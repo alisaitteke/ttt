@@ -16,8 +16,9 @@ export {
   localeLabel,
 } from '@/i18n/locale-options';
 
-const localeModules = import.meta.glob<{ default: Record<string, unknown> }>(
-  '../locales/*.json'
+/** All partial JSON files under `locales/<localeTag>/` (e.g. global.json, settings.json). */
+const localePartials = import.meta.glob<{ default: Record<string, unknown> }>(
+  '../locales/*/*.json'
 );
 
 const loadedLocales = new Set<SupportedLocale>();
@@ -44,14 +45,24 @@ export async function loadLocaleMessages(
     return;
   }
 
-  const path = `../locales/${locale}.json`;
-  const loader = localeModules[path];
-  if (!loader) {
-    throw new Error(`Missing locale bundle for "${locale}" (${path})`);
+  const segment = `/${locale}/`;
+  const entries = Object.entries(localePartials)
+    .filter(([path]) => path.includes(segment))
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  if (entries.length === 0) {
+    throw new Error(
+      `Missing locale bundles for "${locale}" (expected JSON files under locales/${locale}/)`
+    );
   }
 
-  const mod = await loader();
-  instance.global.setLocaleMessage(locale, mod.default);
+  const merged: Record<string, unknown> = {};
+  for (const [, loader] of entries) {
+    const mod = await loader();
+    Object.assign(merged, mod.default);
+  }
+
+  instance.global.setLocaleMessage(locale, merged);
   loadedLocales.add(locale);
   await nextTick();
 }

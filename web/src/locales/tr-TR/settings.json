@@ -1,9 +1,4 @@
 {
-  "locale": {
-    "switchLabel": "Dil",
-    "searchPlaceholder": "Dil ara…",
-    "noResults": "Sonuç bulunamadı."
-  },
   "settings": {
     "title": "Ayarlar",
     "openSettings": "Ayarları aç",

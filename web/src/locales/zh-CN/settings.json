@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "title": "设置",
+    "openSettings": "打开设置",
+    "done": "完成",
+    "tabs": {
+      "appearance": "外观",
+      "providers": "提供商"
+    },
+    "theme": {
+      "label": "主题",
+      "system": "跟随系统",
+      "light": "浅色",
+      "dark": "深色"
+    }
+  }
+}

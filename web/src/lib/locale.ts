@@ -6,11 +6,25 @@ import {
 
 export const LOCALE_STORAGE_KEY = 'ttt-locale';
 
+/** Previous short tags → current BCP 47 filenames (one-time migration from localStorage). */
+const LEGACY_LOCALE_MAP: Record<string, SupportedLocale> = {
+  en: 'en-US',
+  es: 'es-ES',
+  de: 'de-DE',
+  tr: 'tr-TR',
+};
+
 export function getStoredLocale(): SupportedLocale | null {
   try {
     const raw = localStorage.getItem(LOCALE_STORAGE_KEY);
     if (!raw) return null;
-    return isSupportedLocale(raw) ? raw : null;
+    if (isSupportedLocale(raw)) return raw;
+    const mapped = LEGACY_LOCALE_MAP[raw];
+    if (mapped) {
+      setStoredLocale(mapped);
+      return mapped;
+    }
+    return null;
   } catch {
     return null;
   }

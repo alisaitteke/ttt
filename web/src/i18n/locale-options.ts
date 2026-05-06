@@ -1,36 +1,15 @@
-export const DEFAULT_LOCALE = 'en' as const;
+export const DEFAULT_LOCALE = 'en-US' as const;
 
-/** UI languages: BCP-47 style codes must match `src/locales/<code>.json` filenames. */
+/**
+ * UI languages: tags match folder names under `src/locales/<tag>/` (BCP 47, regional where applicable).
+ * Each folder holds partial message files (e.g. `global.json`, `settings.json`) merged at runtime.
+ */
 export const LOCALE_OPTIONS = [
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
-  { code: 'pt', label: 'Português', flag: '🇵🇹' },
-  { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
-  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'en-US', label: 'English', flag: '🇺🇸' },
+  { code: 'es-ES', label: 'Español', flag: '🇪🇸' },
   { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
-  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
-  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
-  { code: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
-  { code: 'id', label: 'Bahasa Indonesia', flag: '🇮🇩' },
-  { code: 'th', label: 'ไทย', flag: '🇹🇭' },
-  { code: 'cs', label: 'Čeština', flag: '🇨🇿' },
-  { code: 'sv', label: 'Svenska', flag: '🇸🇪' },
-  { code: 'da', label: 'Dansk', flag: '🇩🇰' },
-  { code: 'no', label: 'Norsk', flag: '🇳🇴' },
-  { code: 'fi', label: 'Suomi', flag: '🇫🇮' },
-  { code: 'el', label: 'Ελληνικά', flag: '🇬🇷' },
-  { code: 'he', label: 'עברית', flag: '🇮🇱' },
-  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
-  { code: 'ro', label: 'Română', flag: '🇷🇴' },
-  { code: 'hu', label: 'Magyar', flag: '🇭🇺' },
+  { code: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'tr-TR', label: 'Türkçe', flag: '🇹🇷' },
 ] as const;
 
 export type SupportedLocale = (typeof LOCALE_OPTIONS)[number]['code'];

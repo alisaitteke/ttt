@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "title": "Configuración",
+    "openSettings": "Abrir configuración",
+    "done": "Listo",
+    "tabs": {
+      "appearance": "Apariencia",
+      "providers": "Proveedores"
+    },
+    "theme": {
+      "label": "Tema",
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
+  }
+}

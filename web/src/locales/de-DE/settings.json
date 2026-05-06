@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "title": "Einstellungen",
+    "openSettings": "Einstellungen öffnen",
+    "done": "Fertig",
+    "tabs": {
+      "appearance": "Darstellung",
+      "providers": "Anbieter"
+    },
+    "theme": {
+      "label": "Design",
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    }
+  }
+}
