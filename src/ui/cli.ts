@@ -5,8 +5,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import getPort from 'get-port';
 import open from 'open';
-import { startUIServer } from './server.js';
-import { Logger } from '../utils/logger.js';
+import { startUIServer } from '@ttt/ui/server.js';
+import { Logger } from '@ttt/utils/logger.js';
 
 // dist/ui/cli.js -> ../../package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));

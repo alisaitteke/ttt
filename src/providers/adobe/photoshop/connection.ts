@@ -1,10 +1,10 @@
 import { platform } from 'os';
-import { Logger } from '../../../utils/logger.js';
-import { ExtendScriptExecutor } from '../_shared/platform/script-executor.js';
-import { MacOSExtendScriptExecutor } from '../_shared/platform/macos-executor.js';
-import { WindowsExtendScriptExecutor } from '../_shared/platform/windows-executor.js';
-import { PhotoshopDetector } from './detector.js';
-import type { AdobeAppInfo } from '../_shared/detector/base-adobe-detector.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { ExtendScriptExecutor } from '@ttt/providers/adobe/_shared/platform/script-executor.js';
+import { MacOSExtendScriptExecutor } from '@ttt/providers/adobe/_shared/platform/macos-executor.js';
+import { WindowsExtendScriptExecutor } from '@ttt/providers/adobe/_shared/platform/windows-executor.js';
+import { PhotoshopDetector } from '@ttt/providers/adobe/photoshop/detector.js';
+import type { AdobeAppInfo } from '@ttt/providers/adobe/_shared/detector/base-adobe-detector.js';
 
 /**
  * Manages discovery + script execution against a locally-installed Adobe

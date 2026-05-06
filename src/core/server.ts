@@ -1,10 +1,10 @@
-import { NullSafeToolArgumentsServer } from './null-safe-tool-arguments-server.js';
+import { NullSafeToolArgumentsServer } from '@ttt/core/null-safe-tool-arguments-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { Logger } from '../utils/logger.js';
-import { ToolRegistry } from './tool-registry.js';
-import type { Provider } from './types.js';
-import { providers as defaultProviders } from '../providers/index.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { ToolRegistry } from '@ttt/core/tool-registry.js';
+import type { Provider } from '@ttt/core/types.js';
+import { providers as defaultProviders } from '@ttt/providers/index.js';
 
 export interface TTTServerOptions {
   providers?: Provider[];

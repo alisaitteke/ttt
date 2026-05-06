@@ -1,4 +1,4 @@
-import { getDB } from './db.js';
+import { getDB } from '@ttt/ui/store/db.js';
 
 export function kvGet<T>(key: string): T | undefined {
   const row = getDB()

@@ -1,9 +1,9 @@
-import { kvGet, kvSet } from './store/kv.js';
+import { kvGet, kvSet } from '@ttt/ui/store/kv.js';
 import {
   deleteProviderCredentialSecret,
   getProviderCredentialSecret,
   setProviderCredentialSecret,
-} from './store/credentials.js';
+} from '@ttt/ui/store/credentials.js';
 
 export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'groq';
 

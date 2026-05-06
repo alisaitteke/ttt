@@ -3,13 +3,18 @@ import { Experimental_StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { stepCountIs, streamText, type LanguageModelUsage, type ModelMessage } from 'ai';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sanitizeExportChatSegment, TTT_EXPORT_CHAT_ID_ENV } from '../lib/ttt-paths.js';
-import type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from './providers/registry.js';
+import {
+  readWhatsAppPreferences,
+  sanitizeExportChatSegment,
+  TTT_EXPORT_CHAT_ID_ENV,
+  TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV,
+} from '@ttt/lib/ttt-paths.js';
+import type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from '@ttt/ui/providers/registry.js';
 import {
   DESIGN_TOOLS,
   sanitizeDesignToolIds,
   type DesignToolId,
-} from './providers/design-tools.js';
+} from '@ttt/ui/providers/design-tools.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -163,7 +168,8 @@ function buildSystemPrompt(
   designTools: DesignToolId[],
   providerId?: ProviderId,
   localeTag?: string,
-  anonymousHostContext?: Record<string, unknown>
+  anonymousHostContext?: Record<string, unknown>,
+  whatsappExtendedDataConsent?: boolean
 ): string {
   const hostBlock =
     anonymousHostContext !== undefined ? formatAnonymousHostContextSection(anonymousHostContext) : '';
@@ -175,6 +181,11 @@ function buildSystemPrompt(
   }
 
   const toolsDesc = designTools.map(designToolPromptLine).join('\n');
+  const extendedWa =
+    designTools.includes('whatsapp') && whatsappExtendedDataConsent
+      ? `
+- **Extended data (user opted in):** \`whatsapp_list_chats\`, \`whatsapp_fetch_messages\` (needs \`chatJid\` or phone \`to\`), \`whatsapp_search_contacts\`. These read from a local Baileys cache; respect privacy and WhatsApp ToS.`
+      : '';
   const whatsappBlock =
     designTools.includes('whatsapp')
       ? `
@@ -182,7 +193,7 @@ function buildSystemPrompt(
 WhatsApp (Baileys via TTT UI):
 - For session **reachability**, call \`whatsapp_status\` first (same role as \`*_ping\` for other apps).
 - To **send plain text**, use \`whatsapp_send_message\`: \`to\` must be international digits only (no \`+\`, no spaces).
-- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` for an image at an \`https\`/\`http\` URL (with user consent and per WhatsApp ToS).`
+- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` for an image at an \`https\`/\`http\` URL (with user consent and per WhatsApp ToS).${extendedWa}`
       : '';
 
   const groqExtras = providerId === 'groq' ? `\n\n${GROQ_MCP_TOOL_ENFORCEMENT}` : '';
@@ -214,6 +225,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
   const buffer: AssistantBuffer = { text: '', toolCalls: [] };
 
   try {
+    const waPrefs = await readWhatsAppPreferences();
     const spawnArgs = IS_DEV_SOURCE ? ['--import', 'tsx', MCP_SERVER_ENTRY] : [MCP_SERVER_ENTRY];
     const mcpEnv: Record<string, string> = {
       ...sanitizedEnv(),
@@ -224,6 +236,9 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
             TTT_CONNECTION_BRIDGE_SECRET: opts.connectionBridge.secret,
           }
         : {}),
+      ...(waPrefs.extendedDataTools
+        ? { [TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV]: '1' }
+        : { [TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV]: '0' }),
     };
     const exportSeg = sanitizeExportChatSegment(opts.exportChatId);
     if (exportSeg) {
@@ -256,7 +271,8 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
       designTools,
       opts.provider.id,
       opts.locale,
-      opts.anonymousHostContext
+      opts.anonymousHostContext,
+      waPrefs.extendedDataTools
     );
 
     const result = streamText({

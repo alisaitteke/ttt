@@ -1,7 +1,7 @@
-import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
-import { PhotoshopConnection } from '../connection.js';
-import { PhotoshopAPIFactory } from '../api/api-factory.js';
-import { ExtendScriptSnippets } from '../api/extendscript.js';
+import { ToolDefinition, ToolResult } from '@ttt/core/tool-registry.js';
+import { PhotoshopConnection } from '@ttt/providers/adobe/photoshop/connection.js';
+import { PhotoshopAPIFactory } from '@ttt/providers/adobe/photoshop/api/api-factory.js';
+import { ExtendScriptSnippets } from '@ttt/providers/adobe/photoshop/api/extendscript.js';
 
 export function createSelectionTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [

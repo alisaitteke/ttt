@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import type { ProviderAdapter, ProviderModel } from './types.js';
+import type { ProviderAdapter, ProviderModel } from '@ttt/ui/providers/types.js';
 
 // Curated to Gemini models that support tool calling on the Google AI Studio
 // (Generative Language) API. Prices in USD per 1M tokens; Pro tiers reflect

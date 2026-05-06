@@ -16,12 +16,12 @@
     "LICENSE"
   ],
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "tsc-watch --onSuccess \"tsc-alias\"",
     "dev:ui": "concurrently -n server,web -c blue,green \"npm:dev:ui:server\" \"npm:dev:ui:web\"",
     "dev:ui:server": "tsx watch src/ui/cli.ts --port 5174 --no-open",
     "dev:ui:web": "npm --prefix web run dev",
     "build": "npm run build:server && npm run build:web",
-    "build:server": "tsc",
+    "build:server": "tsc && tsc-alias",
     "build:web": "npm --prefix web ci --no-audit --no-fund && npm --prefix web run build",
     "start": "node dist/index.js",
     "start:ui": "node dist/ui/cli.js",
@@ -95,6 +95,8 @@
     "eslint": "^9.18.0",
     "globals": "^17.6.0",
     "prettier": "^3.4.2",
+    "tsc-alias": "^1.8.10",
+    "tsc-watch": "^6.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

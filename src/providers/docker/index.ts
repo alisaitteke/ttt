@@ -17,10 +17,10 @@ import { getNetworkTools } from '@alisaitteke/docker-mcp/dist/tools/networks.js'
 import { getRegistryTools } from '@alisaitteke/docker-mcp/dist/tools/registries.js';
 import { getSystemTools } from '@alisaitteke/docker-mcp/dist/tools/system.js';
 import { getVolumeTools } from '@alisaitteke/docker-mcp/dist/tools/volumes.js';
-import type { Provider } from '../../core/types.js';
-import type { ToolRegistry, ToolResult } from '../../core/tool-registry.js';
-import { Logger } from '../../utils/logger.js';
-import { dispatchDockerTool, type DockerMcpManagers } from './dispatch-docker-tool.js';
+import type { Provider } from '@ttt/core/types.js';
+import type { ToolRegistry, ToolResult } from '@ttt/core/tool-registry.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { dispatchDockerTool, type DockerMcpManagers } from '@ttt/providers/docker/dispatch-docker-tool.js';
 
 const DOCKER_MCP_TOOLS: Tool[] = [
   ...getContainerTools(),

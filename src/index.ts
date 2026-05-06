@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { TTTServer } from './core/server.js';
-import { Logger } from './utils/logger.js';
+import { TTTServer } from '@ttt/core/server.js';
+import { Logger } from '@ttt/utils/logger.js';
 
 const logger = new Logger('Main');
 

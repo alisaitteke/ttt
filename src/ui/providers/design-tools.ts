@@ -1,4 +1,4 @@
-import type { ConnectionAdapterId } from '../../connections/types.js';
+import type { ConnectionAdapterId } from '@ttt/connections/types.js';
 
 export type DesignToolId =
   | 'photoshop'

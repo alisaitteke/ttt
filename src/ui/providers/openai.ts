@@ -1,5 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import type { ProviderAdapter, ProviderModel } from './types.js';
+import type { ProviderAdapter, ProviderModel } from '@ttt/ui/providers/types.js';
 
 // Curated to models known to support tool calling. Prices in USD per 1M tokens.
 const MODELS: ProviderModel[] = [

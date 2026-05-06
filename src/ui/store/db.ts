@@ -1,7 +1,7 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { getTttHomeDir } from '../../lib/ttt-paths.js';
+import { getTttHomeDir } from '@ttt/lib/ttt-paths.js';
 
 let instance: DatabaseType | null = null;
 

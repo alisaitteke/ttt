@@ -1,5 +1,5 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import type { ProviderAdapter, ProviderModel } from './types.js';
+import type { ProviderAdapter, ProviderModel } from '@ttt/ui/providers/types.js';
 
 // Curated to models known to support tool calling on OpenRouter. Prices in USD
 // per 1M tokens; OpenRouter passes provider rates through without markup.

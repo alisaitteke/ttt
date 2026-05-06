@@ -1,12 +1,12 @@
-import type { Provider } from '../../../core/types.js';
-import type { ToolRegistry, ToolResult } from '../../../core/tool-registry.js';
-import { Logger } from '../../../utils/logger.js';
-import { AfterEffectsConnection } from './connection.js';
-import { createProjectTools } from './tools/project-tools.js';
-import { createCompositionTools } from './tools/composition-tools.js';
-import { createLayerCreateTools } from './tools/layer-create-tools.js';
-import { createLayerPropertyTools } from './tools/layer-property-tools.js';
-import { createLayerLifecycleTools } from './tools/layer-lifecycle-tools.js';
+import type { Provider } from '@ttt/core/types.js';
+import type { ToolRegistry, ToolResult } from '@ttt/core/tool-registry.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { AfterEffectsConnection } from '@ttt/providers/adobe/after-effects/connection.js';
+import { createProjectTools } from '@ttt/providers/adobe/after-effects/tools/project-tools.js';
+import { createCompositionTools } from '@ttt/providers/adobe/after-effects/tools/composition-tools.js';
+import { createLayerCreateTools } from '@ttt/providers/adobe/after-effects/tools/layer-create-tools.js';
+import { createLayerPropertyTools } from '@ttt/providers/adobe/after-effects/tools/layer-property-tools.js';
+import { createLayerLifecycleTools } from '@ttt/providers/adobe/after-effects/tools/layer-lifecycle-tools.js';
 
 /**
  * Adobe After Effects provider.

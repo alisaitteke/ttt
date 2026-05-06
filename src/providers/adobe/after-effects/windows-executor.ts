@@ -5,8 +5,8 @@ import { writeFile, unlink, readFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join, basename } from 'path';
 import { randomUUID } from 'crypto';
-import { Logger } from '../../../utils/logger.js';
-import { ExtendScriptExecutor } from '../_shared/platform/script-executor.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { ExtendScriptExecutor } from '@ttt/providers/adobe/_shared/platform/script-executor.js';
 
 const execAsync = promisify(exec);
 

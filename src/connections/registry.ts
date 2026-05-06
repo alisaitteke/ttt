@@ -1,5 +1,5 @@
-import type { ConnectionAdapter, ConnectionAdapterId } from './types.js';
-import { WhatsAppConnectionAdapter } from './adapters/whatsapp/whatsapp-adapter.js';
+import type { ConnectionAdapter, ConnectionAdapterId } from '@ttt/connections/types.js';
+import { WhatsAppConnectionAdapter } from '@ttt/connections/adapters/whatsapp/whatsapp-adapter.js';
 
 const whatsapp = new WhatsAppConnectionAdapter();
 

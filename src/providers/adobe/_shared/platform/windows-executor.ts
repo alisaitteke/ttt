@@ -3,8 +3,8 @@ import { promisify } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join, basename } from 'path';
-import { Logger } from '../../../../utils/logger.js';
-import { ExtendScriptExecutor } from './script-executor.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { ExtendScriptExecutor } from '@ttt/providers/adobe/_shared/platform/script-executor.js';
 
 const execAsync = promisify(exec);
 

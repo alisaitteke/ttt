@@ -1,4 +1,4 @@
-import type { Provider } from '../../core/types.js';
+import type { Provider } from '@ttt/core/types.js';
 
 /**
  * Scaffold for the Figma provider.

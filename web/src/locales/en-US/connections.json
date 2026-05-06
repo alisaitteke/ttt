@@ -8,6 +8,11 @@
       "scanHint": "WhatsApp → Settings → Linked devices → Link a device.",
       "retry": "Try again",
       "forget": "Disconnect & remove session",
+      "consent": {
+        "title": "Extended data for AI tools",
+        "body": "Optional: allow MCP tools that read synced chats and contacts from this device’s Baileys cache (e.g. list chats, fetch recent messages, search contacts). This is unofficial WhatsApp access — you are responsible for lawful use and WhatsApp’s Terms of Service. You can turn this off anytime.",
+        "checkbox": "Allow AI to read synced chats & contacts (extended tools)"
+      },
       "errors": {
         "clientVersion": "WhatsApp blocked the link attempt (outdated web client). Update this app and try again.",
         "sessionRejected": "WhatsApp rejected the session. Use Disconnect & remove session, then try again."

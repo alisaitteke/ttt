@@ -9,26 +9,26 @@ import { homedir, platform as osPlatform } from 'node:os';
 import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/desktop.js';
-import { Logger } from '../utils/logger.js';
+import { launchCreativeCloudDesktop } from '@ttt/providers/adobe/creative-cloud/desktop.js';
+import { Logger } from '@ttt/utils/logger.js';
 import {
   collectAnonymousHostContext,
   normalizeClientIanaTimezone,
   normalizeClientLocalWallClock,
   normalizeClientNowUtcIso,
   normalizeJsTimezoneOffsetMinutes,
-} from './anonymous-host-context.js';
+} from '@ttt/ui/anonymous-host-context.js';
 import {
   buildHistory,
   normalizeChatLocale,
   runChat,
   type AssistantBuffer,
   type RunChatFinishInfo,
-} from './agent.js';
+} from '@ttt/ui/agent.js';
 import {
   getConnectionBridgeConfig,
   setConnectionBridgeConfig,
-} from './connection-bridge-config.js';
+} from '@ttt/ui/connection-bridge-config.js';
 import {
   ensureProviderKeysMigrated,
   getProviderApiKey,
@@ -37,14 +37,14 @@ import {
   saveConfig,
   setProviderConfig,
   type ProviderId,
-} from './config.js';
-import { getProvider, listProviders } from './providers/registry.js';
-import { sanitizeDesignToolIds, type DesignToolId } from './providers/design-tools.js';
+} from '@ttt/ui/config.js';
+import { getProvider, listProviders } from '@ttt/ui/providers/registry.js';
+import { sanitizeDesignToolIds, type DesignToolId } from '@ttt/ui/providers/design-tools.js';
 import {
   listDesignToolsWithInstallStatus,
   resolveDefaultChatTools,
   invalidateDesignToolsListCache,
-} from './providers/design-tool-detection.js';
+} from '@ttt/ui/providers/design-tool-detection.js';
 import {
   appendMessage,
   createChat,
@@ -56,14 +56,19 @@ import {
   setChatArchived,
   updateChatModel,
   updateChatTools,
-} from './store/chats.js';
+} from '@ttt/ui/store/chats.js';
 import {
   getLastComposerDesignToolsPreference,
   setLastComposerDesignToolsPreference,
-} from './store/composer-design-tools-preference.js';
-import { getDB } from './store/db.js';
-import { getTttDropsDir, hasPersistedWhatsAppAuth } from '../lib/ttt-paths.js';
-import { getConnectionAdapter, listConnectionAdapters } from '../connections/registry.js';
+} from '@ttt/ui/store/composer-design-tools-preference.js';
+import { getDB } from '@ttt/ui/store/db.js';
+import {
+  getTttDropsDir,
+  hasPersistedWhatsAppAuth,
+  readWhatsAppPreferences,
+  writeWhatsAppPreferences,
+} from '@ttt/lib/ttt-paths.js';
+import { getConnectionAdapter, listConnectionAdapters } from '@ttt/connections/registry.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // dist/ui/server.js -> ../../web/dist
@@ -368,6 +373,32 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       })
     );
     return c.json({ connections: items });
+  });
+
+  app.get('/api/connections/whatsapp/preferences', async (c) => {
+    const prefs = await readWhatsAppPreferences();
+    return c.json(prefs);
+  });
+
+  app.patch('/api/connections/whatsapp/preferences', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { extendedDataTools?: unknown };
+    const extended = body.extendedDataTools === true;
+    const prev = await readWhatsAppPreferences();
+    await writeWhatsAppPreferences({ extendedDataTools: extended });
+    invalidateDesignToolsListCache();
+    if (prev.extendedDataTools !== extended) {
+      const wa = getConnectionAdapter('whatsapp');
+      try {
+        const info = await wa.getPublicInfo();
+        if (info.connected) {
+          await wa.disconnect();
+          await wa.ensureSocket();
+        }
+      } catch (e) {
+        logger.warn('whatsapp reconnect after preferences change', e);
+      }
+    }
+    return c.json({ ok: true as const, extendedDataTools: extended });
   });
 
   app.post('/api/connections/whatsapp/pairing/start', async (c) => {

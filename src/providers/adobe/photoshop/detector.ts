@@ -1,4 +1,4 @@
-import { BaseAdobeDetector } from '../_shared/detector/base-adobe-detector.js';
+import { BaseAdobeDetector } from '@ttt/providers/adobe/_shared/detector/base-adobe-detector.js';
 
 /**
  * Detect a locally-installed Adobe Photoshop on macOS or Windows.

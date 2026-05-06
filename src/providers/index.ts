@@ -1,12 +1,12 @@
-import type { Provider } from '../core/types.js';
-import photoshopProvider from './adobe/photoshop/index.js';
-import illustratorProvider from './adobe/illustrator/index.js';
-import afterEffectsProvider from './adobe/after-effects/index.js';
-import figmaProvider from './figma/index.js';
-import openclawProvider from './openclaw/index.js';
-import hermesProvider from './hermes/index.js';
-import dockerProvider from './docker/index.js';
-import whatsappToolsProvider from './whatsapp/index.js';
+import type { Provider } from '@ttt/core/types.js';
+import photoshopProvider from '@ttt/providers/adobe/photoshop/index.js';
+import illustratorProvider from '@ttt/providers/adobe/illustrator/index.js';
+import afterEffectsProvider from '@ttt/providers/adobe/after-effects/index.js';
+import figmaProvider from '@ttt/providers/figma/index.js';
+import openclawProvider from '@ttt/providers/openclaw/index.js';
+import hermesProvider from '@ttt/providers/hermes/index.js';
+import dockerProvider from '@ttt/providers/docker/index.js';
+import whatsappToolsProvider from '@ttt/providers/whatsapp/index.js';
 
 /**
  * The full list of providers known to TTT.

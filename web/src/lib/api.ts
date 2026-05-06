@@ -220,6 +220,19 @@ export const apiListDesignTools = () => api<DesignToolsResponse>('/api/design-to
 export const apiListConnections = () =>
   api<ConnectionsListResponse>('/api/connections');
 
+export interface WhatsAppPreferences {
+  extendedDataTools: boolean;
+}
+
+export const apiGetWhatsAppPreferences = () =>
+  api<WhatsAppPreferences>('/api/connections/whatsapp/preferences');
+
+export const apiPatchWhatsAppPreferences = (body: WhatsAppPreferences) =>
+  api<{ ok: true; extendedDataTools: boolean }>('/api/connections/whatsapp/preferences', {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+
 export const apiStartWhatsAppPairing = () =>
   api<{ ok: true }>('/api/connections/whatsapp/pairing/start', { method: 'POST' });
 

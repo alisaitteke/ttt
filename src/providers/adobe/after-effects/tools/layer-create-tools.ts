@@ -1,6 +1,6 @@
-import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
-import { AfterEffectsConnection } from '../connection.js';
-import { AfterEffectsExtendScriptSnippets } from '../extendscript.js';
+import { ToolDefinition, ToolResult } from '@ttt/core/tool-registry.js';
+import { AfterEffectsConnection } from '@ttt/providers/adobe/after-effects/connection.js';
+import { AfterEffectsExtendScriptSnippets } from '@ttt/providers/adobe/after-effects/extendscript.js';
 
 export function createLayerCreateTools(connection: AfterEffectsConnection): ToolDefinition[] {
   return [

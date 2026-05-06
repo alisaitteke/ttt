@@ -8,6 +8,11 @@
       "scanHint": "WhatsApp → Ajustes → Dispositivos vinculados → Vincular dispositivo.",
       "retry": "Reintentar",
       "forget": "Desconectar y borrar sesión",
+      "consent": {
+        "title": "Datos ampliados para herramientas de IA",
+        "body": "Opcional: permitir herramientas MCP que leen chats y contactos sincronizados en la caché de Baileys de este dispositivo. Acceso no oficial a WhatsApp — usted es responsable del uso lícito y de los Términos de WhatsApp. Puede desactivarlo en cualquier momento.",
+        "checkbox": "Permitir que la IA lea chats y contactos sincronizados (herramientas ampliadas)"
+      },
       "errors": {
         "clientVersion": "WhatsApp rechazó el enlace (cliente web obsoleto). Actualiza la aplicación e inténtalo de nuevo.",
         "sessionRejected": "WhatsApp rechazó la sesión. Desconecta y borra la sesión, luego inténtalo de nuevo."

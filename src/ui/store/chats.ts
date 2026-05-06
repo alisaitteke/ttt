@@ -1,9 +1,9 @@
 import type { LanguageModelUsage } from 'ai';
 import { randomUUID } from 'node:crypto';
-import type { UsageCost } from '../providers/registry.js';
-import { sanitizeDesignToolIds, type DesignToolId } from '../providers/design-tools.js';
-import { setLastComposerDesignToolsPreference } from './composer-design-tools-preference.js';
-import { getDB } from './db.js';
+import type { UsageCost } from '@ttt/ui/providers/registry.js';
+import { sanitizeDesignToolIds, type DesignToolId } from '@ttt/ui/providers/design-tools.js';
+import { setLastComposerDesignToolsPreference } from '@ttt/ui/store/composer-design-tools-preference.js';
+import { getDB } from '@ttt/ui/store/db.js';
 
 export interface ChatRow {
   id: string;

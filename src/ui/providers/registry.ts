@@ -1,9 +1,9 @@
-import { anthropicAdapter } from './anthropic.js';
-import { googleAdapter } from './google.js';
-import { groqAdapter } from './groq.js';
-import { openaiAdapter } from './openai.js';
-import { openrouterAdapter } from './openrouter.js';
-import type { ProviderAdapter, ProviderId } from './types.js';
+import { anthropicAdapter } from '@ttt/ui/providers/anthropic.js';
+import { googleAdapter } from '@ttt/ui/providers/google.js';
+import { groqAdapter } from '@ttt/ui/providers/groq.js';
+import { openaiAdapter } from '@ttt/ui/providers/openai.js';
+import { openrouterAdapter } from '@ttt/ui/providers/openrouter.js';
+import type { ProviderAdapter, ProviderId } from '@ttt/ui/providers/types.js';
 
 export const providers: Record<ProviderId, ProviderAdapter> = {
   anthropic: anthropicAdapter,
@@ -21,4 +21,4 @@ export function listProviders(): ProviderAdapter[] {
   return Object.values(providers);
 }
 
-export type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from './types.js';
+export type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from '@ttt/ui/providers/types.js';

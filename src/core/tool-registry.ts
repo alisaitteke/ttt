@@ -1,5 +1,5 @@
 import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '@ttt/utils/logger.js';
 
 export interface ToolHandler {
   (args: Record<string, unknown>): Promise<CallToolResult>;

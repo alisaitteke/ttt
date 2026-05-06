@@ -1,5 +1,5 @@
 import { createGroq } from '@ai-sdk/groq';
-import type { ProviderAdapter, ProviderModel } from './types.js';
+import type { ProviderAdapter, ProviderModel } from '@ttt/ui/providers/types.js';
 
 // Models curated for tool calling on Groq; USD per 1M tokens from:
 // https://home.cloud.groq.io/pricing (uncached input / output).

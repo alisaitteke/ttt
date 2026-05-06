@@ -8,6 +8,11 @@
       "scanHint": "WhatsApp → Ayarlar → Bağlı cihazlar → Cihaz bağla.",
       "retry": "Yeniden dene",
       "forget": "Bağlantıyı kes ve oturumu sil",
+      "consent": {
+        "title": "Yapay zeka araçları için genişletilmiş veri",
+        "body": "İsteğe bağlı: Bu cihazdaki Baileys önbelleğinden senkronize sohbetleri ve kişileri okuyan MCP araçlarına izin ver (sohbet listesi, son mesajlar, kişi arama). Resmi olmayan WhatsApp erişimidir; yasal kullanım ve WhatsApp koşulları sizin sorumluluğunuzdadır. İstediğiniz zaman kapatabilirsiniz.",
+        "checkbox": "Yapay zekanın senkron sohbet ve kişileri okumasına izin ver (genişletilmiş araçlar)"
+      },
       "errors": {
         "clientVersion": "WhatsApp bağlantıyı reddetti (eski web istemcisi). Uygulamayı güncelleyip yeniden deneyin.",
         "sessionRejected": "WhatsApp oturumu reddetti. Önce bağlantıyı kesip oturumu silin, sonra yeniden deneyin."

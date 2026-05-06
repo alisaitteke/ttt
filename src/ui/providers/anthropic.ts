@@ -1,5 +1,5 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
-import type { ProviderAdapter, ProviderModel } from './types.js';
+import type { ProviderAdapter, ProviderModel } from '@ttt/ui/providers/types.js';
 
 // Public list pricing (USD per 1M tokens). Cache-write reflects the 5-minute
 // tier; we don't currently differentiate the 1-hour tier.

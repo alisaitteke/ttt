@@ -1,5 +1,5 @@
-import { Logger } from '../../../../utils/logger.js';
-import { PhotoshopConnection } from '../connection.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { PhotoshopConnection } from '@ttt/providers/adobe/photoshop/connection.js';
 
 export type APIType = 'UXP' | 'ExtendScript';
 

@@ -1,11 +1,11 @@
-import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import { ToolDefinition, ToolResult } from '@ttt/core/tool-registry.js';
 import {
   appendRevealPathLine,
   resolveTttInputPath,
   resolveTttOutputPath,
-} from '../../../../lib/ttt-paths.js';
-import { AfterEffectsConnection } from '../connection.js';
-import { AfterEffectsExtendScriptSnippets } from '../extendscript.js';
+} from '@ttt/lib/ttt-paths.js';
+import { AfterEffectsConnection } from '@ttt/providers/adobe/after-effects/connection.js';
+import { AfterEffectsExtendScriptSnippets } from '@ttt/providers/adobe/after-effects/extendscript.js';
 
 export function createProjectTools(connection: AfterEffectsConnection): ToolDefinition[] {
   return [

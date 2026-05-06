@@ -1,4 +1,4 @@
-import type { ToolRegistry } from './tool-registry.js';
+import type { ToolRegistry } from '@ttt/core/tool-registry.js';
 
 /**
  * A Provider is a single design tool integration (Photoshop, Figma, ...).

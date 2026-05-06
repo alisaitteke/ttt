@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { access, constants, readFile } from 'fs/promises';
 import { platform } from 'os';
-import { Logger } from '../../../../utils/logger.js';
+import { Logger } from '@ttt/utils/logger.js';
 
 const execAsync = promisify(exec);
 

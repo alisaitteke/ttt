@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { access } from 'node:fs/promises';
+import { access, readFile, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
-import { TTT_REVEAL_PATH_PREFIX } from './tool-ui-conventions.js';
+import { TTT_REVEAL_PATH_PREFIX } from '@ttt/lib/tool-ui-conventions.js';
 
 const EXPORTS_SUBDIR = 'exports';
 const DROPS_SUBDIR = 'drops';
@@ -79,6 +79,46 @@ export async function hasPersistedWhatsAppAuth(): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+const WHATSAPP_PREFS_FILENAME = 'preferences.json';
+
+/** Env key for MCP child: user enabled extended read tools in the WhatsApp UI. */
+export const TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV = 'TTT_WHATSAPP_EXTENDED_DATA_CONSENT' as const;
+
+export interface WhatsAppPreferences {
+  extendedDataTools: boolean;
+}
+
+export function getTttWhatsAppPreferencesPath(): string {
+  return join(getTttWhatsAppAuthDir(), WHATSAPP_PREFS_FILENAME);
+}
+
+export async function readWhatsAppPreferences(): Promise<WhatsAppPreferences> {
+  try {
+    const raw = await readFile(getTttWhatsAppPreferencesPath(), 'utf8');
+    const j = JSON.parse(raw) as Partial<WhatsAppPreferences>;
+    return { extendedDataTools: j.extendedDataTools === true };
+  } catch {
+    return { extendedDataTools: false };
+  }
+}
+
+export async function writeWhatsAppPreferences(prefs: WhatsAppPreferences): Promise<void> {
+  getTttWhatsAppAuthDir();
+  await writeFile(
+    getTttWhatsAppPreferencesPath(),
+    `${JSON.stringify({ extendedDataTools: prefs.extendedDataTools }, null, 2)}\n`,
+    { mode: 0o600 }
+  );
+}
+
+export async function unlinkWhatsAppPreferences(): Promise<void> {
+  try {
+    await unlink(getTttWhatsAppPreferencesPath());
+  } catch {
+    /* noop */
   }
 }
 

@@ -1,5 +1,5 @@
-import { sanitizeDesignToolIds, type DesignToolId } from '../providers/design-tools.js';
-import { kvGet, kvSet } from './kv.js';
+import { sanitizeDesignToolIds, type DesignToolId } from '@ttt/ui/providers/design-tools.js';
+import { kvGet, kvSet } from '@ttt/ui/store/kv.js';
 
 const LAST_COMPOSER_DESIGN_TOOLS_KV = 'last_composer_design_tools';
 

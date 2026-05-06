@@ -8,6 +8,11 @@
       "scanHint": "WhatsApp → 设置 → 已关联的设备 → 关联设备。",
       "retry": "重试",
       "forget": "断开并清除会话",
+      "consent": {
+        "title": "AI 工具的扩展数据",
+        "body": "可选：允许 MCP 工具读取本机 Baileys 缓存中同步的聊天与联系人。非官方 WhatsApp 访问 — 合法使用及遵守 WhatsApp 条款由您负责。可随时关闭。",
+        "checkbox": "允许 AI 读取同步的聊天与联系人（扩展工具）"
+      },
       "errors": {
         "clientVersion": "WhatsApp 拒绝了关联（网页客户端版本过旧）。请更新本应用后重试。",
         "sessionRejected": "WhatsApp 拒绝了会话。请先断开并清除会话，然后再试。"

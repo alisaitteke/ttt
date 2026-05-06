@@ -10,7 +10,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { apiLogoutWhatsApp, apiStartWhatsAppPairing, ApiError } from '@/lib/api';
+import {
+  apiGetWhatsAppPreferences,
+  apiLogoutWhatsApp,
+  apiPatchWhatsAppPreferences,
+  apiStartWhatsAppPairing,
+  ApiError,
+} from '@/lib/api';
 import { Loader2, X } from 'lucide-vue-next';
 
 const open = defineModel<boolean>('open', { required: true });
@@ -24,6 +30,8 @@ const { t } = useI18n();
 const status = ref<'idle' | 'pairing' | 'connected' | 'error'>('idle');
 const errorMessage = ref<string | null>(null);
 const qrDataUrl = ref<string | null>(null);
+const extendedData = ref(false);
+const prefsLoading = ref(false);
 let es: EventSource | null = null;
 
 async function bustDesignToolsCache(): Promise<void> {
@@ -44,6 +52,28 @@ async function renderQr(raw: string): Promise<void> {
     qrDataUrl.value = await QRCode.toDataURL(raw, { margin: 1, width: 280 });
   } catch {
     qrDataUrl.value = null;
+  }
+}
+
+async function loadPrefs(): Promise<void> {
+  prefsLoading.value = true;
+  try {
+    const p = await apiGetWhatsAppPreferences();
+    extendedData.value = p.extendedDataTools;
+  } catch {
+    extendedData.value = false;
+  } finally {
+    prefsLoading.value = false;
+  }
+}
+
+async function onExtendedToggle(checked: boolean): Promise<void> {
+  extendedData.value = checked;
+  try {
+    await apiPatchWhatsAppPreferences({ extendedDataTools: checked });
+  } catch {
+    /* revert on failure */
+    extendedData.value = !checked;
   }
 }
 
@@ -135,8 +165,10 @@ async function startPairing(): Promise<void> {
 watch(
   () => open.value,
   (v) => {
-    if (v) void startPairing();
-    else closeStream();
+    if (v) {
+      void loadPrefs();
+      void startPairing();
+    } else closeStream();
   },
   { immediate: true }
 );
@@ -155,6 +187,7 @@ async function onLogout(): Promise<void> {
   status.value = 'idle';
   qrDataUrl.value = null;
   errorMessage.value = null;
+  await loadPrefs();
 }
 
 defineExpose({
@@ -179,6 +212,23 @@ defineExpose({
           {{ t('connections.whatsapp.blurb') }}
         </p>
       </DialogHeader>
+
+      <div
+        class="space-y-2 rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground"
+      >
+        <p class="font-medium text-foreground">{{ t('connections.whatsapp.consent.title') }}</p>
+        <p>{{ t('connections.whatsapp.consent.body') }}</p>
+        <label class="flex cursor-pointer items-start gap-2 text-foreground">
+          <input
+            type="checkbox"
+            class="mt-0.5 size-3.5 shrink-0 rounded border border-input"
+            :checked="extendedData"
+            :disabled="prefsLoading"
+            @change="onExtendedToggle(($event.target as HTMLInputElement).checked)"
+          />
+          <span>{{ t('connections.whatsapp.consent.checkbox') }}</span>
+        </label>
+      </div>
 
       <div class="flex flex-col items-center gap-3">
         <template v-if="status === 'connected'">

@@ -8,6 +8,11 @@
       "scanHint": "WhatsApp → Einstellungen → Verknüpfte Geräte → Gerät verknüpfen.",
       "retry": "Erneut versuchen",
       "forget": "Trennen und Sitzung löschen",
+      "consent": {
+        "title": "Erweiterte Daten für KI-Tools",
+        "body": "Optional: MCP-Tools erlauben, die synchronisierte Chats und Kontakte aus dem Baileys-Cache dieses Geräts lesen. Inoffizieller WhatsApp-Zugang — Sie sind für rechtmäßige Nutzung und die WhatsApp-Nutzungsbedingungen verantwortlich. Jederzeit deaktivierbar.",
+        "checkbox": "KI das Lesen synchronisierter Chats und Kontakte erlauben (erweiterte Tools)"
+      },
       "errors": {
         "clientVersion": "WhatsApp hat die Verknüpfung abgelehnt (veralteter Web-Client). Aktualisieren Sie die App und versuchen Sie es erneut.",
         "sessionRejected": "WhatsApp hat die Sitzung abgelehnt. Zuerst trennen und Sitzung löschen, dann erneut versuchen."

@@ -1,17 +1,17 @@
 import { platform } from 'node:os';
-import { probeCreativeCloudDesktop } from '../../providers/adobe/creative-cloud/desktop.js';
-import { AfterEffectsDetector } from '../../providers/adobe/after-effects/detector.js';
-import { IllustratorDetector } from '../../providers/adobe/illustrator/detector.js';
-import { PhotoshopDetector } from '../../providers/adobe/photoshop/detector.js';
-import { PremiereProDetector } from '../../providers/adobe/premiere/detector.js';
+import { probeCreativeCloudDesktop } from '@ttt/providers/adobe/creative-cloud/desktop.js';
+import { AfterEffectsDetector } from '@ttt/providers/adobe/after-effects/detector.js';
+import { IllustratorDetector } from '@ttt/providers/adobe/illustrator/detector.js';
+import { PhotoshopDetector } from '@ttt/providers/adobe/photoshop/detector.js';
+import { PremiereProDetector } from '@ttt/providers/adobe/premiere/detector.js';
 import {
   type DesignToolId,
   type DesignToolInfo,
   listDesignTools,
-} from './design-tools.js';
-import { probeDockerAvailable } from './docker-detection.js';
-import { probeDaVinciResolveInstalled, probeFigmaDesktopInstalled } from './third-party-design-desktop.js';
-import { getConnectionAdapter } from '../../connections/registry.js';
+} from '@ttt/ui/providers/design-tools.js';
+import { probeDockerAvailable } from '@ttt/ui/providers/docker-detection.js';
+import { probeDaVinciResolveInstalled, probeFigmaDesktopInstalled } from '@ttt/ui/providers/third-party-design-desktop.js';
+import { getConnectionAdapter } from '@ttt/connections/registry.js';
 
 type DetectorCtor = new () => { detect(): Promise<unknown> };
 

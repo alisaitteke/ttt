@@ -1,11 +1,11 @@
-import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import { ToolDefinition, ToolResult } from '@ttt/core/tool-registry.js';
 import {
   appendRevealPathLine,
   resolveTttOutputPath,
-} from '../../../../lib/ttt-paths.js';
-import { PhotoshopConnection } from '../connection.js';
-import { PhotoshopAPIFactory } from '../api/api-factory.js';
-import { ExtendScriptSnippets } from '../api/extendscript.js';
+} from '@ttt/lib/ttt-paths.js';
+import { PhotoshopConnection } from '@ttt/providers/adobe/photoshop/connection.js';
+import { PhotoshopAPIFactory } from '@ttt/providers/adobe/photoshop/api/api-factory.js';
+import { ExtendScriptSnippets } from '@ttt/providers/adobe/photoshop/api/extendscript.js';
 
 /** Parsed payload from ExtendScriptSnippets.newDocument (wire uses percent-encoded strings). */
 type CreateDocumentIdentity = {

@@ -1,20 +1,20 @@
-import type { Provider } from '../../../core/types.js';
-import type { ToolRegistry, ToolResult } from '../../../core/tool-registry.js';
-import { Logger } from '../../../utils/logger.js';
-import { PhotoshopConnection } from './connection.js';
-import { createDocumentTools } from './tools/document-tools.js';
-import { createLayerTools } from './tools/layer-tools.js';
-import { createImageTools } from './tools/image-tools.js';
-import { createImagePlacementTools } from './tools/image-placement-tools.js';
-import { createLayerTransformTools } from './tools/layer-transform-tools.js';
-import { createLayerPropertiesTools } from './tools/layer-properties-tools.js';
-import { createFilterTools } from './tools/filter-tools.js';
-import { createAdjustmentTools } from './tools/adjustment-tools.js';
-import { createTextTools } from './tools/text-tools.js';
-import { createSelectionTools } from './tools/selection-tools.js';
-import { createActionTools } from './tools/action-tools.js';
-import { createHistoryTools } from './tools/history-tools.js';
-import { createLayerOrderingTools } from './tools/layer-ordering-tools.js';
+import type { Provider } from '@ttt/core/types.js';
+import type { ToolRegistry, ToolResult } from '@ttt/core/tool-registry.js';
+import { Logger } from '@ttt/utils/logger.js';
+import { PhotoshopConnection } from '@ttt/providers/adobe/photoshop/connection.js';
+import { createDocumentTools } from '@ttt/providers/adobe/photoshop/tools/document-tools.js';
+import { createLayerTools } from '@ttt/providers/adobe/photoshop/tools/layer-tools.js';
+import { createImageTools } from '@ttt/providers/adobe/photoshop/tools/image-tools.js';
+import { createImagePlacementTools } from '@ttt/providers/adobe/photoshop/tools/image-placement-tools.js';
+import { createLayerTransformTools } from '@ttt/providers/adobe/photoshop/tools/layer-transform-tools.js';
+import { createLayerPropertiesTools } from '@ttt/providers/adobe/photoshop/tools/layer-properties-tools.js';
+import { createFilterTools } from '@ttt/providers/adobe/photoshop/tools/filter-tools.js';
+import { createAdjustmentTools } from '@ttt/providers/adobe/photoshop/tools/adjustment-tools.js';
+import { createTextTools } from '@ttt/providers/adobe/photoshop/tools/text-tools.js';
+import { createSelectionTools } from '@ttt/providers/adobe/photoshop/tools/selection-tools.js';
+import { createActionTools } from '@ttt/providers/adobe/photoshop/tools/action-tools.js';
+import { createHistoryTools } from '@ttt/providers/adobe/photoshop/tools/history-tools.js';
+import { createLayerOrderingTools } from '@ttt/providers/adobe/photoshop/tools/layer-ordering-tools.js';
 
 /**
  * Adobe Photoshop provider — the most complete TTT integration today.
