@@ -68,8 +68,8 @@ async function submit(): Promise<void> {
         <AdobeAppIcon app="ps" :size="40" class="mb-2" />
         <CardTitle>Connect an AI provider</CardTitle>
         <CardDescription>
-          Photoshop MCP UI uses your own API key to talk to a model. The key is stored
-          locally at <code class="text-xs">~/.photoshop-mcp/data.db</code> and never
+          Adobe Agent UI uses your own API key to talk to a model. The key is stored
+          locally at <code class="text-xs">~/.adobe-agent/data.db</code> and never
           leaves your machine.
         </CardDescription>
       </CardHeader>

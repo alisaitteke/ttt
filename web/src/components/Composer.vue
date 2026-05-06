@@ -35,7 +35,7 @@ function submit(): void {
         v-model="draft"
         :disabled="busy || disabled"
         :rows="2"
-        placeholder="Describe what you want the agent to do in Photoshop…"
+        placeholder="Describe what you want the agent to do in Photoshop (additional CC apps later)…"
         class="block w-full resize-none border-0 bg-transparent px-4 pt-3 pb-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
         @keydown="handleKey"
       />

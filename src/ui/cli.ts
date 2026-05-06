@@ -52,9 +52,9 @@ function parseFlags(argv: string[]): CliFlags {
 function printHelp(): void {
   process.stdout.write(
     [
-      'photoshop-mcp-ui — Browser UI for the Photoshop MCP server',
+      'adobe-agent-ui — Browser UI for the Adobe Agent MCP server',
       '',
-      'Usage: photoshop-mcp-ui [options]',
+      'Usage: adobe-agent-ui [options]',
       '',
       'Options:',
       '  -p, --port <number>   Port to listen on (default: random free port)',
@@ -63,14 +63,14 @@ function printHelp(): void {
       '  -h, --help            Show this help',
       '  -v, --version         Show version',
       '',
-      'Configuration is stored at ~/.photoshop-mcp/config.json (chmod 600).',
+      'Configuration is stored at ~/.adobe-agent/config.json (chmod 600).',
       '',
     ].join('\n')
   );
 }
 
 function printVersion(): void {
-  process.stdout.write(`photoshop-mcp-ui ${PKG_VERSION}\n`);
+  process.stdout.write(`adobe-agent-ui ${PKG_VERSION}\n`);
 }
 
 async function main(): Promise<void> {
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
   });
 
   const url = server.url;
-  process.stdout.write(`\nPhotoshop MCP UI ready at:\n  ${url}\n\n`);
+  process.stdout.write(`\nAdobe Agent MCP UI ready at:\n  ${url}\n\n`);
 
   if (!flags.noOpen) {
     try {
@@ -105,6 +105,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`Failed to start Photoshop MCP UI: ${(err as Error).message}\n`);
+  process.stderr.write(`Failed to start Adobe Agent MCP UI: ${(err as Error).message}\n`);
   process.exit(1);
 });

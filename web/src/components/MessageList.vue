@@ -48,7 +48,7 @@ function assistantLabel(m: ChatMessage): string {
         class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center"
       >
         <Sparkles class="mx-auto mb-3 size-6 text-muted-foreground" />
-        <h2 class="text-base font-semibold">Tell the assistant what to do in Photoshop</h2>
+        <h2 class="text-base font-semibold">Tell the assistant what to do (Photoshop is supported today)</h2>
         <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
           Try: "Create a new 1920×1080 document, fill the background with light blue,
           add the text 'Hello' in the center, and save it as hello.psd on my Desktop."

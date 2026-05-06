@@ -1,12 +1,12 @@
 {
-  "name": "@alisaitteke/photoshop-mcp",
+  "name": "@alisaitteke/adobe-agent",
   "version": "1.1.2",
-  "description": "MCP server for Adobe Photoshop automation - control Photoshop from AI assistants",
+  "description": "MCP server for Adobe Creative Cloud automation (Photoshop today; designed for additional CC apps)",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "photoshop-mcp": "dist/index.js",
-    "photoshop-mcp-ui": "dist/ui/cli.js"
+    "adobe-agent": "dist/index.js",
+    "adobe-agent-ui": "dist/ui/cli.js"
   },
   "files": [
     "dist",
@@ -32,8 +32,10 @@
   },
   "keywords": [
     "mcp",
-    "photoshop",
     "adobe",
+    "creative-cloud",
+    "photoshop",
+    "illustrator",
     "automation",
     "ai",
     "model-context-protocol",
@@ -43,11 +45,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alisaitteke/photoshop-mcp.git"
+    "url": "git+https://github.com/alisaitteke/adobe-agent.git"
   },
-  "homepage": "https://github.com/alisaitteke/photoshop-mcp#readme",
+  "homepage": "https://github.com/alisaitteke/adobe-agent#readme",
   "bugs": {
-    "url": "https://github.com/alisaitteke/photoshop-mcp/issues"
+    "url": "https://github.com/alisaitteke/adobe-agent/issues"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -69,7 +71,7 @@
     "hono": "^4.6.14",
     "open": "^10.1.0"
   },
-  "mcpName": "io.github.alisaitteke/photoshop-mcp",
+  "mcpName": "io.github.alisaitteke/adobe-agent",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.5",

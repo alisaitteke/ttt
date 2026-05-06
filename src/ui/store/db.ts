@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-const DATA_DIR = join(homedir(), '.photoshop-mcp');
+const DATA_DIR = join(homedir(), '.adobe-agent');
 const DB_PATH = join(DATA_DIR, 'data.db');
 
 let instance: DatabaseType | null = null;

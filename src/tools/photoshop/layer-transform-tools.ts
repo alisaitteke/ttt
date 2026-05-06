@@ -1,7 +1,7 @@
-import { ToolDefinition, ToolResult } from '../core/tool-registry.js';
-import { PhotoshopConnection } from '../platform/connection.js';
-import { PhotoshopAPIFactory } from '../api/photoshop-api.js';
-import { ExtendScriptSnippets } from '../api/extendscript.js';
+import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
+import { PhotoshopConnection } from '../../platform/connection.js';
+import { PhotoshopAPIFactory } from '../../api/photoshop-api.js';
+import { ExtendScriptSnippets } from '../../api/extendscript.js';
 
 export function createLayerTransformTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [

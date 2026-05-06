@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 // In development (`tsx watch src/ui/cli.ts`) the source `.ts` is loaded directly,
 // so we resolve the TS entry and spawn it through Node's tsx loader.
 const IS_DEV_SOURCE = __filename.endsWith('.ts');
-const PHOTOSHOP_MCP_ENTRY = IS_DEV_SOURCE
+const MCP_SERVER_ENTRY = IS_DEV_SOURCE
   ? resolve(__dirname, '..', 'index.ts')
   : resolve(__dirname, '..', 'index.js');
 
@@ -49,20 +49,21 @@ export interface RunChatOptions {
   onFinish?: (info: RunChatFinishInfo) => void;
 }
 
-export const PHOTOSHOP_SYSTEM_PROMPT = `
-You are an assistant that controls Adobe Photoshop on the user's machine through
-the "photoshop" MCP server. Use the photoshop_* tools to fulfill the user's
-request: open documents, manage layers, place images, apply filters, write text,
-save files, and so on.
+export const ADOBE_AGENT_SYSTEM_PROMPT = `
+You are an assistant that drives Adobe Creative Cloud applications on the user's
+machine via the Adobe Agent MCP server.
+
+Currently implemented automation focuses on Adobe Photoshop — use photoshop_* tools
+to create and edit documents: manage layers, place images, apply filters, edit text,
+save files, etc. Additional Adobe apps may expose tools later with other prefixes.
 
 Guidelines:
-- Start with photoshop_ping when you are unsure whether Photoshop is reachable.
+- Start with photoshop_ping when unsure whether Photoshop is reachable.
 - Prefer single, well-scoped tool calls instead of long combined operations.
 - After meaningful state changes, briefly describe in plain language what you did.
-- If a tool call fails, surface the error to the user and ask for confirmation
-  before retrying or trying an alternative.
-- Only Photoshop MCP tools are available. Do not attempt shell, filesystem,
-  web, or general coding operations; respond in natural language instead.
+- If a tool call fails, surface the error and ask before retrying or trying an alternative.
+- Only MCP tools from this Adobe Agent server are available. Do not attempt shell,
+  filesystem, web, or general coding operations unless the user switches context.
 `.trim();
 
 export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStreamEvent> {
@@ -71,8 +72,8 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
 
   try {
     const spawnArgs = IS_DEV_SOURCE
-      ? ['--import', 'tsx', PHOTOSHOP_MCP_ENTRY]
-      : [PHOTOSHOP_MCP_ENTRY];
+      ? ['--import', 'tsx', MCP_SERVER_ENTRY]
+      : [MCP_SERVER_ENTRY];
     mcp = await createMCPClient({
       transport: new Experimental_StdioMCPTransport({
         command: process.execPath,
@@ -89,7 +90,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
         modelId: opts.modelId,
       }),
       tools,
-      system: PHOTOSHOP_SYSTEM_PROMPT,
+      system: ADOBE_AGENT_SYSTEM_PROMPT,
       messages: [...opts.history, { role: 'user', content: opts.prompt }],
       stopWhen: stepCountIs(20),
       abortSignal: opts.abortSignal,

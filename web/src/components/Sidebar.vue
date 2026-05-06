@@ -91,7 +91,7 @@ function formatDate(ts: number): string {
             title="Adobe Creative Cloud Apps"
           >
             <AdobeAppIcon app="ps" :size="28" />
-            <span class="text-sm font-semibold">Photoshop MCP</span>
+            <span class="text-sm font-semibold">Adobe Agent</span>
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" class="w-80">

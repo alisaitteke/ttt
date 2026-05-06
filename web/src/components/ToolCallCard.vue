@@ -10,7 +10,8 @@ const open = ref(false);
 
 const displayName = computed(() => {
   const name = props.toolCall.name;
-  return name.startsWith('mcp__photoshop__') ? name.slice('mcp__photoshop__'.length) : name;
+  const m = /^mcp__[a-z0-9_-]+__(.+)$/i.exec(name);
+  return m ? m[1] : name;
 });
 
 const formattedInput = computed(() => safeJson(props.toolCall.input));

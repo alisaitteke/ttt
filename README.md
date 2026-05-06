@@ -1,12 +1,12 @@
-# Photoshop MCP Server
+# Adobe Agent MCP Server
 > **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc.
 
-[![npm version](https://img.shields.io/npm/v/@alisaitteke/photoshop-mcp.svg)](https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
+[![npm version](https://img.shields.io/npm/v/@alisaitteke/adobe-agent.svg)](https://www.npmjs.com/package/@alisaitteke/adobe-agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
-A Model Context Protocol (MCP) server that enables AI assistants like Claude and Cursor to control Adobe Photoshop programmatically. This allows you to create designs, manipulate images, and automate Photoshop workflows through natural language commands while working in your IDE.
+A Model Context Protocol (MCP) server for **Adobe Creative Cloud** automation. It is designed so multiple Adobe apps can be exposed as MCP tools over time; **Adobe Photoshop is fully implemented today**. AI assistants such as Claude and Cursor can drive Photoshop (documents, layers, filters, adjustments, selections, scripts, etc.) via natural language from your IDE.
 
 ## 🖥️ Standalone UI (no IDE required)
 
@@ -17,8 +17,7 @@ through this MCP server underneath.
 ![Standalone UI Screenshot](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
-```
+npx -p @alisaitteke/adobe-agent adobe-agent-ui
 
 That's it. A local server starts on `127.0.0.1` (random free port) and your
 default browser opens the chat UI automatically.
@@ -38,7 +37,7 @@ Pick any of the following on first launch — bring your own API key:
 
 1. Pick a provider and paste your API key.
 2. The key is validated against the provider, then stored locally at
-   `~/.photoshop-mcp/data.db` (SQLite, `chmod 600`). It never leaves your
+   `~/.adobe-agent/data.db` (SQLite, `chmod 600`). It never leaves your
    machine.
 3. Type natural-language prompts. The UI streams the model's reply, runs
    Photoshop tool calls in real time, and renders each tool call as an
@@ -49,17 +48,17 @@ Pick any of the following on first launch — bring your own API key:
 ### CLI flags
 
 ```
-photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
+adobe-agent-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 ```
 
 ### Notes
 
-- The agent is restricted to Photoshop MCP tools only — built-in shell, file
+- The agent only sees tools from **Adobe Agent** (today: Photoshop-focused `photoshop_*` tools) — built-in shell, file
   and web tools are disabled.
 - Tech stack: Vue 3 + Tailwind v4 + [shadcn-vue](https://www.shadcn-vue.com/)
   on the frontend; [Hono](https://hono.dev/) + the [Vercel AI SDK](https://sdk.vercel.ai/)
-  on the backend. The agent loop talks to this same Photoshop MCP server over
-  STDIO — same code path as the IDE integration.
+  on the backend. The agent loop talks to this same Adobe Agent MCP server over
+  STDIO — the same code path as the IDE integration.
 
 ---
 
@@ -246,7 +245,7 @@ Redo 1 step to bring back one operation.
 
 ## Features
 
-- ✅ **Works on both Windows and macOS**
+- ✅ **Adobe CC direction**: MCP tools are grouped by application; Photoshop is implemented first, others can plug in separately
 - ✅ **Supports Photoshop 2012-2025+**
 - ✅ **ExtendScript API**: Universal compatibility via AppleScript/COM automation
 - ✅ **Auto-Detection**: Automatically finds Photoshop installation on your system
@@ -271,14 +270,14 @@ Redo 1 step to bring back one operation.
 No installation required! Just configure your MCP client:
 
 ```bash
-npx @alisaitteke/photoshop-mcp
+npx @alisaitteke/adobe-agent
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/alisaitteke/photoshop-mcp.git
-cd photoshop-mcp
+git clone https://github.com/alisaitteke/adobe-agent.git
+cd adobe-agent
 npm install
 npm run build
 ```
@@ -292,9 +291,9 @@ Add to your Cursor settings (`.cursor/config.json` or workspace settings):
 ```json
 {
   "mcpServers": {
-    "photoshop": {
+    "adobe-agent": {
       "command": "npx",
-      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "args": ["-y", "@alisaitteke/adobe-agent"],
       "env": {
         "LOG_LEVEL": "1"
       }
@@ -310,9 +309,9 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 ```json
 {
   "mcpServers": {
-    "photoshop": {
+    "adobe-agent": {
       "command": "npx",
-      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "args": ["-y", "@alisaitteke/adobe-agent"],
       "env": {
         "LOG_LEVEL": "1"
       }
@@ -1305,7 +1304,7 @@ npm run format
 ## Architecture
 
 ```
-photoshop-mcp/
+adobe-agent/
 ├── src/
 │   ├── core/              # MCP server core
 │   │   ├── server.ts      # Main MCP server
@@ -1322,18 +1321,11 @@ photoshop-mcp/
 │   │   ├── photoshop-api.ts    # API factory
 │   │   ├── batch-play.ts       # UXP batchPlay helpers (legacy)
 │   │   └── extendscript.ts     # ExtendScript snippets library
-│   ├── tools/            # MCP tool implementations (42+ tools)
-│   │   ├── document-tools.ts        # Document operations
-│   │   ├── layer-tools.ts           # Layer creation/deletion
-│   │   ├── layer-properties-tools.ts # Opacity, blend modes, etc.
-│   │   ├── layer-transform-tools.ts  # Scale, rotate, move
-│   │   ├── image-tools.ts           # Resize, crop
-│   │   ├── image-placement-tools.ts # Place/open images
-│   │   ├── filter-tools.ts          # Blur, sharpen, noise
-│   │   ├── adjustment-tools.ts      # Color adjustments
-│   │   ├── text-tools.ts            # Text formatting
-│   │   ├── selection-tools.ts       # Selections & masks
-│   │   └── action-tools.ts          # Actions & custom scripts
+│   ├── tools/            # MCP tools grouped by Adobe application
+│   │   ├── photoshop/    # Photoshop automation (implemented)
+│   │   │   ├── document-tools.ts / layer-tools.ts / image-tools.ts …
+│   │   │   └── ...
+│   │   └── illustrator/ # Future Illustrator tools (currently empty registrar)
 │   └── utils/            # Utilities
 │       └── logger.ts     # Logging system (stderr-based)
 └── examples/             # Configuration examples

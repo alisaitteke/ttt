@@ -7,34 +7,35 @@ import {
 import { Logger } from '../utils/logger.js';
 import { ToolRegistry } from './tool-registry.js';
 import { Session } from './session.js';
-import { createDocumentTools } from '../tools/document-tools.js';
-import { createLayerTools } from '../tools/layer-tools.js';
-import { createImageTools } from '../tools/image-tools.js';
-import { createImagePlacementTools } from '../tools/image-placement-tools.js';
-import { createLayerTransformTools } from '../tools/layer-transform-tools.js';
-import { createLayerPropertiesTools } from '../tools/layer-properties-tools.js';
-import { createFilterTools } from '../tools/filter-tools.js';
-import { createAdjustmentTools } from '../tools/adjustment-tools.js';
-import { createTextTools } from '../tools/text-tools.js';
-import { createSelectionTools } from '../tools/selection-tools.js';
-import { createActionTools } from '../tools/action-tools.js';
-import { createHistoryTools } from '../tools/history-tools.js';
-import { createLayerOrderingTools } from '../tools/layer-ordering-tools.js';
+import { createDocumentTools } from '../tools/photoshop/document-tools.js';
+import { createLayerTools } from '../tools/photoshop/layer-tools.js';
+import { createImageTools } from '../tools/photoshop/image-tools.js';
+import { createImagePlacementTools } from '../tools/photoshop/image-placement-tools.js';
+import { createLayerTransformTools } from '../tools/photoshop/layer-transform-tools.js';
+import { createLayerPropertiesTools } from '../tools/photoshop/layer-properties-tools.js';
+import { createFilterTools } from '../tools/photoshop/filter-tools.js';
+import { createAdjustmentTools } from '../tools/photoshop/adjustment-tools.js';
+import { createTextTools } from '../tools/photoshop/text-tools.js';
+import { createSelectionTools } from '../tools/photoshop/selection-tools.js';
+import { createActionTools } from '../tools/photoshop/action-tools.js';
+import { createHistoryTools } from '../tools/photoshop/history-tools.js';
+import { createLayerOrderingTools } from '../tools/photoshop/layer-ordering-tools.js';
+import { createIllustratorTools } from '../tools/illustrator/tools.js';
 
-export class PhotoshopMCPServer {
+export class AdobeAgentMCPServer {
   private server: Server;
   private logger: Logger;
   private toolRegistry: ToolRegistry;
   private session: Session;
 
   constructor() {
-    this.logger = new Logger('PhotoshopMCPServer');
+    this.logger = new Logger('AdobeAgentMCPServer');
     this.toolRegistry = new ToolRegistry();
     this.session = new Session();
 
     this.server = new Server(
       {
-        name: 'photoshop-mcp',
+        name: 'adobe-agent',
         version: '0.1.0',
       },
       {
@@ -49,7 +50,6 @@ export class PhotoshopMCPServer {
   }
 
   private registerTools() {
-    // Register basic tools
     this.toolRegistry.register('photoshop_ping', {
       tool: {
         name: 'photoshop_ping',
@@ -74,71 +74,61 @@ export class PhotoshopMCPServer {
       handler: async () => await this.getVersion(),
     });
 
-    // Register feature tools
     const connection = this.session.getConnection();
-    
-    const documentTools = createDocumentTools(connection);
-    documentTools.forEach((tool) => {
+
+    createIllustratorTools().forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const layerTools = createLayerTools(connection);
-    layerTools.forEach((tool) => {
+    createDocumentTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const imageTools = createImageTools(connection);
-    imageTools.forEach((tool) => {
+    createLayerTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const imagePlacementTools = createImagePlacementTools(connection);
-    imagePlacementTools.forEach((tool) => {
+    createImageTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const layerTransformTools = createLayerTransformTools(connection);
-    layerTransformTools.forEach((tool) => {
+    createImagePlacementTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const layerPropertiesTools = createLayerPropertiesTools(connection);
-    layerPropertiesTools.forEach((tool) => {
+    createLayerTransformTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const filterTools = createFilterTools(connection);
-    filterTools.forEach((tool) => {
+    createLayerPropertiesTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const adjustmentTools = createAdjustmentTools(connection);
-    adjustmentTools.forEach((tool) => {
+    createFilterTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const textTools = createTextTools(connection);
-    textTools.forEach((tool) => {
+    createAdjustmentTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const selectionTools = createSelectionTools(connection);
-    selectionTools.forEach((tool) => {
+    createTextTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const actionTools = createActionTools(connection);
-    actionTools.forEach((tool) => {
+    createSelectionTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const historyTools = createHistoryTools(connection);
-    historyTools.forEach((tool) => {
+    createActionTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
-    const layerOrderingTools = createLayerOrderingTools(connection);
-    layerOrderingTools.forEach((tool) => {
+    createHistoryTools(connection).forEach((tool) => {
+      this.toolRegistry.register(tool.tool.name, tool);
+    });
+
+    createLayerOrderingTools(connection).forEach((tool) => {
       this.toolRegistry.register(tool.tool.name, tool);
     });
 
@@ -157,14 +147,14 @@ export class PhotoshopMCPServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       this.logger.debug(`Tool called: ${request.params.name}`);
-      
+
       try {
         const args = (request.params.arguments as Record<string, unknown>) || {};
         const result = await this.toolRegistry.execute(request.params.name, args);
-        
+
         // Update session activity
         this.session.updateActivity();
-        
+
         return result;
       } catch (error) {
         this.logger.error(`Tool execution failed: ${request.params.name}`, error);
@@ -216,7 +206,7 @@ export class PhotoshopMCPServer {
     // Connect server transport
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    
+
     this.logger.info('MCP Server connected via stdio');
   }
 
