@@ -154,9 +154,6 @@ async function removeKey(id: IntegrationId): Promise<void> {
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div class="min-w-0 flex-1">
           <h3 class="text-sm font-medium">{{ t('settings.integrations.heading') }}</h3>
-          <p class="mt-1 text-xs text-muted-foreground">
-            {{ t('settings.integrations.description') }}
-          </p>
         </div>
         <Button
           v-if="!busy"

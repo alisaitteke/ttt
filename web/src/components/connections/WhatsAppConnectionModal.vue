@@ -216,7 +216,7 @@ defineExpose({
       }
     "
   >
-    <DialogContent class="max-w-sm gap-4 p-5">
+    <DialogContent class="max-w-sm gap-4">
       <DialogHeader class="space-y-2">
         <DialogTitle class="text-base">{{ t('connections.whatsapp.title') }}</DialogTitle>
         <p class="text-xs text-muted-foreground">

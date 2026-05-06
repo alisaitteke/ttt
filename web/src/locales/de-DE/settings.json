@@ -7,7 +7,13 @@
       "appearance": "Darstellung",
       "providers": "KI-Modelle",
       "connections": "Messaging",
-      "integrations": "Integrationen"
+      "integrations": "Integrationen",
+      "hints": {
+        "providers": "API-Schlüssel für LLM-Anbieter hinzufügen, damit der Chat diese Modelle nutzen kann.",
+        "connections": "Messaging-Konten für optionale MCP-Tools verknüpfen; pro Chat im Tool-Picker aktivieren.",
+        "integrations": "API-Schlüssel für Extras wie GIF-Suche—getrennt von Ihren KI-Modellanbietern.",
+        "appearance": "Oberflächensprache sowie hell-, dunkel oder System-Design wählen."
+      }
     },
     "theme": {
       "label": "Design",
@@ -40,7 +46,6 @@
     },
     "connections": {
       "heading": "Messaging-Verbindungen",
-      "description": "Verknüpfen Sie Messaging-Konten für optionale MCP-Tools. Pro Chat im Tool-Picker auswählen.",
       "statusConnected": "Verbunden",
       "statusDisconnected": "Nicht verbunden",
       "setUp": "Einrichten",
@@ -48,7 +53,6 @@
     },
     "integrations": {
       "heading": "Integrationen",
-      "description": "API-Schlüssel für Nicht-LLM-Funktionen (z. B. GIF-Suche). Getrennt von Modellanbietern.",
       "connectedHeading": "Verbundene Integrationen",
       "emptyState": "Noch keine Integrationen konfiguriert. Fügen Sie eine aus dem Katalog hinzu.",
       "addIntegration": "Integration hinzufügen",

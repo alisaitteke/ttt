@@ -59,7 +59,6 @@ defineExpose({ refresh });
 <template>
   <div class="space-y-3">
     <h3 class="text-sm font-medium">{{ t('settings.connections.heading') }}</h3>
-    <p class="text-xs text-muted-foreground">{{ t('settings.connections.description') }}</p>
 
     <ul class="space-y-2">
       <li

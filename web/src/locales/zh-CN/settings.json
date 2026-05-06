@@ -7,7 +7,13 @@
       "appearance": "外观",
       "providers": "AI 模型",
       "connections": "消息",
-      "integrations": "集成"
+      "integrations": "集成",
+      "hints": {
+        "providers": "在此添加大模型提供商的 API 密钥，供对话使用对应模型。",
+        "connections": "绑定消息账号以使用可选的 MCP 工具；每个会话可在工具选择器中开启。",
+        "integrations": "用于 GIF 搜索等扩展能力的 API 密钥，与 AI 模型提供商分开配置。",
+        "appearance": "选择界面语言以及浅色、深色或跟随系统的主题。"
+      }
     },
     "theme": {
       "label": "主题",
@@ -40,7 +46,6 @@
     },
     "connections": {
       "heading": "消息连接",
-      "description": "为可选的 MCP 工具关联消息账号。每个会话在工具选择器中自行启用。",
       "statusConnected": "已连接",
       "statusDisconnected": "未连接",
       "setUp": "设置",
@@ -48,7 +53,6 @@
     },
     "integrations": {
       "heading": "集成",
-      "description": "非 LLM 功能的 API 密钥（例如 GIF 搜索）。与模型提供商分开管理。",
       "connectedHeading": "已连接的集成",
       "emptyState": "尚未配置集成。请从目录中添加。",
       "addIntegration": "添加集成",

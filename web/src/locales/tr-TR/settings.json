@@ -7,7 +7,13 @@
       "appearance": "Görünüm",
       "providers": "AI Modelleri",
       "connections": "İletişim araçları",
-      "integrations": "Entegrasyonlar"
+      "integrations": "Entegrasyonlar",
+      "hints": {
+        "providers": "Sohbetin kullanacağı yapay zekâ modelleri için sağlayıcı API anahtarlarını burada ekleyin.",
+        "connections": "İsteğe bağlı MCP araçları için mesajlaşma hesaplarını bağlayın; her sohbette araç seçicide açabilirsiniz.",
+        "integrations": "GIF araması gibi ek özelliklerin API anahtarları; model sağlayıcılarından ayrı tutulur.",
+        "appearance": "Arayüz dilini ve açık, koyu veya sistem temasını seçin."
+      }
     },
     "theme": {
       "label": "Tema",
@@ -40,7 +46,6 @@
     },
     "connections": {
       "heading": "İletişim bağlantıları",
-      "description": "İsteğe bağlı MCP araçları için mesajlaşma hesaplarını bağlayın. Her sohbette araç seçicide seçim yapılır.",
       "statusConnected": "Bağlı",
       "statusDisconnected": "Bağlı değil",
       "setUp": "Kur",
@@ -48,7 +53,6 @@
     },
     "integrations": {
       "heading": "Entegrasyonlar",
-      "description": "LLM dışı özellikler için API anahtarları (ör. GIF araması). Model sağlayıcılarından ayrıdır.",
       "connectedHeading": "Bağlı entegrasyonlar",
       "emptyState": "Henüz entegrasyon yok. Katalogdan bir tane ekleyin.",
       "addIntegration": "Entegrasyon ekle",

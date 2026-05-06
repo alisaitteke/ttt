@@ -303,7 +303,7 @@ onUnmounted(() => {
           @bulk-delete="requestBulkDelete"
         />
         <Dialog :open="deleteConfirmOpen" @update:open="onDeleteConfirmOpenUpdate">
-          <DialogContent class="gap-4 p-5 sm:max-w-md">
+          <DialogContent class="gap-4 sm:max-w-md">
             <DialogTitle class="text-base font-semibold leading-snug">
               {{ deleteConfirmTitle }}
             </DialogTitle>

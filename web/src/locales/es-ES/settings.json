@@ -7,7 +7,13 @@
       "appearance": "Apariencia",
       "providers": "Modelos de IA",
       "connections": "Mensajería",
-      "integrations": "Integraciones"
+      "integrations": "Integraciones",
+      "hints": {
+        "providers": "Añade claves API de proveedores de LLM para que el chat pueda usar esos modelos.",
+        "connections": "Vincula cuentas de mensajería para herramientas MCP opcionales; actívalas por chat en el selector.",
+        "integrations": "Claves API para extras como búsqueda de GIF, aparte de tus proveedores de modelos.",
+        "appearance": "Elige el idioma de la interfaz y el tema claro, oscuro o del sistema."
+      }
     },
     "theme": {
       "label": "Tema",
@@ -40,7 +46,6 @@
     },
     "connections": {
       "heading": "Conexiones de mensajería",
-      "description": "Vincula cuentas de mensajería para herramientas MCP opcionales. Cada chat elige en el selector de herramientas.",
       "statusConnected": "Conectado",
       "statusDisconnected": "No conectado",
       "setUp": "Configurar",
@@ -48,7 +53,6 @@
     },
     "integrations": {
       "heading": "Integraciones",
-      "description": "Claves API para funciones que no son del LLM (p. ej. búsqueda de GIF). Separadas de los proveedores de modelos.",
       "connectedHeading": "Integraciones conectadas",
       "emptyState": "Aún no hay integraciones. Añade una desde el catálogo.",
       "addIntegration": "Añadir integración",

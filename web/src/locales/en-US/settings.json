@@ -7,7 +7,13 @@
       "appearance": "Appearance",
       "providers": "AI Models",
       "connections": "Messaging",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "hints": {
+        "providers": "Add API keys for LLM providers so chat can use those models.",
+        "connections": "Link messaging accounts for optional MCP tools; each chat enables them in the tool picker.",
+        "integrations": "API keys for extras like GIF search—separate from your AI model providers.",
+        "appearance": "Choose the interface language and light, dark, or system theme."
+      }
     },
     "theme": {
       "label": "Theme",
@@ -40,7 +46,6 @@
     },
     "connections": {
       "heading": "Messaging connections",
-      "description": "Link messaging accounts for optional MCP tools. Each chat opts in from the tool picker.",
       "statusConnected": "Connected",
       "statusDisconnected": "Not connected",
       "setUp": "Set up",
@@ -48,7 +53,6 @@
     },
     "integrations": {
       "heading": "Integrations",
-      "description": "API keys for non-LLM capabilities (e.g. GIF search). Separate from model providers.",
       "connectedHeading": "Connected integrations",
       "emptyState": "No integrations configured yet. Add one from the catalog.",
       "addIntegration": "Add integration",

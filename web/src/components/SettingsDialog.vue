@@ -173,26 +173,26 @@ function onIntegrationsChanged(): void {
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
-      class="flex h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden p-5 sm:max-w-lg"
+      class="flex h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden sm:max-w-lg"
     >
-      <div class="mb-2 flex shrink-0 items-start justify-between gap-3">
-        <div class="flex min-w-0 flex-1 flex-col justify-start">
-          <DialogTitle class="text-base font-semibold leading-snug">{{
+      <div class="mb-2 flex shrink-0 flex-col gap-1">
+        <div class="flex items-center justify-between gap-3">
+          <DialogTitle class="min-w-0 flex-1 text-base font-semibold leading-snug">{{
             t('settings.title')
           }}</DialogTitle>
-          <p v-if="panel === 'form'" class="mt-1 text-xs text-muted-foreground">
-            {{
-              formMode === 'add'
-                ? t('settings.providers.formSubtitleAdd')
-                : t('settings.providers.formSubtitleUpdate')
-            }}
-          </p>
+          <DialogClose as-child>
+            <Button variant="ghost" size="icon" type="button" class="shrink-0">
+              <X class="size-4" />
+            </Button>
+          </DialogClose>
         </div>
-        <DialogClose as-child>
-          <Button variant="ghost" size="icon" type="button" class="shrink-0">
-            <X class="size-4" />
-          </Button>
-        </DialogClose>
+        <p v-if="panel === 'form'" class="text-xs text-muted-foreground">
+          {{
+            formMode === 'add'
+              ? t('settings.providers.formSubtitleAdd')
+              : t('settings.providers.formSubtitleUpdate')
+          }}
+        </p>
       </div>
 
       <div class="min-h-0 flex-1 flex flex-col overflow-hidden">
@@ -276,6 +276,7 @@ function onIntegrationsChanged(): void {
           class="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]"
         >
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
+        <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.providers') }}</p>
         <h3 class="text-sm font-medium">{{ t('settings.providers.connectedHeading') }}</h3>
 
         <div
@@ -340,18 +341,21 @@ function onIntegrationsChanged(): void {
         </ul>
         </div>
 
-        <div v-show="settingsTab === 'connections'" role="tabpanel">
+        <div v-show="settingsTab === 'connections'" role="tabpanel" class="space-y-3">
+          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.connections') }}</p>
           <SettingsConnectionsPanel
             :auto-open-provider="focusConnection"
             @changed="onConnectionsChanged"
           />
         </div>
 
-        <div v-show="settingsTab === 'integrations'" role="tabpanel">
+        <div v-show="settingsTab === 'integrations'" role="tabpanel" class="space-y-3">
+          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.integrations') }}</p>
           <SettingsIntegrationsPanel @changed="onIntegrationsChanged" />
         </div>
 
-        <div v-show="settingsTab === 'appearance'" role="tabpanel">
+        <div v-show="settingsTab === 'appearance'" role="tabpanel" class="space-y-3">
+          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.appearance') }}</p>
           <SettingsAppearancePanel />
         </div>
         </div>
