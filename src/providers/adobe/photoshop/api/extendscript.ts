@@ -87,6 +87,9 @@ export const ExtendScriptSnippets = {
 
   /**
    * Create a new document
+   *
+   * Returns a JSON string (primitive) so host executors can JSON.parse stdout reliably.
+   * documentTitle and filePath are encodeURIComponent values inside JSON strings.
    */
   newDocument: (
     width: number,
@@ -101,7 +104,18 @@ export const ExtendScriptSnippets = {
       'New Document',
       ${colorMode}
     );
-    return { id: doc.id, name: doc.name };
+    var titleEnc = encodeURIComponent(doc.name);
+    var savedStr = 'false';
+    try {
+      savedStr = doc.saved ? 'true' : 'false';
+    } catch (e) {}
+    var filePathJson = 'null';
+    try {
+      if (doc.fullName && doc.fullName.fsName) {
+        filePathJson = '"' + encodeURIComponent(doc.fullName.fsName) + '"';
+      }
+    } catch (e) {}
+    return '{"documentId":' + doc.id + ',"documentTitle":"' + titleEnc + '","saved":' + savedStr + ',"filePath":' + filePathJson + '}';
   `,
 
   /**

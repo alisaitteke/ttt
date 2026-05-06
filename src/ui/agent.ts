@@ -3,7 +3,7 @@ import { Experimental_StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { stepCountIs, streamText, type LanguageModelUsage, type ModelMessage } from 'ai';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ModelPricing, ProviderAdapter, UsageCost } from './providers/registry.js';
+import type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from './providers/registry.js';
 import {
   DESIGN_TOOLS,
   sanitizeDesignToolIds,
@@ -65,6 +65,17 @@ code blocks for commands or snippets, and tables when comparing options. Keep to
 summaries and errors readable with short paragraphs and lists; do not use raw HTML.
 `.trim();
 
+const GROQ_MCP_TOOL_ENFORCEMENT = `
+Groq-specific (required):
+When enabled MCP tools can fulfill any part of the user's request — including
+checks, inspections, edits, docker actions, or app discovery — you must issue the
+appropriate tool call(s) in your response turn instead of only describing what you
+would do, hedging, or guessing from prior context. If reachability is uncertain,
+call the relevant *_ping tool first, then continue with the substantive tool. Use
+text-only answers only when the user clearly wants pure explanation with no
+actionable tool, or when no listed tool applies.
+`.trim();
+
 function designToolPromptLine(id: DesignToolId): string {
   const tool = DESIGN_TOOLS[id];
   if (tool.toolPrefixes?.length) {
@@ -80,12 +91,14 @@ function designToolAllowedPrefixes(id: DesignToolId): string[] {
   return [tool.toolPrefix];
 }
 
-function buildSystemPrompt(designTools: DesignToolId[]): string {
+function buildSystemPrompt(designTools: DesignToolId[], providerId?: ProviderId): string {
   if (designTools.length === 0) {
     return `${TTT_SYSTEM_PROMPT}\n\nCurrently no design tools are enabled for this chat. You can only respond with text.`;
   }
 
   const toolsDesc = designTools.map(designToolPromptLine).join('\n');
+
+  const groqExtras = providerId === 'groq' ? `\n\n${GROQ_MCP_TOOL_ENFORCEMENT}` : '';
 
   return `${TTT_SYSTEM_PROMPT}
 
@@ -103,6 +116,8 @@ Guidelines:
   alternative.
 - Only MCP tools exposed by this TTT server are available. Do not attempt shell,
   filesystem, web, or general coding operations unless the user switches context.
+- When saving files via tools, the \`path\` argument is optional; relative paths
+  resolve under ~/.ttt/exports; absolute paths are used as given.${groqExtras}
 `.trim();
 }
 
@@ -134,7 +149,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
             )
           );
 
-    const systemPrompt = buildSystemPrompt(designTools);
+    const systemPrompt = buildSystemPrompt(designTools, opts.provider.id);
 
     const result = streamText({
       model: opts.provider.getLanguageModel({

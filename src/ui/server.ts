@@ -1,8 +1,11 @@
 import { serve, type ServerType } from '@hono/node-server';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { readFile, stat } from 'node:fs/promises';
-import { dirname, join, normalize, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { homedir, platform as osPlatform } from 'node:os';
+import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/desktop.js';
 import { Logger } from '../utils/logger.js';
@@ -32,10 +35,14 @@ import {
   updateChatTools,
 } from './store/chats.js';
 import { getDB } from './store/db.js';
+import { getTttDropsDir } from '../lib/ttt-paths.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // dist/ui/server.js -> ../../web/dist
 const WEB_DIST = resolve(__dirname, '..', '..', 'web', 'dist');
+
+/** Max size for drag-drop staging (browser → ~/.ttt/drops). Loopback-only endpoint. */
+const STAGE_DROP_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -94,7 +101,77 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       activeModel: config.activeModel,
       hasApiKey: Boolean(active?.apiKey),
       apiKeyMasked: maskApiKey(active?.apiKey),
+      hostPlatform: osPlatform(),
     });
+  });
+
+  app.post('/api/files/reveal', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { path?: string };
+    if (!body.path || typeof body.path !== 'string') {
+      return c.json({ error: 'missing_path' }, 400);
+    }
+    try {
+      const abs = await assertRevealableTarget(body.path);
+      await revealPathInFileManager(abs);
+      return c.json({ ok: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'path_not_found' || msg === 'empty_path') {
+        return c.json({ error: msg }, 400);
+      }
+      if (msg === 'path_outside_home') {
+        return c.json({ error: msg }, 403);
+      }
+      if (msg === 'unsupported_platform') {
+        return c.json({ error: msg }, 501);
+      }
+      logger.error('reveal failed', e);
+      return c.json({ error: 'reveal_failed', message: msg }, 500);
+    }
+  });
+
+  app.post('/api/files/pick-local', async (c) => {
+    try {
+      const result = await pickLocalFileViaNativeDialog(logger);
+      if ('cancelled' in result) {
+        return c.json({ cancelled: true as const });
+      }
+      return c.json({ path: result.path });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'unsupported_platform') {
+        return c.json({ error: msg }, 501);
+      }
+      if (msg === 'pick_timeout') {
+        return c.json({ error: msg }, 408);
+      }
+      logger.error('pick-local failed', e);
+      return c.json({ error: 'pick_failed', message: msg }, 500);
+    }
+  });
+
+  app.post('/api/files/stage-drop', async (c) => {
+    try {
+      const body = await c.req.parseBody();
+      const raw = body.file;
+      if (!raw || !(raw instanceof File)) {
+        return c.json({ error: 'missing_file' }, 400);
+      }
+      const size = raw.size;
+      if (size > STAGE_DROP_MAX_BYTES) {
+        return c.json({ error: 'file_too_large' }, 413);
+      }
+      const srcName = basename(raw.name || 'drop') || 'drop';
+      const ext = extname(srcName) || '.bin';
+      const dest = join(getTttDropsDir(), `drop-${randomUUID()}${ext}`);
+      const buf = Buffer.from(await raw.arrayBuffer());
+      await writeFile(dest, buf, { mode: 0o600 });
+      return c.json({ path: dest });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      logger.error('stage-drop failed', e);
+      return c.json({ error: 'stage_drop_failed', message: msg }, 500);
+    }
   });
 
   app.post('/api/active', async (c) => {
@@ -412,6 +489,156 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
         server.close(() => resolveClose());
       }),
   };
+}
+
+async function assertRevealableTarget(inputPath: string): Promise<string> {
+  const trimmed = inputPath.trim();
+  if (!trimmed) {
+    throw new Error('empty_path');
+  }
+  const normalized = normalize(trimmed);
+  let target: string;
+  try {
+    target = await realpath(normalized);
+  } catch {
+    throw new Error('path_not_found');
+  }
+  const home = homedir();
+  let homeResolved: string;
+  try {
+    homeResolved = await realpath(home);
+  } catch {
+    homeResolved = normalize(home);
+  }
+  const rel = relative(homeResolved, target);
+  if (rel.startsWith('..') || isAbsolute(rel)) {
+    throw new Error('path_outside_home');
+  }
+  return target;
+}
+
+const PICK_LOCAL_FILE_TIMEOUT_MS = 120_000;
+
+async function pickLocalFileViaNativeDialog(
+  logger: Logger
+): Promise<{ path: string } | { cancelled: true }> {
+  const plat = osPlatform();
+  if (plat === 'darwin') {
+    return pickLocalFileDarwin(logger);
+  }
+  if (plat === 'win32') {
+    return pickLocalFileWin32(logger);
+  }
+  throw new Error('unsupported_platform');
+}
+
+function pickLocalFileDarwin(logger: Logger): Promise<{ path: string } | { cancelled: true }> {
+  const script =
+    'POSIX path of (choose file with prompt "Select a file (path only - file is not uploaded)")';
+  return new Promise((resolve, reject) => {
+    const child = spawn('osascript', ['-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    let err = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGTERM');
+      reject(new Error('pick_timeout'));
+    }, PICK_LOCAL_FILE_TIMEOUT_MS);
+    child.stdout?.on('data', (d) => {
+      out += d.toString();
+    });
+    child.stderr?.on('data', (d) => {
+      err += d.toString();
+    });
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        const combined = `${err}${out}`.toLowerCase();
+        if (combined.includes('user canceled') || combined.includes('(-128)')) {
+          resolve({ cancelled: true });
+          return;
+        }
+        logger.warn('osascript pick failed', { code, err });
+        reject(new Error(err.trim() || `osascript exited with code ${code}`));
+        return;
+      }
+      const path = out.trim().replace(/\r?\n+$/, '');
+      if (!path) {
+        resolve({ cancelled: true });
+        return;
+      }
+      resolve({ path });
+    });
+  });
+}
+
+function pickLocalFileWin32(logger: Logger): Promise<{ path: string } | { cancelled: true }> {
+  const ps =
+    "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Select a file (path only - file is not uploaded)'; if ($d.ShowDialog() -eq 'OK') { [Console]::Out.WriteLine($d.FileName) }";
+  return new Promise((resolve, reject) => {
+    const child = spawn('powershell.exe', ['-NoProfile', '-STA', '-Command', ps], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+    let out = '';
+    let err = '';
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error('pick_timeout'));
+    }, PICK_LOCAL_FILE_TIMEOUT_MS);
+    child.stdout?.on('data', (d) => {
+      out += d.toString();
+    });
+    child.stderr?.on('data', (d) => {
+      err += d.toString();
+    });
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      const path = out.trim().replace(/\r?\n+$/, '');
+      if (!path) {
+        resolve({ cancelled: true });
+        return;
+      }
+      if (code !== 0) {
+        logger.warn('powershell pick failed', { code, err });
+        reject(new Error(err.trim() || `powershell exited with code ${code}`));
+        return;
+      }
+      resolve({ path });
+    });
+  });
+}
+
+function revealPathInFileManager(absolutePath: string): Promise<void> {
+  const plat = osPlatform();
+  if (plat === 'darwin') {
+    return new Promise((resolveFn, reject) => {
+      const child = spawn('open', ['-R', absolutePath], { stdio: 'ignore' });
+      child.on('error', reject);
+      child.on('close', (code) => {
+        if (code === 0) resolveFn();
+        else reject(new Error(`open exited with code ${code}`));
+      });
+    });
+  }
+  if (plat === 'win32') {
+    return new Promise((resolveFn, reject) => {
+      const child = spawn('explorer.exe', [`/select,${absolutePath}`], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+      child.on('error', reject);
+      child.on('close', () => resolveFn());
+    });
+  }
+  throw new Error('unsupported_platform');
 }
 
 function isLoopbackOrigin(origin: string, port: number): boolean {

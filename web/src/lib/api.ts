@@ -55,6 +55,8 @@ export interface Status {
   activeModel: string;
   hasApiKey: boolean;
   apiKeyMasked: string | null;
+  /** Node `process.platform` from the UI server host. */
+  hostPlatform: string;
 }
 
 export interface ProviderModel {
@@ -137,6 +139,36 @@ export interface ChatDetail {
 // ---- Status -----------------------------------------------------------
 
 export const apiStatus = () => api<Status>('/api/status');
+
+export const apiRevealFile = (path: string) =>
+  api<{ ok: boolean }>('/api/files/reveal', {
+    method: 'POST',
+    body: JSON.stringify({ path }),
+  });
+
+export type PickLocalFileResult = { path: string } | { cancelled: true };
+
+export async function apiPickLocalFile(): Promise<PickLocalFileResult> {
+  return api<PickLocalFileResult>('/api/files/pick-local', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}
+
+/**
+ * Save a browser File to ~/.ttt/drops on the UI server host and return the absolute path.
+ * Used when drag-and-drop cannot expose the original disk path.
+ */
+export async function apiStageDroppedFile(file: File): Promise<{ path: string }> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/api/files/stage-drop', { method: 'POST', body: fd });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ApiError(res.status, data.error ?? res.statusText, data);
+  }
+  return (await res.json()) as { path: string };
+}
 
 export const apiSetActive = (body: Partial<{ activeProvider: ProviderId; activeModel: string }>) =>
   api<{ activeProvider: ProviderId; activeModel: string }>('/api/active', {

@@ -1,17 +1,16 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
-
-const DATA_DIR = join(homedir(), '.ttt');
-const DB_PATH = join(DATA_DIR, 'data.db');
+import { join } from 'node:path';
+import { getTttHomeDir } from '../../lib/ttt-paths.js';
 
 let instance: DatabaseType | null = null;
 
 export function getDB(): DatabaseType {
   if (instance) return instance;
-  mkdirSync(dirname(DB_PATH), { recursive: true, mode: 0o700 });
-  const db = new Database(DB_PATH);
+  const dataDir = getTttHomeDir();
+  const dbPath = join(dataDir, 'data.db');
+  mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   migrate(db);
@@ -63,9 +62,9 @@ function migrate(db: DatabaseType): void {
 }
 
 export function getDataDir(): string {
-  return DATA_DIR;
+  return getTttHomeDir();
 }
 
 export function getDBPath(): string {
-  return DB_PATH;
+  return join(getTttHomeDir(), 'data.db');
 }

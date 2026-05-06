@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Onboarding from './components/Onboarding.vue';
 import ChatView from './components/ChatView.vue';
@@ -29,6 +29,9 @@ const route = useRoute();
 const router = useRouter();
 
 const hasAnyKey = computed(() => providers.value.some((p) => p.hasApiKey));
+
+const hostPlatform = computed(() => status.value?.hostPlatform ?? 'linux');
+provide('hostPlatform', hostPlatform);
 
 function routeChatId(): string | null {
   const id = route.params.id;

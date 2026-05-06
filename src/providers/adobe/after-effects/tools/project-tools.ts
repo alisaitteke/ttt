@@ -1,4 +1,9 @@
 import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import {
+  appendRevealPathLine,
+  resolveTttInputPath,
+  resolveTttOutputPath,
+} from '../../../../lib/ttt-paths.js';
 import { AfterEffectsConnection } from '../connection.js';
 import { AfterEffectsExtendScriptSnippets } from '../extendscript.js';
 
@@ -24,10 +29,10 @@ export function createProjectTools(connection: AfterEffectsConnection): ToolDefi
           properties: {
             path: {
               type: 'string',
-              description: 'Full path where to save the project file (.aep)',
+              description:
+                'Optional. Absolute path saves there unchanged. Relative paths resolve under ~/.ttt/exports. Omit for an auto-generated .aep in ~/.ttt/exports.',
             },
           },
-          required: ['path'],
         },
       },
       handler: async (args) => saveProject(connection, args),
@@ -41,7 +46,8 @@ export function createProjectTools(connection: AfterEffectsConnection): ToolDefi
           properties: {
             path: {
               type: 'string',
-              description: 'Full path to the project file (.aep)',
+              description:
+                'Path to the .aep file. Absolute path is used as-is. Relative paths resolve under ~/.ttt/exports.',
             },
           },
           required: ['path'],
@@ -78,21 +84,30 @@ async function getProjectInfo(connection: AfterEffectsConnection): Promise<ToolR
   }
 }
 
+function ensureAepExtension(filePath: string): string {
+  if (filePath.toLowerCase().endsWith('.aep')) return filePath;
+  return `${filePath}.aep`;
+}
+
 async function saveProject(
   connection: AfterEffectsConnection,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const path = args.path as string;
+  const pathArg = typeof args.path === 'string' ? args.path : undefined;
 
   try {
-    const script = AfterEffectsExtendScriptSnippets.saveProject(path);
+    let outPath = resolveTttOutputPath(pathArg, 'aep');
+    outPath = ensureAepExtension(outPath);
+
+    const script = AfterEffectsExtendScriptSnippets.saveProject(outPath);
     const result = await connection.executeScript(script);
 
+    const msg = `Project saved to: ${JSON.stringify(result)} (path: ${outPath})`;
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Project saved to: ${JSON.stringify(result)}`,
+          text: appendRevealPathLine(msg, outPath),
         },
       ],
     };
@@ -113,9 +128,10 @@ async function openProject(
   connection: AfterEffectsConnection,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const path = args.path as string;
+  const raw = args.path as string;
 
   try {
+    const path = resolveTttInputPath(raw);
     const script = AfterEffectsExtendScriptSnippets.openProject(path);
     const result = await connection.executeScript(script);
 

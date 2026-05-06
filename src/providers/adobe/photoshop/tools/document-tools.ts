@@ -1,14 +1,72 @@
 import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import {
+  appendRevealPathLine,
+  resolveTttOutputPath,
+} from '../../../../lib/ttt-paths.js';
 import { PhotoshopConnection } from '../connection.js';
 import { PhotoshopAPIFactory } from '../api/api-factory.js';
 import { ExtendScriptSnippets } from '../api/extendscript.js';
+
+/** Parsed payload from ExtendScriptSnippets.newDocument (wire uses percent-encoded strings). */
+type CreateDocumentIdentity = {
+  documentId: number;
+  documentTitle: string;
+  saved: boolean;
+  filePath: string | null;
+};
+
+function tryDecodeURIComponent(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
+/**
+ * Normalizes executeScript return value: executors JSON.parse stdout when it is valid JSON.
+ */
+function parseNewDocumentScriptResult(raw: unknown): CreateDocumentIdentity | null {
+  let payload: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      payload = JSON.parse(raw) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+  const rec = payload as Record<string, unknown>;
+  const documentId = rec.documentId;
+  if (typeof documentId !== 'number' || !Number.isFinite(documentId)) {
+    return null;
+  }
+  const titleWire = rec.documentTitle;
+  if (typeof titleWire !== 'string') {
+    return null;
+  }
+  const documentTitle = tryDecodeURIComponent(titleWire);
+  const saved = Boolean(rec.saved);
+  let filePath: string | null = null;
+  if (rec.filePath === null || rec.filePath === undefined) {
+    filePath = null;
+  } else if (typeof rec.filePath === 'string') {
+    filePath = tryDecodeURIComponent(rec.filePath);
+  } else {
+    return null;
+  }
+  return { documentId, documentTitle, saved, filePath };
+}
 
 export function createDocumentTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
     {
       tool: {
         name: 'photoshop_create_document',
-        description: 'Create a new Photoshop document with specified dimensions',
+        description:
+          'Create a new Photoshop document with specified dimensions. The result includes documentId (Photoshop internal ID for this open document; use it in follow-up rounds to know which tab/document was created; it is not an OS file id) and documentTitle; filePath is present only when the document is already associated with a path on disk.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -59,7 +117,8 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
           properties: {
             path: {
               type: 'string',
-              description: 'Full path where to save the document',
+              description:
+                'Optional. Absolute path saves there unchanged. Relative paths resolve under ~/.ttt/exports. Omit for an auto-generated file in ~/.ttt/exports.',
             },
             format: {
               type: 'string',
@@ -75,7 +134,6 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
               default: 8,
             },
           },
-          required: ['path'],
         },
       },
       handler: async (args) => saveDocument(connection, args),
@@ -126,13 +184,33 @@ async function createDocument(
       colorModeMap[colorMode] || 'NewDocumentMode.RGB'
     );
 
-    await api.executeScript(script);
+    const raw = await api.executeScript(script);
+
+    const summary = `Document created: ${width}x${height}px at ${resolution}dpi (${colorMode})`;
+    const identity = parseNewDocumentScriptResult(raw);
+    let text: string;
+    if (identity) {
+      text = `${summary}\n${JSON.stringify(
+        {
+          documentId: identity.documentId,
+          documentTitle: identity.documentTitle,
+          saved: identity.saved,
+          filePath: identity.filePath,
+          note:
+            'documentId is the Photoshop internal identifier for this open document (same role as distinguishing document tabs); it is not an OS inode or cloud id.',
+        },
+        null,
+        2
+      )}`;
+    } else {
+      text = `${summary}\n(Could not read document identifier from Photoshop response.)`;
+    }
 
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Document created: ${width}x${height}px at ${resolution}dpi (${colorMode})`,
+          text,
         },
       ],
     };
@@ -178,36 +256,58 @@ async function getDocumentInfo(connection: PhotoshopConnection): Promise<ToolRes
   }
 }
 
+function formatToFileExtension(format: string): string {
+  switch (format.toUpperCase()) {
+    case 'JPEG':
+      return 'jpg';
+    case 'PNG':
+      return 'png';
+    default:
+      return 'psd';
+  }
+}
+
+function ensureFilenameExtension(filePath: string, ext: string): string {
+  const suffix = `.${ext.replace(/^\.+/, '').toLowerCase()}`;
+  if (filePath.toLowerCase().endsWith(suffix)) return filePath;
+  return filePath + suffix;
+}
+
 async function saveDocument(
   connection: PhotoshopConnection,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const path = args.path as string;
   const format = (args.format as string) || 'PSD';
   const quality = (args.quality as number) || 8;
+  const pathArg = typeof args.path === 'string' ? args.path : undefined;
 
   try {
+    const ext = formatToFileExtension(format);
+    let outPath = resolveTttOutputPath(pathArg, ext);
+    outPath = ensureFilenameExtension(outPath, ext);
+
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
 
     let script;
     switch (format.toUpperCase()) {
       case 'JPEG':
-        script = ExtendScriptSnippets.saveAsJPEG(path, quality);
+        script = ExtendScriptSnippets.saveAsJPEG(outPath, quality);
         break;
       case 'PNG':
-        script = ExtendScriptSnippets.saveAsPNG(path);
+        script = ExtendScriptSnippets.saveAsPNG(outPath);
         break;
       default:
-        script = ExtendScriptSnippets.saveAsPSD(path);
+        script = ExtendScriptSnippets.saveAsPSD(outPath);
     }
     await api.executeScript(script);
 
+    const msg = `Document saved as ${format} to: ${outPath}`;
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Document saved as ${format} to: ${path}`,
+          text: appendRevealPathLine(msg, outPath),
         },
       ],
     };
