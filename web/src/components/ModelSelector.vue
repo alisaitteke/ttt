@@ -29,6 +29,10 @@ const model = computed(() =>
   provider.value?.models.find((m) => m.id === props.currentModel)
 );
 
+const triggerAriaLabel = computed(
+  () => `Model: ${model.value?.label ?? 'Select model'}`
+);
+
 function openSettings(): void {
   open.value = false;
   emit('open-settings');
@@ -56,10 +60,11 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
         variant="ghost"
         size="sm"
         :disabled="disabled"
-        class="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+        class="h-7 gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground md:gap-1.5 md:px-2"
+        :aria-label="triggerAriaLabel"
       >
         <ProviderIcon :provider="currentProvider" :size="14" />
-        <span class="font-normal">
+        <span class="hidden font-normal md:inline">
           Model:
           <span class="font-medium text-foreground">
             {{ model?.label ?? 'Select model' }}

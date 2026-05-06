@@ -23,6 +23,7 @@ const creativeCloudDesktopInstalled = ref(false);
 const loading = ref(true);
 const fatalError = ref<string | null>(null);
 const settingsOpen = ref(false);
+const sidebarMobileOpen = ref(false);
 
 const chat = useChatStore();
 const route = useRoute();
@@ -85,11 +86,13 @@ watch(
 );
 
 async function handleNewChat(): Promise<void> {
+  sidebarMobileOpen.value = false;
   const created = await chat.newChat();
   await router.push({ name: 'chat', params: { id: created.id } });
 }
 
 async function handleSelect(id: string): Promise<void> {
+  sidebarMobileOpen.value = false;
   await router.push({ name: 'chat', params: { id } });
 }
 
@@ -103,6 +106,10 @@ async function handleDelete(id: string): Promise<void> {
 
 async function handleSettingsSaved(): Promise<void> {
   await refresh();
+}
+
+function openMobileSidebar(): void {
+  sidebarMobileOpen.value = true;
 }
 
 onMounted(refresh);
@@ -123,6 +130,7 @@ onMounted(refresh);
       <Onboarding v-if="!hasAnyKey" @saved="refresh" />
       <div v-else class="flex h-screen">
         <Sidebar
+          v-model:mobile-open="sidebarMobileOpen"
           :chats="chat.chats.value"
           :active-chat-id="chat.activeChatId.value"
           @new-chat="handleNewChat"
@@ -132,14 +140,16 @@ onMounted(refresh);
           @open-settings="settingsOpen = true"
         />
         <ChatView
-          class="flex-1"
+          class="min-w-0 flex-1"
           :providers="providers"
           :design-tools="designTools"
           :creative-cloud-desktop-installed="creativeCloudDesktopInstalled"
           :store="chat"
           :settings-open="settingsOpen"
+          :sidebar-mobile-open="sidebarMobileOpen"
           @new-chat="handleNewChat"
           @open-settings="settingsOpen = true"
+          @open-sidebar="openMobileSidebar"
         />
         <SettingsDialog
           v-if="settingsOpen"

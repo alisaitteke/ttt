@@ -24,11 +24,13 @@ const props = defineProps<{
   creativeCloudDesktopInstalled: boolean;
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
+  sidebarMobileOpen: boolean;
 }>();
 
-const emit = defineEmits<{ 
+const emit = defineEmits<{
   'new-chat': [];
   'open-settings': [];
+  'open-sidebar': [];
 }>();
 
 const activeChat = computed(() => {
@@ -61,7 +63,12 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
 
 <template>
   <div class="flex h-screen flex-col">
-    <StatusBar :chat="activeChat" :totals="activeChat ? props.store.chatTotals.value : null" />
+    <StatusBar
+      :chat="activeChat"
+      :totals="activeChat ? props.store.chatTotals.value : null"
+      :sidebar-mobile-open="props.sidebarMobileOpen"
+      @open-sidebar="emit('open-sidebar')"
+    />
 
     <div v-if="!activeChat" class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
       <p class="text-sm text-muted-foreground">Select a chat from the sidebar or start a new one.</p>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { MessageSquarePlus, MoreHorizontal, Pencil, Settings2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import type { ChatSummary } from '@/lib/api';
 const props = defineProps<{
   chats: ChatSummary[];
   activeChatId: string | null;
+  mobileOpen: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   rename: [id: string, title: string];
   delete: [id: string];
   'open-settings': [];
+  'update:mobileOpen': [open: boolean];
 }>();
 
 const menuOpenFor = ref<string | null>(null);
@@ -24,6 +26,26 @@ const renamingId = ref<string | null>(null);
 const renameDraft = ref('');
 
 const npmVersion = import.meta.env.VITE_TTT_NPM_VERSION;
+
+function closeMobileNav(): void {
+  emit('update:mobileOpen', false);
+}
+
+function onOverlayClick(): void {
+  closeMobileNav();
+}
+
+function openSettings(): void {
+  closeMobileNav();
+  emit('open-settings');
+}
+
+function onEscape(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && props.mobileOpen) closeMobileNav();
+}
+
+onMounted(() => window.addEventListener('keydown', onEscape));
+onUnmounted(() => window.removeEventListener('keydown', onEscape));
 
 function toggleMenu(id: string, event: Event): void {
   event.stopPropagation();
@@ -64,8 +86,20 @@ function formatDate(ts: number): string {
 </script>
 
 <template>
+  <div
+    class="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] transition-opacity duration-200 md:hidden"
+    :class="
+      mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+    "
+    aria-hidden="true"
+    @click="onOverlayClick"
+  />
+
   <aside
-    class="flex h-screen w-[260px] shrink-0 flex-col border-r border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 dark:bg-background/[0.14]"
+    class="fixed inset-y-0 left-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-r border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
+    :class="
+      mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+    "
     @click="menuOpenFor = null"
   >
     <div
@@ -75,6 +109,7 @@ function formatDate(ts: number): string {
         :to="{ name: 'home' }"
         class="flex min-w-0 items-center gap-2 rounded-md p-1 -ml-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Home"
+        @click="closeMobileNav"
       >
         <img
           src="/ttt-logo.svg?v=0.8"
@@ -166,7 +201,7 @@ function formatDate(ts: number): string {
       <Button
         variant="ghost"
         class="m-0 h-full w-full min-h-0 justify-start gap-2 rounded-none px-4 py-0 text-xs font-medium shadow-none"
-        @click="emit('open-settings')"
+        @click="openSettings"
       >
         <Settings2 class="size-4 shrink-0" />
         Settings

@@ -128,7 +128,8 @@ function clearAll(): void {
         variant="ghost"
         size="sm"
         :disabled="disabled"
-        class="h-7 min-w-[10rem] max-w-[18rem] gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+        class="h-7 min-w-0 max-w-none gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground md:min-w-[10rem] md:max-w-[18rem] md:px-2.5"
+        :aria-label="label"
       >
         <div class="flex shrink-0 -space-x-1.5">
           <AdobeAppIcon
@@ -139,7 +140,7 @@ function clearAll(): void {
             class="ring-1 ring-background"
           />
         </div>
-        <span class="min-w-0 flex-1 truncate text-left font-normal">
+        <span class="hidden min-w-0 flex-1 truncate text-left font-normal md:block">
           {{ label }}
         </span>
         <ChevronDown class="size-3.5 shrink-0 opacity-50" />

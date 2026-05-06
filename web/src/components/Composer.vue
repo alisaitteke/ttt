@@ -310,7 +310,7 @@ function submit(): void {
           </Button>
         </div>
         <span
-          class="min-w-0 flex-1 text-right text-[11px] leading-snug text-muted-foreground opacity-60 select-none sm:text-xs"
+          class="hidden min-w-0 flex-1 text-right text-[11px] leading-snug text-muted-foreground opacity-60 select-none md:inline-block md:text-xs"
         >
           Press Enter to send · Shift+Enter for newline
         </span>

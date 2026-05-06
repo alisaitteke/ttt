@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Menu } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +14,11 @@ import type { ChatTotals } from '@/stores/chat';
 const props = defineProps<{
   chat: ChatSummary | null;
   totals: ChatTotals | null;
+  sidebarMobileOpen: boolean;
+}>();
+
+const emit = defineEmits<{
+  'open-sidebar': [];
 }>();
 
 const tokenFormatter = new Intl.NumberFormat('en-US');
@@ -53,6 +60,18 @@ const costLabel = computed(() => {
   <header
     class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/50 bg-background/20 px-4 backdrop-blur-2xl backdrop-saturate-150 dark:bg-background/[0.14]"
   >
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      class="size-9 shrink-0 md:hidden"
+      aria-label="Open navigation"
+      :aria-expanded="sidebarMobileOpen"
+      @click="emit('open-sidebar')"
+    >
+      <Menu class="size-5" />
+    </Button>
+
     <div class="min-w-0 flex-1 truncate text-sm font-medium">
       {{ chat?.title ?? 'New chat' }}
     </div>
