@@ -59,7 +59,7 @@ function isProcessAlive(pid: number): boolean {
 async function stopBackgroundDaemon(): Promise<never> {
   const state = readBackgroundStateSync();
   if (!state) {
-    process.stderr.write('ttt-ui: no background daemon state found.\n');
+    process.stderr.write(`\n  ${c.yellow}!${c.reset}  No background server found.\n\n`);
     process.exit(1);
   }
   if (!isProcessAlive(state.pid)) {
@@ -68,13 +68,14 @@ async function stopBackgroundDaemon(): Promise<never> {
     } catch {
       /* noop */
     }
-    process.stdout.write('ttt-ui: removed stale daemon state.\n');
+    process.stdout.write(`\n  ${c.dim}–${c.reset}  Removed stale state (process was already gone).\n\n`);
     process.exit(0);
   }
+  process.stdout.write(`\n  ${c.dim}Stopping TTT UI (PID ${state.pid})…${c.reset}\n`);
   try {
     process.kill(state.pid, 'SIGTERM');
   } catch (err) {
-    process.stderr.write(`ttt-ui: failed to signal PID ${state.pid}: ${(err as Error).message}\n`);
+    process.stderr.write(`\n  ${c.yellow}!${c.reset}  Failed to signal PID ${state.pid}: ${(err as Error).message}\n\n`);
     process.exit(1);
   }
   for (let i = 0; i < 50; i++) {
@@ -82,7 +83,7 @@ async function stopBackgroundDaemon(): Promise<never> {
     await new Promise((r) => setTimeout(r, 100));
   }
   if (isProcessAlive(state.pid)) {
-    process.stderr.write(`ttt-ui: process ${state.pid} still running.\n`);
+    process.stderr.write(`\n  ${c.yellow}!${c.reset}  Process ${state.pid} did not stop in time.\n\n`);
     process.exit(1);
   }
   try {
@@ -90,16 +91,30 @@ async function stopBackgroundDaemon(): Promise<never> {
   } catch {
     /* noop */
   }
-  process.stdout.write(`ttt-ui: stopped (was ${state.url}).\n`);
+  process.stdout.write(`\n  ${c.green}${c.bold}✓${c.reset}  TTT UI stopped  ${c.dim}(was ${state.url})${c.reset}\n\n`);
   process.exit(0);
 }
+
+// ANSI helpers — gracefully degrade when stdout is not a TTY
+const isTTY = process.stdout.isTTY === true;
+const c = {
+  reset:  isTTY ? '\x1b[0m'  : '',
+  bold:   isTTY ? '\x1b[1m'  : '',
+  dim:    isTTY ? '\x1b[2m'  : '',
+  green:  isTTY ? '\x1b[32m' : '',
+  yellow: isTTY ? '\x1b[33m' : '',
+  cyan:   isTTY ? '\x1b[36m' : '',
+  gray:   isTTY ? '\x1b[90m' : '',
+};
 
 function spawnDetached(): never {
   mkdirSync(getTttHomeDir(), { recursive: true, mode: 0o700 });
   const existing = readBackgroundStateSync();
   if (existing && isProcessAlive(existing.pid)) {
     process.stderr.write(
-      `ttt-ui: daemon already running (PID ${existing.pid}, ${existing.url}). Use --stop.\n`
+      `${c.yellow}!${c.reset} ttt-ui is already running (PID ${existing.pid})\n` +
+      `  ${c.dim}${existing.url}${c.reset}\n\n` +
+      `  Run ${c.bold}ttt-ui --stop${c.reset} to stop it.\n\n`
     );
     process.exit(1);
   }
@@ -112,7 +127,9 @@ function spawnDetached(): never {
   }
 
   const cliPath = fileURLToPath(import.meta.url);
-  const childArgv = process.argv.slice(2).filter((a) => a !== '--detach' && a !== '-D' && a !== '--stop');
+  const childArgv = process.argv.slice(2).filter(
+    (a) => a !== '--detach' && a !== '-D' && a !== '--stop' && a !== 'ui'
+  );
   const child = spawn(process.execPath, [cliPath, ...childArgv], {
     detached: true,
     stdio: 'ignore',
@@ -121,13 +138,15 @@ function spawnDetached(): never {
   });
   child.unref();
 
+  const statePath = getBackgroundStatePath();
   process.stdout.write(
-    [
-      `TTT UI detached (child PID ${child.pid}).`,
-      `State (URL appears when ready): ${getBackgroundStatePath()}`,
-      'Stop: ttt-ui --stop',
-      '',
-    ].join('\n')
+    `\n  ${c.green}${c.bold}✓${c.reset}  ${c.bold}TTT UI${c.reset}  ${c.dim}started in background${c.reset}\n\n` +
+    `  ${c.dim}PID${c.reset}     ${child.pid}\n` +
+    `  ${c.dim}State${c.reset}   ${c.cyan}${statePath}${c.reset}\n\n` +
+    `  ${c.dim}The URL will be written to state file when ready.${c.reset}\n\n` +
+    `  ${c.dim}────────────────────────────────────────────${c.reset}\n\n` +
+    `  ${c.bold}ttt-ui --stop${c.reset}${c.dim}        Stop the background server${c.reset}\n` +
+    `  ${c.bold}ttt-ui --help${c.reset}${c.dim}        Show all options${c.reset}\n\n`
   );
   process.exit(0);
 }
@@ -176,7 +195,7 @@ function parseFlags(argv: string[]): CliFlags {
     } else if (arg === '--stop') {
       flags.stop = true;
     } else if (arg === '--help' || arg === '-h') {
-      printHelp();
+      printUiHelp();
       process.exit(0);
     } else if (arg === '--version' || arg === '-v') {
       printVersion();
@@ -186,35 +205,35 @@ function parseFlags(argv: string[]): CliFlags {
   return flags;
 }
 
-function printHelp(): void {
+export function printUiHelp(): void {
+  const row = (flags: string, desc: string) =>
+    `  ${c.bold}${flags.padEnd(26)}${c.reset}${c.dim}${desc}${c.reset}\n`;
+
   process.stdout.write(
-    [
-      'ttt-ui — Browser UI for the TTT (The Tortoise Trainer) MCP server',
-      '',
-      'Usage: ttt-ui [options]',
-      '',
-      'Options:',
-      '  -p, --port <number>   Port to listen on (default: random free port)',
-      '      --host <host>     Host to bind to (default: 127.0.0.1)',
-      '      --no-open         Do not auto-open the browser',
-      '  -D, --detach          Run in background (state: ui-background.json under TTT_HOME; optional --port)',
-      '      --stop            Stop the detached UI process (same TTT_HOME as the daemon)',
-      '  -h, --help            Show this help',
-      '  -v, --version         Show version',
-      '',
-      'API keys: OS credential store. Chat/settings: ~/.ttt/data.db.',
-      '',
-    ].join('\n')
+    `\n  ${c.bold}ttt ui${c.reset}  ${c.dim}v${PKG_VERSION} — Browser UI for the TTT MCP server${c.reset}\n\n` +
+    `  ${c.dim}USAGE${c.reset}\n\n` +
+    `  ttt ui ${c.dim}[options]${c.reset}\n\n` +
+    `  ${c.dim}OPTIONS${c.reset}\n\n` +
+    row('-p, --port <number>', 'Port to listen on  (default: auto)') +
+    row('    --host <host>',   'Bind address       (default: 127.0.0.1)') +
+    row('    --no-open',       'Do not open browser automatically') +
+    row('-D, --detach',        'Run server in the background') +
+    row('    --stop',          'Stop the background server') +
+    row('-h, --help',          'Show this help') +
+    `\n  ${c.dim}STORAGE${c.reset}\n\n` +
+    `  API keys    OS credential store (Keychain on macOS)\n` +
+    `  Database    ${c.cyan}~/.ttt/data.db${c.reset}\n` +
+    `  BG state    ${c.cyan}~/.ttt/ui-background.json${c.reset}\n\n`
   );
 }
 
 function printVersion(): void {
-  process.stdout.write(`ttt-ui ${PKG_VERSION}\n`);
+  process.stdout.write(`ttt ${c.bold}${PKG_VERSION}${c.reset}\n`);
 }
 
-async function main(): Promise<void> {
+export async function runUiCli(argv: string[]): Promise<void> {
   const logger = new Logger('UI');
-  const flags = parseFlags(process.argv.slice(2));
+  const flags = parseFlags(argv);
 
   if (flags.stop) {
     await stopBackgroundDaemon();
@@ -245,7 +264,14 @@ async function main(): Promise<void> {
     });
   }
 
-  process.stdout.write(`\nTTT UI ready at:\n  ${url}\n\n`);
+  process.stdout.write(
+    `\n  ${c.green}${c.bold}✓${c.reset}  ${c.bold}TTT UI${c.reset}  ${c.dim}v${PKG_VERSION}${c.reset}\n\n` +
+    `  ${c.dim}URL${c.reset}     ${c.cyan}${c.bold}${url}${c.reset}\n` +
+    (isBackgroundChild ? '' :
+      `\n  ${c.dim}────────────────────────────────────────────${c.reset}\n\n` +
+      `  ${c.bold}^C${c.reset}${c.dim}  to stop${c.reset}\n`) +
+    `\n`
+  );
 
   if (!flags.noOpen) {
     try {
@@ -267,7 +293,10 @@ async function main(): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-main().catch((err) => {
-  process.stderr.write(`Failed to start TTT UI: ${(err as Error).message}\n`);
-  process.exit(1);
-});
+// Standalone entry — used when spawned directly as a background child process.
+if (process.env[BG_CHILD_ENV] === '1') {
+  runUiCli(process.argv.slice(2)).catch((err) => {
+    process.stderr.write(`Failed to start TTT UI: ${(err as Error).message}\n`);
+    process.exit(1);
+  });
+}

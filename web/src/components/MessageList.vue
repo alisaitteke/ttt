@@ -2,7 +2,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { User, Sparkles } from 'lucide-vue-next';
-import MarkdownRender from 'vue-renderer-markdown';
+import MarkdownContent from './MarkdownContent.vue';
 import ToolCallCard from './ToolCallCard.vue';
 import ProviderIcon from './ProviderIcon.vue';
 import type { ChatMessage } from '@/stores/chat';
@@ -94,7 +94,7 @@ function assistantLabel(m: ChatMessage): string {
           >
             {{ m.role === 'user' ? t('messages.you') : assistantLabel(m) }}
           </div>
-          <MarkdownRender
+          <MarkdownContent
             v-if="m.text && m.role === 'assistant'"
             class="assistant-markdown min-w-0 text-sm leading-relaxed text-foreground"
             :content="m.text"

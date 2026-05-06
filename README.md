@@ -9,6 +9,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
+![Standalone UI Screenshot](./images/frame_generic_light.png)
+
 ## Demo
 
 Short demo of the bundled web UI:
@@ -57,8 +59,6 @@ npx -p @alisaitteke/ttt ui
 # or
 npx -p @alisaitteke/ttt ttt-ui
 ```
-
-![Standalone UI Screenshot](./images/frame_generic_light.png)
 
 That's it. In foreground mode, a local server starts on `127.0.0.1` (random free port unless you pass `--port`) and your default browser opens the chat UI automatically.
 
