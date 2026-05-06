@@ -1,6 +1,7 @@
 {
   "sidebar": {
     "homeAria": "Startseite",
+    "resizeAria": "Chatlistenbreite anpassen",
     "newChatAria": "Neuer Chat",
     "emptyNone": "Noch keine Chats.",
     "emptyActive": "Keine aktiven Chats.",

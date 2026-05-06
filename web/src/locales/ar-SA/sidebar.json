@@ -1,6 +1,7 @@
 {
   "sidebar": {
     "homeAria": "الرئيسية",
+    "resizeAria": "تغيير عرض لوحة قائمة الدردشة",
     "newChatAria": "محادثة جديدة",
     "emptyNone": "لا توجد محادثات بعد.",
     "emptyActive": "لا توجد محادثات نشطة.",

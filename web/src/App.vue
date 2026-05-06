@@ -272,6 +272,7 @@ onUnmounted(() => {
         <Sidebar
           v-model:mobile-open="sidebarMobileOpen"
           :chats="chat.chats.value"
+          :design-tools="designTools"
           :active-chat-id="chat.activeChatId.value"
           :select-mode="chatListSelectMode"
           :selected-chat-ids="chatListSelectedIds"

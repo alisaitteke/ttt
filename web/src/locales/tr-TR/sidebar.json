@@ -1,6 +1,7 @@
 {
   "sidebar": {
     "homeAria": "Ana sayfa",
+    "resizeAria": "Sohbet listesi panelini yeniden boyutlandır",
     "newChatAria": "Yeni sohbet",
     "emptyNone": "Henüz sohbet yok.",
     "emptyActive": "Aktif sohbet yok.",

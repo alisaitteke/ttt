@@ -16,10 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { ChatSummary } from '@/lib/api';
+import AdobeAppIcon from '@/components/AdobeAppIcon.vue';
+import type { AdobeApp } from '@/components/AdobeAppIcon.vue';
+import type { ChatSummary, DesignToolInfo } from '@/lib/api';
 
 const props = defineProps<{
   chat: ChatSummary;
+  designTools: DesignToolInfo[];
   activeChatId: string | null;
   isRenaming: boolean;
   renameDraft: string;
@@ -27,7 +30,6 @@ const props = defineProps<{
   inArchivedList: boolean;
   selectMode: boolean;
   selected: boolean;
-  formatDate: (ts: number) => string;
 }>();
 
 const emit = defineEmits<{
@@ -71,11 +73,19 @@ const actionsAriaLabel = computed(() =>
 const checkboxAriaLabel = computed(() =>
   t('sidebar.selectCheckboxAria', { title: props.chat.title })
 );
+
+const stackedTools = computed(() => {
+  const ids = props.chat.tools ?? [];
+  return ids.slice(0, 3).map((id) => ({
+    id,
+    iconKey: (props.designTools.find((t) => t.id === id)?.iconKey ?? 'ps') as AdobeApp,
+  }));
+});
 </script>
 
 <template>
   <div
-    class="group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
+    class="group relative flex cursor-pointer items-center gap-2 rounded-md px-3.5 py-1 text-sm hover:bg-accent/40"
     :class="{
       'bg-accent/45': !selectMode && chat.id === activeChatId,
       'ring-1 ring-ring/40': selectMode && selected,
@@ -103,9 +113,6 @@ const checkboxAriaLabel = computed(() =>
         @keydown.escape.prevent="cancelRename"
       />
       <div v-else class="truncate" :title="chat.title">{{ chat.title }}</div>
-      <div class="text-[10px] text-muted-foreground">
-        {{ formatDate(chat.updatedAt) }} · {{ chat.provider }}
-      </div>
     </div>
 
     <DropdownMenu :modal="false">
@@ -154,5 +161,20 @@ const checkboxAriaLabel = computed(() =>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <div
+      v-if="stackedTools.length > 0"
+      class="flex shrink-0 -space-x-1.5"
+      aria-hidden="true"
+    >
+      <div
+        v-for="(item, index) in stackedTools"
+        :key="item.id"
+        class="relative inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted p-px ring-1 ring-background"
+        :style="{ zIndex: index + 1 }"
+      >
+        <AdobeAppIcon :app="item.iconKey" :size="14" />
+      </div>
+    </div>
   </div>
 </template>

@@ -1,6 +1,7 @@
 {
   "sidebar": {
     "homeAria": "Inicio",
+    "resizeAria": "Redimensionar el panel de la lista de chats",
     "newChatAria": "Chat nuevo",
     "emptyNone": "Aún no hay chats.",
     "emptyActive": "No hay chats activos.",

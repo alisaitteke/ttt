@@ -1,6 +1,7 @@
 {
   "sidebar": {
     "homeAria": "主页",
+    "resizeAria": "调整聊天列表面板宽度",
     "newChatAria": "新会话",
     "emptyNone": "暂无会话。",
     "emptyActive": "暂无活跃会话。",

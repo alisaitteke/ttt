@@ -5,10 +5,11 @@ import { useI18n } from 'vue-i18n';
 import { ChevronDown, ChevronRight, Plus, Settings2, Archive, Trash2, X } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import SidebarChatRow from '@/components/SidebarChatRow.vue';
-import type { ChatSummary } from '@/lib/api';
+import type { ChatSummary, DesignToolInfo } from '@/lib/api';
 
 const props = defineProps<{
   chats: ChatSummary[];
+  designTools: DesignToolInfo[];
   activeChatId: string | null;
   mobileOpen: boolean;
   selectMode: boolean;
@@ -32,6 +33,81 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const SIDEBAR_WIDTH_STORAGE_KEY = 'ttt-sidebar-width-pixels';
+const SIDEBAR_WIDTH_DEFAULT = 260;
+const SIDEBAR_WIDTH_MIN = 200;
+const SIDEBAR_WIDTH_MAX = 520;
+
+function clampSidebarWidth(n: number): number {
+  return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, Math.round(n)));
+}
+
+function readStoredSidebarWidth(): number {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    if (raw === null) return SIDEBAR_WIDTH_DEFAULT;
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed)) return SIDEBAR_WIDTH_DEFAULT;
+    return clampSidebarWidth(parsed);
+  } catch {
+    return SIDEBAR_WIDTH_DEFAULT;
+  }
+}
+
+const sidebarWidthPx = ref(readStoredSidebarWidth());
+
+function persistSidebarWidth(): void {
+  try {
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidthPx.value));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+let resizePointerStartX = 0;
+let resizeWidthStart = SIDEBAR_WIDTH_DEFAULT;
+let resizeListenersAttached = false;
+
+function isRtlShell(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.getAttribute('dir') === 'rtl';
+}
+
+function applySidebarResizeDelta(clientX: number): void {
+  const delta = isRtlShell()
+    ? resizePointerStartX - clientX
+    : clientX - resizePointerStartX;
+  sidebarWidthPx.value = clampSidebarWidth(resizeWidthStart + delta);
+}
+
+function stopSidebarResize(): void {
+  if (!resizeListenersAttached) return;
+  resizeListenersAttached = false;
+  document.body.style.removeProperty('cursor');
+  document.body.style.removeProperty('user-select');
+  window.removeEventListener('pointermove', onSidebarResizePointerMove);
+  window.removeEventListener('pointerup', stopSidebarResize);
+  window.removeEventListener('pointercancel', stopSidebarResize);
+  persistSidebarWidth();
+}
+
+function onSidebarResizePointerMove(e: PointerEvent): void {
+  applySidebarResizeDelta(e.clientX);
+}
+
+function onSidebarResizePointerDown(e: PointerEvent): void {
+  if (e.button !== 0) return;
+  if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+  e.preventDefault();
+  resizePointerStartX = e.clientX;
+  resizeWidthStart = sidebarWidthPx.value;
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  resizeListenersAttached = true;
+  window.addEventListener('pointermove', onSidebarResizePointerMove);
+  window.addEventListener('pointerup', stopSidebarResize);
+  window.addEventListener('pointercancel', stopSidebarResize);
+}
 
 const renamingId = ref<string | null>(null);
 const renameDraft = ref('');
@@ -76,7 +152,10 @@ function onEscape(e: KeyboardEvent): void {
 }
 
 onMounted(() => window.addEventListener('keydown', onEscape));
-onUnmounted(() => window.removeEventListener('keydown', onEscape));
+onUnmounted(() => {
+  window.removeEventListener('keydown', onEscape);
+  stopSidebarResize();
+});
 
 function startRenameFor(chat: ChatSummary): void {
   renamingId.value = chat.id;
@@ -85,15 +164,6 @@ function startRenameFor(chat: ChatSummary): void {
 
 function cancelRename(): void {
   renamingId.value = null;
-}
-
-function formatDate(ts: number): string {
-  const d = new Date(ts);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  }
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function onRowDelete(id: string): void {
@@ -133,7 +203,8 @@ function openSettings(): void {
   />
 
   <aside
-    class="fixed inset-y-0 start-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-e border-border bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
+    class="fixed inset-y-0 start-0 z-50 flex h-screen max-md:w-[260px] shrink-0 flex-col border-e border-sidebar-border bg-sidebar/45 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-sidebar/30 transition-transform duration-200 ease-out dark:bg-sidebar/35 dark:supports-[backdrop-filter]:bg-sidebar/22 md:relative md:inset-auto md:z-auto md:w-[var(--sidebar-panel-width)] md:translate-x-0"
+    :style="{ '--sidebar-panel-width': `${sidebarWidthPx}px` }"
     :class="
       mobileOpen
         ? 'translate-x-0'
@@ -141,7 +212,7 @@ function openSettings(): void {
     "
   >
     <div
-      class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 px-4"
+      class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border/70 px-4"
     >
       <RouterLink
         :to="{ name: 'home' }"
@@ -223,8 +294,8 @@ function openSettings(): void {
         </div>
       </div>
 
-      <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
-        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-0">
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1 px-1 py-1">
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div
             v-if="activeChats.length === 0 && archivedChats.length === 0"
             class="px-2 py-6 text-center text-xs text-muted-foreground"
@@ -239,13 +310,13 @@ function openSettings(): void {
               v-for="chat in activeChats"
               :key="chat.id"
               :chat="chat"
+              :design-tools="designTools"
               :active-chat-id="activeChatId"
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="false"
               :select-mode="selectMode"
               :selected="selectedChatIds.includes(chat.id)"
-              :format-date="formatDate"
               @select="emit('select', $event)"
               @enter-select-with="emit('enter-select-with', $event)"
               @toggle-selected="emit('toggle-selected', $event)"
@@ -260,7 +331,7 @@ function openSettings(): void {
           </div>
         </div>
 
-        <div v-if="archivedChats.length > 0" class="shrink-0 border-t border-border/40 pt-1">
+        <div v-if="archivedChats.length > 0" class="shrink-0 border-t border-sidebar-border/60 pt-1">
           <button
             type="button"
             class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-start text-xs font-medium text-muted-foreground hover:bg-accent/40"
@@ -277,13 +348,13 @@ function openSettings(): void {
               v-for="chat in archivedChats"
               :key="chat.id"
               :chat="chat"
+              :design-tools="designTools"
               :active-chat-id="activeChatId"
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="true"
               :select-mode="selectMode"
               :selected="selectedChatIds.includes(chat.id)"
-              :format-date="formatDate"
               @select="emit('select', $event)"
               @enter-select-with="emit('enter-select-with', $event)"
               @toggle-selected="emit('toggle-selected', $event)"
@@ -299,5 +370,12 @@ function openSettings(): void {
         </div>
       </div>
     </div>
+
+    <button
+      type="button"
+      class="absolute inset-y-0 end-0 z-30 hidden w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none hover:bg-foreground/[0.06] md:block focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+      :aria-label="t('sidebar.resizeAria')"
+      @pointerdown="onSidebarResizePointerDown"
+    />
   </aside>
 </template>
