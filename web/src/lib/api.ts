@@ -256,6 +256,16 @@ export interface ChatRequest {
   chatId: string;
   prompt: string;
   requestId: string;
+  /** BCP 47 UI locale; server adds a system instruction to reply in this language. */
+  locale?: string;
+  /** Browser IANA timezone (optional), e.g. Europe/Istanbul. */
+  timezone?: string;
+  /** `Date#getTimezoneOffset()` in minutes (optional). */
+  timezoneOffsetMinutes?: number;
+  /** `Date#toISOString()` for the same instant as the wall-clock fields (optional). */
+  clientNowUtcIso?: string;
+  /** Local civil time in `timezone` as `YYYY-MM-DD HH:mm:ss` (optional). */
+  clientLocalWallClockInIanaZone?: string;
 }
 
 export async function* streamChat(

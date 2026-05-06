@@ -266,7 +266,7 @@ function submit(): void {
 <template>
   <div class="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-5">
     <div
-      class="relative mx-auto max-w-3xl rounded-[1.35rem] border border-black/[0.06] bg-white/48 shadow-[0_12px_42px_-14px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 transition-[box-shadow,background-color,backdrop-filter] focus-within:border-black/[0.09] focus-within:bg-white/58 focus-within:shadow-[0_18px_52px_-14px_rgba(0,0,0,0.16)] focus-within:ring-1 focus-within:ring-[rgb(var(--marketing-glow-primary)_/_0.52)] dark:border-white/[0.09] dark:bg-black/48 dark:shadow-[0_14px_48px_-16px_rgba(0,0,0,0.55)] dark:focus-within:border-white/[0.12] dark:focus-within:bg-black/58 dark:focus-within:shadow-[0_20px_56px_-14px_rgba(0,0,0,0.65)]"
+      class="group relative mx-auto max-w-3xl rounded-[1.35rem] border border-black/[0.06] bg-white/48 shadow-[0_12px_42px_-14px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 transition-[box-shadow,background-color,backdrop-filter] focus-within:border-black/[0.09] focus-within:bg-white/58 focus-within:shadow-[0_18px_52px_-14px_rgba(0,0,0,0.14),0_0_56px_-10px_rgb(var(--marketing-glow-primary)_/_0.32),0_18px_76px_-22px_rgb(var(--marketing-glow-secondary)_/_0.22)] focus-within:ring-2 focus-within:ring-[rgb(var(--marketing-glow-primary)_/_0.52)] dark:border-white/[0.09] dark:bg-black/48 dark:shadow-[0_14px_48px_-16px_rgba(0,0,0,0.55)] dark:focus-within:border-white/[0.12] dark:focus-within:bg-black/58 dark:focus-within:shadow-[0_20px_56px_-14px_rgba(0,0,0,0.55),0_0_72px_-6px_rgb(var(--marketing-glow-primary)_/_0.38),0_24px_96px_-20px_rgb(var(--marketing-glow-secondary)_/_0.26)]"
       @dragenter="onDragEnter"
       @dragleave="onDragLeave"
       @dragover="onDragOver"
@@ -301,7 +301,7 @@ function submit(): void {
           v-if="!busy"
           size="icon"
           :disabled="!draft.trim() || disabled"
-          class="size-8 shrink-0 rounded-full disabled:opacity-40"
+          class="size-8 shrink-0 rounded-full transition-colors disabled:opacity-40 enabled:group-focus-within:bg-[rgb(var(--marketing-glow-primary)_/_0.9)] enabled:group-focus-within:text-white enabled:group-focus-within:shadow-md enabled:group-focus-within:hover:bg-[rgb(var(--marketing-glow-secondary)_/_0.92)] enabled:group-focus-within:hover:text-white dark:enabled:group-focus-within:bg-[rgb(var(--marketing-glow-primary)_/_0.82)] dark:enabled:group-focus-within:hover:bg-[rgb(var(--marketing-glow-secondary)_/_0.85)]"
           @click="submit"
         >
           <ArrowUp class="size-4" />

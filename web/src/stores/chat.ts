@@ -1,4 +1,5 @@
 import { computed, reactive, ref } from 'vue';
+import type { WritableComputedRef } from 'vue';
 import {
   abortChat,
   apiCreateChat,
@@ -14,7 +15,61 @@ import {
   type UsageCost,
   type UsageDetails,
 } from '@/lib/api';
-import { translateStatic } from '@/i18n';
+import {
+  DEFAULT_LOCALE,
+  i18n,
+  isSupportedLocale,
+  translateStatic,
+  type SupportedLocale,
+} from '@/i18n';
+
+function currentChatLocaleTag(): SupportedLocale {
+  const raw = (i18n.global.locale as WritableComputedRef<string>).value;
+  return isSupportedLocale(raw) ? raw : DEFAULT_LOCALE;
+}
+
+/** Local civil wall-clock in an IANA zone for a given instant (stable ASCII, `YYYY-MM-DD HH:mm:ss`). */
+function formatLocalWallClockInIanaZone(ianaZone: string, instant: Date): string {
+  const dtf = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ianaZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(instant);
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  const y = pick('year');
+  const mo = pick('month');
+  const da = pick('day');
+  const h = pick('hour');
+  const mi = pick('minute');
+  const se = pick('second');
+  if (!y || !mo || !da || !h || !mi || !se) return '';
+  return `${y}-${mo}-${da} ${h}:${mi}:${se}`;
+}
+
+function chatClientInstantSnapshot(): {
+  timezone: string;
+  timezoneOffsetMinutes: number;
+  clientNowUtcIso: string;
+  clientLocalWallClockInIanaZone: string;
+} {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const now = new Date();
+  const clientLocalWallClockInIanaZone = formatLocalWallClockInIanaZone(timezone, now);
+  return {
+    timezone,
+    timezoneOffsetMinutes: now.getTimezoneOffset(),
+    clientNowUtcIso: now.toISOString(),
+    clientLocalWallClockInIanaZone:
+      clientLocalWallClockInIanaZone || formatLocalWallClockInIanaZone('UTC', now),
+  };
+}
 
 export interface ToolCall extends PersistedToolCall {}
 
@@ -249,7 +304,13 @@ export function useChatStore() {
 
     try {
       for await (const ev of streamChat(
-        { chatId: activeChatId.value, prompt: trimmed, requestId },
+        {
+          chatId: activeChatId.value,
+          prompt: trimmed,
+          requestId,
+          locale: currentChatLocaleTag(),
+          ...chatClientInstantSnapshot(),
+        },
         abortController.signal
       )) {
         if (ev.event === 'done') break;

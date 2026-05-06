@@ -51,6 +51,16 @@ export interface RunChatOptions {
   apiKey: string;
   modelId: string;
   designTools?: DesignToolId[];
+  /**
+   * User-selected UI locale (BCP 47), e.g. en-US. When set, the system prompt instructs the
+   * model to reply in that language only.
+   */
+  locale?: string;
+  /**
+   * Anonymous machine/OS snapshot (JSON-ready) assembled on the UI server — no hostnames or user paths.
+   * Injected into the system prompt so the model can tailor OS-specific guidance (paths, Docker/Desktop apps, Adobe installs).
+   */
+  anonymousHostContext?: Record<string, unknown>;
   /** When set, default exports use ~/.ttt/exports/<id>/ (passed to the MCP child as env). */
   exportChatId?: string;
   abortSignal: AbortSignal;
@@ -67,6 +77,54 @@ numbered lists, **bold** and *italic* where helpful, inline \`code\` and fenced
 code blocks for commands or snippets, and tables when comparing options. Keep tool
 summaries and errors readable with short paragraphs and lists; do not use raw HTML.
 `.trim();
+
+/** Matches UI locale folders under `web/src/locales/<tag>/`; used to validate API input only. */
+const UI_REPLY_LOCALE_NAMES: Record<string, string> = {
+  'en-US': 'English (United States)',
+  'es-ES': 'Spanish (Spain)',
+  'zh-CN': 'Simplified Chinese (China)',
+  'de-DE': 'German (Germany)',
+  'tr-TR': 'Turkish (Turkey)',
+  'ar-SA': 'Arabic (Saudi Arabia)',
+};
+
+export function normalizeChatLocale(input: unknown): string | undefined {
+  if (typeof input !== 'string') return undefined;
+  return Object.hasOwn(UI_REPLY_LOCALE_NAMES, input) ? input : undefined;
+}
+
+function userUiLanguageInstruction(localeTag: string): string {
+  const langName = UI_REPLY_LOCALE_NAMES[localeTag] ?? localeTag;
+  return `
+User interface language (required):
+The user's application UI is set to "${langName}" (BCP 47: \`${localeTag}\`).
+You MUST write every user-facing part of your answer — narrative text, Markdown headings and lists,
+summaries or paraphrases of tool outcomes, confirmations, warnings, error explanations for the human,
+and follow-up questions — exclusively in "${langName}".
+Follow this rule strictly even if earlier messages used another language, unless this user message
+explicitly asks you to use a different language in this turn.
+Technical identifiers unchanged from tools (paths, opaque IDs, literals, snippets) stay as-is; any
+human-readable prose around them must still match "${langName}".
+`.trim();
+}
+
+function formatAnonymousHostContextSection(ctx: Record<string, unknown>): string {
+  let json: string;
+  try {
+    json = JSON.stringify(ctx, null, 2);
+  } catch {
+    return '';
+  }
+  if (!json || json === '{}') return '';
+  return `
+Anonymous host context (JSON; non-identifying, no hostname or account identifiers).
+Use it to infer OS conventions (path separators, process names, Adobe CC / Docker quirks), timezone hints,
+and coarse performance headroom — not for fingerprinting or storage.
+Prefer tool results over guessing; do not paste this blob back to the user unless they explicitly ask how you inferred their environment.
+
+${json}
+`.trim();
+}
 
 const GROQ_MCP_TOOL_ENFORCEMENT = `
 Groq-specific (required):
@@ -94,9 +152,19 @@ function designToolAllowedPrefixes(id: DesignToolId): string[] {
   return [tool.toolPrefix];
 }
 
-function buildSystemPrompt(designTools: DesignToolId[], providerId?: ProviderId): string {
+function buildSystemPrompt(
+  designTools: DesignToolId[],
+  providerId?: ProviderId,
+  localeTag?: string,
+  anonymousHostContext?: Record<string, unknown>
+): string {
+  const hostBlock =
+    anonymousHostContext !== undefined ? formatAnonymousHostContextSection(anonymousHostContext) : '';
+  const langBlock = localeTag ? `\n\n${userUiLanguageInstruction(localeTag)}` : '';
+  const hostPrefix = hostBlock ? `\n\n${hostBlock}` : '';
+
   if (designTools.length === 0) {
-    return `${TTT_SYSTEM_PROMPT}\n\nCurrently no design tools are enabled for this chat. You can only respond with text.`;
+    return `${TTT_SYSTEM_PROMPT}\n\nCurrently no design tools are enabled for this chat. You can only respond with text.${hostPrefix}${langBlock}`.trim();
   }
 
   const toolsDesc = designTools.map(designToolPromptLine).join('\n');
@@ -121,7 +189,7 @@ Guidelines:
   filesystem, web, or general coding operations unless the user switches context.
 - When saving files via tools, the \`path\` argument is optional; relative paths
   resolve under ~/.ttt/exports/<active-chat-id> in the web UI (under
-  ~/.ttt/exports when no chat scope, e.g. CLI); absolute paths are used as given.${groqExtras}
+  ~/.ttt/exports when no chat scope, e.g. CLI); absolute paths are used as given.${groqExtras}${hostPrefix}${langBlock}
 `.trim();
 }
 
@@ -162,7 +230,12 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
             )
           );
 
-    const systemPrompt = buildSystemPrompt(designTools, opts.provider.id);
+    const systemPrompt = buildSystemPrompt(
+      designTools,
+      opts.provider.id,
+      opts.locale,
+      opts.anonymousHostContext
+    );
 
     const result = streamText({
       model: opts.provider.getLanguageModel({

@@ -11,7 +11,20 @@ import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/desktop.js';
 import { Logger } from '../utils/logger.js';
-import { buildHistory, runChat, type AssistantBuffer, type RunChatFinishInfo } from './agent.js';
+import {
+  collectAnonymousHostContext,
+  normalizeClientIanaTimezone,
+  normalizeClientLocalWallClock,
+  normalizeClientNowUtcIso,
+  normalizeJsTimezoneOffsetMinutes,
+} from './anonymous-host-context.js';
+import {
+  buildHistory,
+  normalizeChatLocale,
+  runChat,
+  type AssistantBuffer,
+  type RunChatFinishInfo,
+} from './agent.js';
 import {
   ensureProviderKeysMigrated,
   getProviderApiKey,
@@ -447,6 +460,11 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       chatId?: string;
       prompt?: string;
       requestId?: string;
+      locale?: unknown;
+      timezone?: unknown;
+      timezoneOffsetMinutes?: unknown;
+      clientNowUtcIso?: unknown;
+      clientLocalWallClockInIanaZone?: unknown;
     };
     if (!body.prompt || !body.chatId) {
       return c.json({ error: 'missing_chat_or_prompt' }, 400);
@@ -473,6 +491,17 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     }
 
     const history = buildHistory(getMessages(chat.id).slice(0, -1));
+    const locale = normalizeChatLocale(body.locale);
+    const clientTz = normalizeClientIanaTimezone(body.timezone);
+    const clientTzOffset = normalizeJsTimezoneOffsetMinutes(body.timezoneOffsetMinutes);
+    const clientUtc = normalizeClientNowUtcIso(body.clientNowUtcIso);
+    const clientWall = normalizeClientLocalWallClock(body.clientLocalWallClockInIanaZone);
+    const anonymousHostContext = collectAnonymousHostContext({
+      ...(clientTz !== undefined ? { clientIanaTimezone: clientTz } : {}),
+      ...(clientTzOffset !== undefined ? { clientTimezoneOffsetMinutes: clientTzOffset } : {}),
+      ...(clientUtc !== undefined ? { clientNowUtcIso: clientUtc } : {}),
+      ...(clientWall !== undefined ? { clientLocalWallClockInIanaZone: clientWall } : {}),
+    });
 
     const requestId = body.requestId ?? crypto.randomUUID();
     const controller = new AbortController();
@@ -511,6 +540,8 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
           modelId: chat.model,
           designTools: chat.tools ?? [],
           exportChatId: chat.id,
+          anonymousHostContext,
+          ...(locale ? { locale } : {}),
           abortSignal: controller.signal,
           onAssistantBuffer: (b) => {
             buffer = b;
