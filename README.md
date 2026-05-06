@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
-![Standalone UI Screenshot](./images/frame_generic_light.png)
+[![Standalone UI — click to watch demo](./images/frame_generic_light.png)](https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4)
 
 ### Quick start
 
@@ -22,12 +22,6 @@ Or run in the **foreground** (random free port; opens your browser):
 ```bash
 npx -p @alisaitteke/ttt ui
 ```
-
-## Demo
-
-Short demo of the bundled web UI (click to watch):
-
-[![Watch the demo](./images/frame_generic_light.png)](https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4)
 
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
 
