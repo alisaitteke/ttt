@@ -46,6 +46,15 @@
     },
     "connections": {
       "heading": "Messaging-Verbindungen",
+      "comingSoon": "Demnächst",
+      "brands": {
+        "telegram": "Telegram",
+        "signal": "Signal",
+        "discord": "Discord",
+        "slack": "Slack",
+        "messenger": "Messenger",
+        "microsoftTeams": "Microsoft Teams"
+      },
       "statusConnected": "Verbunden",
       "statusDisconnected": "Nicht verbunden",
       "setUp": "Einrichten",

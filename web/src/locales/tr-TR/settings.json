@@ -4,7 +4,7 @@
     "openSettings": "Ayarları aç",
     "done": "Tamam",
     "tabs": {
-      "appearance": "Görünüm",
+      "appearance": "Genel Ayarlar",
       "providers": "AI Modelleri",
       "connections": "İletişim araçları",
       "integrations": "Entegrasyonlar",
@@ -46,6 +46,15 @@
     },
     "connections": {
       "heading": "İletişim bağlantıları",
+      "comingSoon": "Yakında",
+      "brands": {
+        "telegram": "Telegram",
+        "signal": "Signal",
+        "discord": "Discord",
+        "slack": "Slack",
+        "messenger": "Messenger",
+        "microsoftTeams": "Microsoft Teams"
+      },
       "statusConnected": "Bağlı",
       "statusDisconnected": "Bağlı değil",
       "setUp": "Kur",

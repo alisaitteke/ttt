@@ -46,6 +46,15 @@
     },
     "connections": {
       "heading": "消息连接",
+      "comingSoon": "即将推出",
+      "brands": {
+        "telegram": "Telegram",
+        "signal": "Signal",
+        "discord": "Discord",
+        "slack": "Slack",
+        "messenger": "Messenger",
+        "microsoftTeams": "Microsoft Teams"
+      },
       "statusConnected": "已连接",
       "statusDisconnected": "未连接",
       "setUp": "设置",

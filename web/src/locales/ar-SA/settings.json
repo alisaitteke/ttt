@@ -46,6 +46,15 @@
     },
     "connections": {
       "heading": "اتصالات المراسلة",
+      "comingSoon": "قريبًا",
+      "brands": {
+        "telegram": "Telegram",
+        "signal": "Signal",
+        "discord": "Discord",
+        "slack": "Slack",
+        "messenger": "Messenger",
+        "microsoftTeams": "Microsoft Teams"
+      },
       "statusConnected": "متصل",
       "statusDisconnected": "غير متصل",
       "setUp": "إعداد",
