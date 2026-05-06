@@ -9,6 +9,16 @@
     "menuRename": "Yeniden adlandır",
     "menuArchive": "Arşivle",
     "menuUnarchive": "Arşivden çıkar",
-    "menuDelete": "Sil"
+    "menuDelete": "Sil",
+    "menuSelect": "Seç",
+    "selectDoneAria": "Seçim modundan çık",
+    "selectArchiveAria": "Seçilenleri arşivle",
+    "selectDeleteAria": "Seçilenleri sil",
+    "selectCheckboxAria": "Sohbeti seç: {title}",
+    "deleteConfirmTitle": "Bu sohbeti sil?",
+    "deleteConfirmTitleBulk": "{count} sohbeti sil?",
+    "deleteConfirmDescription": "Bu işlem geri alınamaz.",
+    "deleteConfirmCancel": "Vazgeç",
+    "deleteConfirmAction": "Sil"
   }
 }

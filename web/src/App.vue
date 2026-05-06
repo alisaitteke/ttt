@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, provide, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import Onboarding from './components/Onboarding.vue';
@@ -7,6 +7,13 @@ import ChatView from './components/ChatView.vue';
 import Sidebar from './components/Sidebar.vue';
 import SettingsDialog from './components/SettingsDialog.vue';
 import ShellBackgroundGlow from './components/ShellBackgroundGlow.vue';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useChatStore } from './stores/chat';
 import {
   apiListProviders,
@@ -31,6 +38,12 @@ function handleOpenSettings(tab?: 'appearance' | 'providers'): void {
   settingsOpen.value = true;
 }
 const sidebarMobileOpen = ref(false);
+const chatListSelectMode = ref(false);
+const chatListSelectedIds = ref<string[]>([]);
+
+const deleteConfirmOpen = ref(false);
+const deleteConfirmIsBulk = ref(false);
+const deleteConfirmSingleId = ref<string | null>(null);
 
 const { t } = useI18n();
 const chat = useChatStore();
@@ -38,6 +51,14 @@ const route = useRoute();
 const router = useRouter();
 
 const hasAnyKey = computed(() => providers.value.some((p) => p.hasApiKey));
+
+const deleteConfirmTitle = computed(() =>
+  deleteConfirmIsBulk.value
+    ? t('sidebar.deleteConfirmTitleBulk', {
+        count: chatListSelectedIds.value.length,
+      })
+    : t('sidebar.deleteConfirmTitle')
+);
 
 const hostPlatform = computed(() => status.value?.hostPlatform ?? 'linux');
 provide('hostPlatform', hostPlatform);
@@ -99,9 +120,88 @@ async function handleNewChat(): Promise<void> {
   await router.push({ name: 'chat', params: { id: created.id } });
 }
 
+function exitChatListSelectMode(): void {
+  chatListSelectMode.value = false;
+  chatListSelectedIds.value = [];
+}
+
+function enterChatListSelectModeWith(id: string): void {
+  chatListSelectMode.value = true;
+  chatListSelectedIds.value = [id];
+}
+
+function toggleChatListSelection(id: string): void {
+  const s = new Set(chatListSelectedIds.value);
+  if (s.has(id)) s.delete(id);
+  else s.add(id);
+  chatListSelectedIds.value = [...s];
+}
+
+function onChatListSelectEscape(e: KeyboardEvent): void {
+  if (e.key === 'Escape') exitChatListSelectMode();
+}
+
+watch(chatListSelectMode, (on) => {
+  if (on) window.addEventListener('keydown', onChatListSelectEscape);
+  else window.removeEventListener('keydown', onChatListSelectEscape);
+});
+
 async function handleSelect(id: string): Promise<void> {
   sidebarMobileOpen.value = false;
   await router.push({ name: 'chat', params: { id } });
+}
+
+async function handleBulkArchive(): Promise<void> {
+  const ids = chatListSelectedIds.value.filter((id) => {
+    const c = chat.chats.value.find((x) => x.id === id);
+    return c && !c.archived;
+  });
+  if (ids.length === 0) return;
+  await chat.setManyChatsArchived(ids);
+  exitChatListSelectMode();
+}
+
+async function handleBulkDelete(): Promise<void> {
+  const ids = [...chatListSelectedIds.value];
+  if (ids.length === 0) return;
+  const active = chat.activeChatId.value;
+  const hitActive = active !== null && ids.includes(active);
+  for (const id of ids) {
+    await chat.removeChat(id);
+  }
+  if (hitActive) await router.replace({ name: 'home' });
+  exitChatListSelectMode();
+}
+
+function requestDeleteChat(id: string): void {
+  deleteConfirmIsBulk.value = false;
+  deleteConfirmSingleId.value = id;
+  deleteConfirmOpen.value = true;
+}
+
+function requestBulkDelete(): void {
+  if (chatListSelectedIds.value.length === 0) return;
+  deleteConfirmIsBulk.value = true;
+  deleteConfirmSingleId.value = null;
+  deleteConfirmOpen.value = true;
+}
+
+function onDeleteConfirmOpenUpdate(open: boolean): void {
+  deleteConfirmOpen.value = open;
+  if (!open) {
+    deleteConfirmIsBulk.value = false;
+    deleteConfirmSingleId.value = null;
+  }
+}
+
+async function confirmPendingDelete(): Promise<void> {
+  const isBulk = deleteConfirmIsBulk.value;
+  const singleId = deleteConfirmSingleId.value;
+  deleteConfirmOpen.value = false;
+  deleteConfirmIsBulk.value = false;
+  deleteConfirmSingleId.value = null;
+  if (isBulk) await handleBulkDelete();
+  else if (singleId) await handleDelete(singleId);
 }
 
 async function handleDelete(id: string): Promise<void> {
@@ -129,6 +229,10 @@ function openMobileSidebar(): void {
 }
 
 onMounted(refresh);
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onChatListSelectEscape);
+});
 </script>
 
 <template>
@@ -144,19 +248,50 @@ onMounted(refresh);
     <ShellBackgroundGlow />
     <div class="relative z-10 min-h-screen">
       <Onboarding v-if="!hasAnyKey" @saved="refresh" />
-      <div v-else class="flex h-screen">
+      <div v-else class="flex h-screen min-h-0">
         <Sidebar
           v-model:mobile-open="sidebarMobileOpen"
           :chats="chat.chats.value"
           :active-chat-id="chat.activeChatId.value"
+          :select-mode="chatListSelectMode"
+          :selected-chat-ids="chatListSelectedIds"
           @new-chat="handleNewChat"
           @select="handleSelect"
           @rename="(id, title) => chat.rename(id, title)"
-          @delete="handleDelete"
+          @delete="requestDeleteChat"
           @archive="handleArchive"
           @unarchive="handleUnarchive"
           @open-settings="handleOpenSettings('appearance')"
+          @exit-select="exitChatListSelectMode"
+          @enter-select-with="enterChatListSelectModeWith"
+          @toggle-selected="toggleChatListSelection"
+          @bulk-archive="handleBulkArchive"
+          @bulk-delete="requestBulkDelete"
         />
+        <Dialog :open="deleteConfirmOpen" @update:open="onDeleteConfirmOpenUpdate">
+          <DialogContent class="gap-4 p-5 sm:max-w-md">
+            <DialogTitle class="text-base font-semibold leading-snug">
+              {{ deleteConfirmTitle }}
+            </DialogTitle>
+            <p class="text-sm text-muted-foreground">
+              {{ t('sidebar.deleteConfirmDescription') }}
+            </p>
+            <div class="flex flex-wrap justify-end gap-2">
+              <DialogClose as-child>
+                <Button type="button" variant="outline">
+                  {{ t('sidebar.deleteConfirmCancel') }}
+                </Button>
+              </DialogClose>
+              <Button
+                type="button"
+                variant="destructive"
+                @click="confirmPendingDelete"
+              >
+                {{ t('sidebar.deleteConfirmAction') }}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <ChatView
           class="min-w-0 flex-1"
           :providers="providers"

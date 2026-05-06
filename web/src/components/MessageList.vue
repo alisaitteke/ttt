@@ -12,6 +12,8 @@ const props = defineProps<{
   messages: ChatMessage[];
   busy: boolean;
   providers: ProviderInfo[];
+  /** Extra bottom padding so scroll content clears the overlapped composer dock. */
+  overlapComposerDock?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -47,8 +49,11 @@ function assistantLabel(m: ChatMessage): string {
 </script>
 
 <template>
-  <div ref="scroller" class="flex-1 overflow-y-auto">
-    <div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
+  <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
+    <div
+      class="mx-auto flex max-w-3xl flex-col gap-6 px-4 pt-6"
+      :class="props.overlapComposerDock ? 'pb-44 md:pb-52' : 'pb-6'"
+    >
       <div
         v-if="messages.length === 0"
         class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center"

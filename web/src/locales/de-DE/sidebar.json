@@ -9,6 +9,16 @@
     "menuRename": "Umbenennen",
     "menuArchive": "Archivieren",
     "menuUnarchive": "Archivierung aufheben",
-    "menuDelete": "Löschen"
+    "menuDelete": "Löschen",
+    "menuSelect": "Auswählen",
+    "selectDoneAria": "Auswahlmodus beenden",
+    "selectArchiveAria": "Ausgewählte Chats archivieren",
+    "selectDeleteAria": "Ausgewählte Chats löschen",
+    "selectCheckboxAria": "Chat auswählen: {title}",
+    "deleteConfirmTitle": "Diesen Chat löschen?",
+    "deleteConfirmTitleBulk": "{count} Chats löschen?",
+    "deleteConfirmDescription": "Dies kann nicht rückgängig gemacht werden.",
+    "deleteConfirmCancel": "Abbrechen",
+    "deleteConfirmAction": "Löschen"
   }
 }

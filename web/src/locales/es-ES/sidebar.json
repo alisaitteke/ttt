@@ -9,6 +9,16 @@
     "menuRename": "Renombrar",
     "menuArchive": "Archivar",
     "menuUnarchive": "Desarchivar",
-    "menuDelete": "Eliminar"
+    "menuDelete": "Eliminar",
+    "menuSelect": "Seleccionar",
+    "selectDoneAria": "Salir del modo de selección",
+    "selectArchiveAria": "Archivar chats seleccionados",
+    "selectDeleteAria": "Eliminar chats seleccionados",
+    "selectCheckboxAria": "Seleccionar chat: {title}",
+    "deleteConfirmTitle": "¿Eliminar este chat?",
+    "deleteConfirmTitleBulk": "¿Eliminar {count} chats?",
+    "deleteConfirmDescription": "Esta acción no se puede deshacer.",
+    "deleteConfirmCancel": "Cancelar",
+    "deleteConfirmAction": "Eliminar"
   }
 }

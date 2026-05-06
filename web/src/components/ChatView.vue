@@ -65,7 +65,7 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
 </script>
 
 <template>
-  <div class="flex h-screen flex-col">
+  <div class="flex h-full min-h-0 flex-col">
     <StatusBar
       :chat="activeChat"
       :totals="activeChat ? props.store.chatTotals.value : null"
@@ -89,46 +89,54 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
     </div>
 
     <template v-else>
-      <MessageList
-        :messages="props.store.messages"
-        :busy="props.store.sending.value"
-        :providers="props.providers"
-      />
+      <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <MessageList
+          overlap-composer-dock
+          :messages="props.store.messages"
+          :busy="props.store.sending.value"
+          :providers="props.providers"
+        />
 
-      <div
-        v-if="props.store.error.value"
-        class="border-t border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-xs text-destructive"
-      >
-        {{ props.store.error.value }}
-      </div>
-
-      <Composer
-        :busy="props.store.sending.value"
-        @send="(p) => props.store.send(p)"
-        @abort="props.store.abort"
-      >
-        <template #actions>
-          <div class="flex items-center gap-1.5">
-            <DesignToolSelector
-              :design-tools="props.designTools"
-              :creative-cloud-desktop-installed="props.creativeCloudDesktopInstalled"
-              :selected="activeChat.tools"
-              :disabled="props.store.sending.value"
-              @update:tools="onToolsChange"
-            />
-            <span class="h-4 w-px bg-border/60" />
-            <ModelSelector
-              :providers="props.providers"
-              :current-provider="activeChat.provider"
-              :current-model="activeChat.model"
-              :disabled="props.store.sending.value"
-              @update:provider="onProviderChange"
-              @update:model="onModelChange"
-              @open-settings="emit('open-settings', $event)"
-            />
+        <div
+          class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-stretch"
+        >
+          <div
+            v-if="props.store.error.value"
+            class="pointer-events-auto shrink-0 border-t border-destructive/40 bg-destructive/15 px-4 py-2 text-center text-xs text-destructive backdrop-blur-md supports-[backdrop-filter]:bg-destructive/10"
+          >
+            {{ props.store.error.value }}
           </div>
-        </template>
-      </Composer>
+
+          <Composer
+            class="pointer-events-auto w-full shrink-0"
+            :busy="props.store.sending.value"
+            @send="(p) => props.store.send(p)"
+            @abort="props.store.abort"
+          >
+            <template #actions>
+              <div class="flex items-center gap-1.5">
+                <DesignToolSelector
+                  :design-tools="props.designTools"
+                  :creative-cloud-desktop-installed="props.creativeCloudDesktopInstalled"
+                  :selected="activeChat.tools"
+                  :disabled="props.store.sending.value"
+                  @update:tools="onToolsChange"
+                />
+                <span class="h-4 w-px bg-border/60" />
+                <ModelSelector
+                  :providers="props.providers"
+                  :current-provider="activeChat.provider"
+                  :current-model="activeChat.model"
+                  :disabled="props.store.sending.value"
+                  @update:provider="onProviderChange"
+                  @update:model="onModelChange"
+                  @open-settings="emit('open-settings', $event)"
+                />
+              </div>
+            </template>
+          </Composer>
+        </div>
+      </div>
     </template>
 
     <Footer />

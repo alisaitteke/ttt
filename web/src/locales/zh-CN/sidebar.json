@@ -9,6 +9,16 @@
     "menuRename": "重命名",
     "menuArchive": "归档",
     "menuUnarchive": "取消归档",
-    "menuDelete": "删除"
+    "menuDelete": "删除",
+    "menuSelect": "选择",
+    "selectDoneAria": "退出选择模式",
+    "selectArchiveAria": "归档所选会话",
+    "selectDeleteAria": "删除所选会话",
+    "selectCheckboxAria": "选择会话：{title}",
+    "deleteConfirmTitle": "删除此会话？",
+    "deleteConfirmTitleBulk": "删除 {count} 个会话？",
+    "deleteConfirmDescription": "此操作无法撤销。",
+    "deleteConfirmCancel": "取消",
+    "deleteConfirmAction": "删除"
   }
 }

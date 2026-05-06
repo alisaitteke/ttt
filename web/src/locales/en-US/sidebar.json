@@ -9,6 +9,16 @@
     "menuRename": "Rename",
     "menuArchive": "Archive",
     "menuUnarchive": "Unarchive",
-    "menuDelete": "Delete"
+    "menuDelete": "Delete",
+    "menuSelect": "Select",
+    "selectDoneAria": "Exit selection mode",
+    "selectArchiveAria": "Archive selected chats",
+    "selectDeleteAria": "Delete selected chats",
+    "selectCheckboxAria": "Select chat: {title}",
+    "deleteConfirmTitle": "Delete this chat?",
+    "deleteConfirmTitleBulk": "Delete {count} chats?",
+    "deleteConfirmDescription": "This cannot be undone.",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmAction": "Delete"
   }
 }

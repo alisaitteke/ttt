@@ -9,6 +9,16 @@
     "menuRename": "إعادة تسمية",
     "menuArchive": "أرشفة",
     "menuUnarchive": "إلغاء الأرشفة",
-    "menuDelete": "حذف"
+    "menuDelete": "حذف",
+    "menuSelect": "تحديد",
+    "selectDoneAria": "الخروج من وضع التحديد",
+    "selectArchiveAria": "أرشفة المحادثات المحددة",
+    "selectDeleteAria": "حذف المحادثات المحددة",
+    "selectCheckboxAria": "تحديد المحادثة: {title}",
+    "deleteConfirmTitle": "حذف هذه المحادثة؟",
+    "deleteConfirmTitleBulk": "حذف {count} محادثات؟",
+    "deleteConfirmDescription": "لا يمكن التراجع عن هذا الإجراء.",
+    "deleteConfirmCancel": "إلغاء",
+    "deleteConfirmAction": "حذف"
   }
 }

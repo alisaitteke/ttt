@@ -163,6 +163,18 @@ export function useChatStore() {
     await loadChats();
   }
 
+  /** Archive multiple non-archived chats; one list refresh at the end. */
+  async function setManyChatsArchived(ids: string[]): Promise<void> {
+    const targets = chats.value
+      .filter((c) => ids.includes(c.id) && !c.archived)
+      .map((c) => c.id);
+    if (targets.length === 0) return;
+    for (const id of targets) {
+      await apiSetChatArchived(id, true);
+    }
+    await loadChats();
+  }
+
   function ensureAssistantMessage(): ChatMessage {
     const last = messages[messages.length - 1];
     if (last && last.role === 'assistant') return last;
@@ -279,6 +291,7 @@ export function useChatStore() {
     removeChat,
     rename,
     setChatArchived,
+    setManyChatsArchived,
     send,
     abort,
   };

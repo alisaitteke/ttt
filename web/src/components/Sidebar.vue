@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { ChevronDown, ChevronRight, Plus, Settings2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronRight, Plus, Settings2, Archive, Trash2, X } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import SidebarChatRow from '@/components/SidebarChatRow.vue';
 import type { ChatSummary } from '@/lib/api';
@@ -11,6 +11,8 @@ const props = defineProps<{
   chats: ChatSummary[];
   activeChatId: string | null;
   mobileOpen: boolean;
+  selectMode: boolean;
+  selectedChatIds: string[];
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +24,11 @@ const emit = defineEmits<{
   unarchive: [id: string];
   'update:mobileOpen': [open: boolean];
   'open-settings': [];
+  'exit-select': [];
+  'enter-select-with': [id: string];
+  'toggle-selected': [id: string];
+  'bulk-archive': [];
+  'bulk-delete': [];
 }>();
 
 const { t } = useI18n();
@@ -32,6 +39,15 @@ const archivedOpen = ref(false);
 
 const activeChats = computed(() => props.chats.filter((c) => !c.archived));
 const archivedChats = computed(() => props.chats.filter((c) => c.archived));
+
+const hasArchivableSelection = computed(() =>
+  props.selectedChatIds.some((id) => {
+    const c = props.chats.find((x) => x.id === id);
+    return c !== undefined && !c.archived;
+  })
+);
+
+const hasAnySelection = computed(() => props.selectedChatIds.length > 0);
 
 watch(
   () => [props.activeChatId, archivedChats.value] as const,
@@ -55,6 +71,7 @@ function onOverlayClick(): void {
 }
 
 function onEscape(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && props.selectMode) return;
   if (e.key === 'Escape' && props.mobileOpen) closeMobileNav();
 }
 
@@ -161,15 +178,49 @@ function openSettings(): void {
 
     <div class="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-2">
       <div class="shrink-0 px-1 pb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          class="h-10 w-full"
-          :aria-label="t('sidebar.newChatAria')"
-          @click="emit('new-chat')"
-        >
-          <Plus class="size-4" />
-        </Button>
+        <template v-if="!selectMode">
+          <Button
+            type="button"
+            variant="ghost"
+            class="h-10 w-full"
+            :aria-label="t('sidebar.newChatAria')"
+            @click="emit('new-chat')"
+          >
+            <Plus class="size-4" />
+          </Button>
+        </template>
+        <div v-else class="flex gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            class="size-10 shrink-0"
+            :aria-label="t('sidebar.selectDoneAria')"
+            @click="emit('exit-select')"
+          >
+            <X class="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            class="h-10 min-w-0 flex-1"
+            :disabled="!hasArchivableSelection"
+            :aria-label="t('sidebar.selectArchiveAria')"
+            @click="emit('bulk-archive')"
+          >
+            <Archive class="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            class="h-10 min-w-0 flex-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            :disabled="!hasAnySelection"
+            :aria-label="t('sidebar.selectDeleteAria')"
+            @click="emit('bulk-delete')"
+          >
+            <Trash2 class="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
@@ -192,8 +243,12 @@ function openSettings(): void {
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="false"
+              :select-mode="selectMode"
+              :selected="selectedChatIds.includes(chat.id)"
               :format-date="formatDate"
               @select="emit('select', $event)"
+              @enter-select-with="emit('enter-select-with', $event)"
+              @toggle-selected="emit('toggle-selected', $event)"
               @start-rename="startRenameFor(chat)"
               @update:rename-draft="renameDraft = $event"
               @rename="onRowRename"
@@ -226,8 +281,12 @@ function openSettings(): void {
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="true"
+              :select-mode="selectMode"
+              :selected="selectedChatIds.includes(chat.id)"
               :format-date="formatDate"
               @select="emit('select', $event)"
+              @enter-select-with="emit('enter-select-with', $event)"
+              @toggle-selected="emit('toggle-selected', $event)"
               @start-rename="startRenameFor(chat)"
               @update:rename-draft="renameDraft = $event"
               @rename="onRowRename"

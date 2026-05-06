@@ -264,9 +264,9 @@ function submit(): void {
 </script>
 
 <template>
-  <div class="border-t border-border bg-background px-4 py-3">
+  <div class="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-5">
     <div
-      class="relative mx-auto max-w-3xl rounded-2xl border border-border bg-card shadow-sm transition-shadow focus-within:ring-1 focus-within:ring-ring"
+      class="relative mx-auto max-w-3xl rounded-[1.35rem] border border-black/[0.06] bg-white/48 shadow-[0_12px_42px_-14px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 transition-[box-shadow,background-color,backdrop-filter] focus-within:border-black/[0.09] focus-within:bg-white/58 focus-within:shadow-[0_18px_52px_-14px_rgba(0,0,0,0.16)] focus-within:ring-1 focus-within:ring-[rgb(var(--marketing-glow-primary)_/_0.52)] dark:border-white/[0.09] dark:bg-black/48 dark:shadow-[0_14px_48px_-16px_rgba(0,0,0,0.55)] dark:focus-within:border-white/[0.12] dark:focus-within:bg-black/58 dark:focus-within:shadow-[0_20px_56px_-14px_rgba(0,0,0,0.65)]"
       @dragenter="onDragEnter"
       @dragleave="onDragLeave"
       @dragover="onDragOver"
@@ -274,7 +274,7 @@ function submit(): void {
     >
       <div
         v-if="fileDragActive || dropping"
-        class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-primary/70 bg-background/90 px-4 text-center backdrop-blur-[1px]"
+        class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 rounded-[1.35rem] border-2 border-dashed border-primary/55 bg-background/48 px-4 text-center backdrop-blur-lg supports-[backdrop-filter]:bg-background/38"
       >
         <p class="text-sm font-medium text-foreground">
           {{

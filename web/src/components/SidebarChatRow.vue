@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2 } from 'lucide-vue-next';
+import {
+  Archive,
+  ArchiveRestore,
+  CheckSquare,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from 'lucide-vue-next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +25,15 @@ const props = defineProps<{
   renameDraft: string;
   /** When true, row is in the archived list (show Unarchive). */
   inArchivedList: boolean;
+  selectMode: boolean;
+  selected: boolean;
   formatDate: (ts: number) => string;
 }>();
 
 const emit = defineEmits<{
   select: [id: string];
+  'enter-select-with': [id: string];
+  'toggle-selected': [id: string];
   'update:renameDraft': [v: string];
   'start-rename': [];
   rename: [id: string, title: string];
@@ -42,19 +53,43 @@ function cancelRename() {
   emit('cancel-rename');
 }
 
+function onRowClick(): void {
+  if (props.selectMode) emit('toggle-selected', props.chat.id);
+  else emit('select', props.chat.id);
+}
+
+function onCheckboxChange(): void {
+  emit('toggle-selected', props.chat.id);
+}
+
 const { t } = useI18n();
 
 const actionsAriaLabel = computed(() =>
   t('sidebar.chatActionsAria', { title: props.chat.title })
+);
+
+const checkboxAriaLabel = computed(() =>
+  t('sidebar.selectCheckboxAria', { title: props.chat.title })
 );
 </script>
 
 <template>
   <div
     class="group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
-    :class="{ 'bg-accent/45': chat.id === activeChatId }"
-    @click="emit('select', chat.id)"
+    :class="{
+      'bg-accent/45': !selectMode && chat.id === activeChatId,
+      'ring-1 ring-ring/40': selectMode && selected,
+    }"
+    @click="onRowClick"
   >
+    <input
+      v-if="selectMode"
+      type="checkbox"
+      class="size-4 shrink-0 rounded border border-input bg-background text-primary accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      :checked="selected"
+      :aria-label="checkboxAriaLabel"
+      @click.stop.prevent="onCheckboxChange"
+    />
     <div class="min-w-0 flex-1">
       <input
         v-if="isRenaming"
@@ -92,6 +127,10 @@ const actionsAriaLabel = computed(() =>
         <DropdownMenuItem class="gap-2" @select="emit('start-rename')">
           <Pencil class="size-3.5 shrink-0" />
           {{ t('sidebar.menuRename') }}
+        </DropdownMenuItem>
+        <DropdownMenuItem class="gap-2" @select="emit('enter-select-with', chat.id)">
+          <CheckSquare class="size-3.5 shrink-0" />
+          {{ t('sidebar.menuSelect') }}
         </DropdownMenuItem>
         <DropdownMenuItem
           v-if="!inArchivedList"
