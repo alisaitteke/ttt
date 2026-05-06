@@ -1,6 +1,6 @@
 # TTT — The Tortoise Trainer
 
-> A provider-driven **local MCP orchestrator**: one MCP server (and optional bundled web UI) unifies Adobe desktop automation, Docker Engine tooling, and other backends behind a shared tool registry.
+> A provider-driven **local MCP orchestrator**: one MCP server (and optional bundled web UI) unifies Adobe desktop automation, Docker Engine tooling, optional WhatsApp messaging via the UI, and other backends behind a shared tool registry.
 
 > **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc., Figma Inc., Docker Inc., or any other vendor whose product TTT integrates with.
 
@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
-TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, with more integrations following the same pattern.
+TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
 
 The architecture is **provider-driven**: each backend contributes MCP tools from its own tree under `src/providers/`; the server rolls them together in `src/providers/index.ts`.
 
@@ -24,6 +24,7 @@ The architecture is **provider-driven**: each backend contributes MCP tools from
 | **Figma** | 🚧 Scaffolded | `figma_` | Planned: REST API / plugin bridge |
 | **OpenClaw** | 🚧 Scaffolded | `openclaw_` | Planned: REST API integration |
 | **Hermes** | 🚧 Scaffolded | `hermes_` | Planned |
+| **WhatsApp** | ✅ Beta | `whatsapp_` | Messaging via [Baileys](https://github.com/WhiskeySockets/Baileys) in the **standalone UI** only (QR-linked session); see [WhatsApp (Messaging)](#whatsapp-messaging) |
 
 ## 🖥️ Standalone UI (no IDE required)
 
@@ -69,15 +70,34 @@ Pick any of the following on first launch — bring your own API key:
 1. Pick a provider and paste your API key.
 2. The key is validated against the provider, then stored in your OS **credential store** (macOS Keychain, Windows Credential Manager, or Linux Secret Service via libsecret). Chat history and non-secret settings still live in `~/.ttt/data.db` (SQLite). Keys never leave your machine.
 3. Type natural-language prompts. The UI streams the model's reply, runs tool calls in real time, and renders each tool call as an inspectable card (input + result).
-4. Switch provider, model, or **enabled backends** (Photoshop, After Effects, Docker, …) anytime from the composer bar — chats, costs and tool history are persisted across sessions.
+4. Switch provider, model, or **enabled backends** (Photoshop, After Effects, Docker, WhatsApp, …) anytime from the composer bar — chats, costs and tool history are persisted across sessions.
 
 **Optional:** you can supply API keys via environment variables instead of the UI (handy for automation). Each provider has a `TTT_<PROVIDER>_API_KEY` name, e.g. `TTT_ANTHROPIC_API_KEY`, `TTT_OPENAI_API_KEY`, `TTT_GOOGLE_API_KEY`, `TTT_OPENROUTER_API_KEY`, `TTT_GROQ_API_KEY`. When set, the variable takes precedence over the stored key for that provider.
 
 **Linux:** if `keytar` fails to load, install Secret Service build dependencies (for example on Debian/Ubuntu: `libsecret-1-dev`) and reinstall the package so native bindings can compile or download a matching prebuild.
 
+### WhatsApp (Messaging)
+
+WhatsApp is integrated as an optional **connection adapter** inside **`ttt-ui`**, not as a classic filesystem/process backend:
+
+1. Run the standalone UI (`npx -p @alisaitteke/ttt ui` or detached mode).
+2. Open **Settings → Messaging**, choose **WhatsApp**, and link your phone with **QR code** (same flow as WhatsApp “Linked devices”).
+3. Enable **WhatsApp** for the chats where you want `whatsapp_*` tools — alongside Photoshop, Docker, etc., if you like.
+
+**Important**
+
+- **Unofficial API.** Linking uses the same multi-device Web mechanism third-party libraries rely on; it is **not** supported by Meta for automation. Use responsibly and comply with [WhatsApp Terms of Service](https://www.whatsapp.com/legal).
+- **Beta.** Behavior may change; sessions may need reconnect after client/library updates.
+- **Session files** live under `${TTT_HOME}/connections/whatsapp/` (default `~/.ttt/connections/whatsapp/`).
+- **Extended read tools** (optional): In the WhatsApp dialog you can opt in to **Allow AI to read chats & contacts**. That exposes extra MCP tools (`whatsapp_list_chats`, `whatsapp_fetch_messages`, `whatsapp_search_contacts`) that read from the local Baileys cache — disable anytime.
+
+When you chat **inside this UI**, the server runs MCP tooling with an internal HTTP **bridge** so WhatsApp calls hit the live Baileys socket in the same process.
+
+**Cursor / Claude Desktop (stdio MCP only):** The registry includes `whatsapp_*`, but those handlers need `TTT_CONNECTION_BRIDGE_URL` and `TTT_CONNECTION_BRIDGE_SECRET` pointing at your UI session. That secret is generated **per UI server run** and is injected automatically when the UI spawns MCP — **not** when an IDE launches `npx @alisaitteke/ttt` alone. For WhatsApp, prefer chatting from **`ttt-ui`** unless you wire bridge credentials yourself in advanced setups.
+
 ### Per-chat backend selection
 
-The UI lets you pick which backends are active for each chat (Photoshop, After Effects, Docker, …). Combine them—for example Photoshop + Docker—or narrow to one backend. The agent only sees prefixes you enable for that conversation.
+The UI lets you pick which backends are active for each chat (Photoshop, After Effects, Docker, WhatsApp, …). Combine them—for example Photoshop + Docker—or narrow to one backend. The agent only sees prefixes you enable for that conversation.
 
 ### CLI flags
 
@@ -126,7 +146,7 @@ The main package entry (`npx @alisaitteke/ttt`) is the **MCP server over stdio**
 
 ### Notes
 
-- The agent only sees tools exposed by **TTT** for the prefixes active in that chat—for example `photoshop_*`, `aftereffects_*`, and `docker_*` / `dockerhub_*` / `ghcr_*` when Docker is enabled. Built-in shell, file, and web tools are disabled.
+- The agent only sees tools exposed by **TTT** for the prefixes active in that chat—for example `photoshop_*`, `aftereffects_*`, `docker_*` / `dockerhub_*` / `ghcr_*` when Docker is enabled, and `whatsapp_*` when WhatsApp is enabled (requires linked session in Messaging settings). Built-in shell, file, and web tools are disabled.
 - Tech stack: Vue 3 + Tailwind v4 + [shadcn-vue](https://www.shadcn-vue.com/) on the frontend; [Hono](https://hono.dev/) + the [Vercel AI SDK](https://sdk.vercel.ai/) on the backend. The agent loop talks to this same TTT MCP server over STDIO — the same code path as the IDE integration.
 
 ---
@@ -215,9 +235,10 @@ Save the project as intro.aep to Desktop.
 
 - ✅ **Provider-driven MCP**: Backends live under `src/providers/` (e.g. `adobe/photoshop/`, `docker/`) and register tools through a shared `Provider` interface; `src/providers/index.ts` is the single entry that composes the live server.
 - ✅ **Unified local orchestration**: One MCP process exposes every enabled backend; Cursor, Claude Desktop, and the standalone UI all hit the same registry and handlers.
-- ✅ **Standalone UI**: Local chat with model choice, persisted history, and **per-chat backend selection** (Photoshop, After Effects, Docker, …).
+- ✅ **Standalone UI**: Local chat with model choice, persisted history, and **per-chat backend selection** (Photoshop, After Effects, Docker, WhatsApp, …).
 - ✅ **Adobe desktop automation (supported apps)**: Photoshop via AppleScript (macOS) / COM (Windows) with ExtendScript execution; After Effects on macOS via JXA and file-backed script I/O; Windows After Effects via `afterfx.exe -r` (⚠️ untested). Auto-discovery with optional `PHOTOSHOP_PATH` / `AFTER_EFFECTS_PATH`.
 - ✅ **Docker Engine**: Full `docker_*` surface plus `dockerhub_*` and `ghcr_*` registry tools when the local daemon is running and reachable.
+- ✅ **WhatsApp (beta, UI-hosted)**: `whatsapp_*` tools for status, recipient checks, send text/image (public URL), and optional extended read tools with explicit UI consent; session via Baileys in **`ttt-ui`** with QR linking under Settings → Messaging.
 - ✅ **Photoshop-specific depth**: Undo/redo, history states, playing actions, and custom ExtendScript—all scoped to the Photoshop provider, not universal across every tool name.
 - 🚧 **More backends**: Illustrator, Figma, OpenClaw, and Hermes ship as scaffolds today; they follow the same provider pattern as Adobe and Docker.
 
@@ -280,10 +301,12 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Environment Variables
 
-- `TTT_HOME`: (Optional) Override the TTT data directory (default `~/.ttt`). Used for SQLite, exports, credential-relative paths, and the detached UI state file (`ui-background.json`). See [Running the UI in the background](#running-the-ui-in-the-background-detached).
+- `TTT_HOME`: (Optional) Override the TTT data directory (default `~/.ttt`). Used for SQLite, exports, credential-relative paths, WhatsApp adapter files under `connections/whatsapp/`, and the detached UI state file (`ui-background.json`). See [Running the UI in the background](#running-the-ui-in-the-background-detached).
 - `PHOTOSHOP_PATH`: (Optional) Specify custom Photoshop installation path
 - `AFTER_EFFECTS_PATH`: (Optional) Specify custom After Effects installation path
 - `LOG_LEVEL`: Logging level (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
+- `TTT_CONNECTION_BRIDGE_URL` / `TTT_CONNECTION_BRIDGE_SECRET`: Used by the WhatsApp MCP tools to POST to `${URL}/api/internal/connections/whatsapp/tools/...` with header `x-ttt-bridge-secret`. In normal use the **standalone UI sets these when it spawns MCP** for chat; you do not configure them manually. External MCP hosts (Cursor, Claude Desktop) do not receive the ephemeral secret unless you replicate the bridge yourself.
+- `TTT_WHATSAPP_EXTENDED_DATA_CONSENT`: Set to `1` by the UI’s agent when the user enabled extended read tools in **Settings → Messaging → WhatsApp**; registers `whatsapp_list_chats`, `whatsapp_fetch_messages`, and `whatsapp_search_contacts`. Not intended for manual editing.
 
 ## Tool Reference
 
@@ -412,6 +435,28 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 </details>
 
+<details>
+<summary><strong>WhatsApp tools</strong> (<code>whatsapp_*</code> prefix — beta, UI-linked session)</summary>
+
+Requires **`ttt-ui`** running with WhatsApp linked under **Settings → Messaging**. Use `whatsapp_status` before sends when the session might have dropped (there is no `whatsapp_ping`). Recipient `to` fields use **digits only** (country code, no `+` or spaces).
+
+### Session & recipients
+- `whatsapp_status` — Linked-session reachability (connection hint).
+- `whatsapp_check_recipient` — Ask WhatsApp whether a number is registered (`onWhatsApp`).
+
+### Messaging
+- `whatsapp_send_message` — Plain text to `to`.
+- `whatsapp_send_image` — One image or looping GIF from a **public** `http(s)` URL (host downloads media). Optional `caption`. For animated GIFs (e.g. Giphy), prefer `.mp4` or `.gif` URLs — not `.webp` previews, which send as a static image.
+
+### Extended read (optional UI consent)
+Only registered when **Allow AI to read chats & contacts** is enabled in the WhatsApp settings dialog (sets `TTT_WHATSAPP_EXTENDED_DATA_CONSENT=1` for the UI-spawned MCP child):
+
+- `whatsapp_list_chats` — Recent chats from local Baileys cache (may be incomplete until sync).
+- `whatsapp_fetch_messages` — Recent messages for a chat (`chatJid` or phone `to`).
+- `whatsapp_search_contacts` — Substring search over synced contacts.
+
+</details>
+
 ---
 
 ## Context Tracking
@@ -492,6 +537,16 @@ This helps assistants stay aligned with the current document, layer, or composit
 
 After Effects scripts use file-based I/O to return results, and this preference MUST be enabled.
 
+### WhatsApp
+
+#### Tools return “require the TTT web UI” or bridge errors
+
+WhatsApp runs inside the **`ttt-ui`** process. Link the device under **Settings → Messaging**, enable **WhatsApp** for that chat, and use the standalone UI (or supply bridge env vars yourself for advanced setups). A Cursor/Claude-only MCP spawn does **not** get the ephemeral bridge secret.
+
+#### QR fails or “outdated web client” / session rejected
+
+Update WhatsApp on your phone and this package when prompted; use **Disconnect & remove session** in the WhatsApp dialog and scan again if the session was rejected.
+
 ### General
 
 #### Debug Logging
@@ -563,9 +618,13 @@ src/
 │   ├── docker/                      # ✅ Docker Engine (docker_* + registry tools)
 │   │   ├── dispatch-docker-tool.ts  # Bridges embedded docker-mcp tools
 │   │   └── index.ts                 # Registers the Docker provider
+│   ├── whatsapp/                    # ✅ whatsapp_* MCP tools (HTTP bridge → UI Baileys)
+│   │   └── index.ts
 │   ├── figma/                       # 🚧 scaffold
 │   ├── openclaw/                    # 🚧 scaffold
 │   └── hermes/                      # 🚧 scaffold
+├── connections/                     # Long-lived adapters used by the UI server
+│   └── adapters/whatsapp/         # Baileys socket + tool invoke for whatsapp_*
 ├── ui/                              # Standalone Vue + Hono UI
 └── utils/
     └── logger.ts
@@ -584,3 +643,4 @@ MIT
 
 - Built with the [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)
 - Inspired by the Adobe Photoshop scripting community
+- WhatsApp linking uses the community [Baileys](https://github.com/WhiskeySockets/Baileys) library (not affiliated with Meta / WhatsApp)

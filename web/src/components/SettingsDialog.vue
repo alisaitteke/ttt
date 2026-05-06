@@ -195,11 +195,14 @@ function onIntegrationsChanged(): void {
         </DialogClose>
       </div>
 
-      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]">
-      <!-- List panel -->
-      <div v-if="panel === 'list'" class="space-y-4">
+      <div class="min-h-0 flex-1 flex flex-col overflow-hidden">
+      <!-- List panel: tab bar fixed, only panel body scrolls -->
+      <div
+        v-if="panel === 'list'"
+        class="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden"
+      >
         <div
-          class="flex rounded-lg border border-border bg-muted/40 p-1"
+          class="flex shrink-0 rounded-lg border border-border bg-muted/40 p-1"
           role="tablist"
           :aria-label="t('settings.title')"
         >
@@ -269,6 +272,9 @@ function onIntegrationsChanged(): void {
           </button>
         </div>
 
+        <div
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]"
+        >
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
         <h3 class="text-sm font-medium">{{ t('settings.providers.connectedHeading') }}</h3>
 
@@ -348,10 +354,14 @@ function onIntegrationsChanged(): void {
         <div v-show="settingsTab === 'appearance'" role="tabpanel">
           <SettingsAppearancePanel />
         </div>
+        </div>
       </div>
 
       <!-- Form panel -->
-      <div v-else class="space-y-4">
+      <div
+        v-else
+        class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]"
+      >
         <Button variant="ghost" size="sm" class="-ms-2 gap-1 px-2 text-muted-foreground" @click="cancelForm">
           <ArrowLeft class="size-4 rtl:scale-x-[-1]" />
           {{ t('settings.providers.back') }}
