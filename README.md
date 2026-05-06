@@ -1,9 +1,5 @@
 # TTT — The Tortoise Trainer
 
-> A provider-driven **local MCP orchestrator**: one MCP server (and optional bundled web UI) unifies Adobe desktop automation, Docker Engine tooling, optional WhatsApp messaging via the UI, and other backends behind a shared tool registry.
-
-> **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc., Figma Inc., Docker Inc., or any other vendor whose product TTT integrates with.
-
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/ttt.svg)](https://www.npmjs.com/package/@alisaitteke/ttt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
@@ -653,3 +649,7 @@ MIT
 - Built with the [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)
 - Inspired by the Adobe Photoshop scripting community
 - WhatsApp linking uses the community [Baileys](https://github.com/WhiskeySockets/Baileys) library (not affiliated with Meta / WhatsApp)
+
+> A provider-driven **local MCP orchestrator**: one MCP server (and optional bundled web UI) unifies Adobe desktop automation, Docker Engine tooling, optional WhatsApp messaging via the UI, and other backends behind a shared tool registry.
+
+> **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc., Figma Inc., Docker Inc., or any other vendor whose product TTT integrates with.
