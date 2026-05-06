@@ -175,8 +175,8 @@ function onIntegrationsChanged(): void {
     <DialogContent
       class="flex h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden p-5 sm:max-w-lg"
     >
-      <div class="mb-4 flex shrink-0 items-start justify-between gap-3">
-        <div class="flex min-h-[3.25rem] min-w-0 flex-1 flex-col justify-start">
+      <div class="mb-2 flex shrink-0 items-start justify-between gap-3">
+        <div class="flex min-w-0 flex-1 flex-col justify-start">
           <DialogTitle class="text-base font-semibold leading-snug">{{
             t('settings.title')
           }}</DialogTitle>
