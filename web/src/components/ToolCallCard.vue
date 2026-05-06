@@ -188,12 +188,13 @@ async function revealPath(path: string) {
   <div class="rounded-lg border border-border bg-card/50">
     <button
       type="button"
-      class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
+      class="flex w-full items-center gap-2 px-3 py-2 text-start text-xs"
       @click="toggleOpen"
     >
-      <component :is="open ? ChevronDown : ChevronRight" class="size-3 text-muted-foreground" />
-      <span class="font-mono text-foreground">{{ displayName }}</span>
-      <span class="ml-auto flex items-center gap-1.5">
+      <ChevronDown v-if="open" class="size-3 text-muted-foreground" />
+      <ChevronRight v-else class="size-3 text-muted-foreground rtl:scale-x-[-1]" />
+      <span class="font-mono bidi-plain text-foreground">{{ displayName }}</span>
+      <span class="ms-auto flex items-center gap-1.5">
         <Loader2 v-if="toolCall.status === 'pending'" class="size-3 animate-spin text-muted-foreground" />
         <CheckCircle2 v-else-if="toolCall.status === 'success'" class="size-3.5 text-emerald-500" />
         <XCircle v-else class="size-3.5 text-destructive" />
@@ -238,7 +239,7 @@ async function revealPath(path: string) {
                 toolCall.result?.ok &&
                 isPreviewableImagePath(p)
               "
-              class="pl-0.5"
+              class="ps-0.5"
             >
               <DropdownMenu v-if="!previewErrorByPath[p]" :modal="false">
                 <DropdownMenuTrigger as-child>
@@ -282,30 +283,28 @@ async function revealPath(path: string) {
         </div>
         <pre
           v-if="resultParsed.text.trim()"
-          class="max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug"
+          class="bidi-plain max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug"
         >{{ resultParsed.text }}</pre>
         <pre
           v-else-if="resultParsed.paths.length === 0"
-          class="max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug"
+          class="bidi-plain max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug"
         >{{ toolCall.result.content }}</pre>
       </div>
       <div>
         <button
           type="button"
-          class="flex w-full items-center gap-1.5 rounded-md py-1 text-left text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-muted/50"
+          class="flex w-full items-center gap-1.5 rounded-md py-1 text-start text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-muted/50"
           :aria-expanded="inputOpen"
           :aria-controls="toolInputSectionId"
           @click="toggleInputOpen"
         >
-          <component
-            :is="inputOpen ? ChevronDown : ChevronRight"
-            class="size-3 shrink-0 text-muted-foreground"
-          />
+          <ChevronDown v-if="inputOpen" class="size-3 shrink-0 text-muted-foreground" />
+          <ChevronRight v-else class="size-3 shrink-0 text-muted-foreground rtl:scale-x-[-1]" />
           <span>{{ t('toolCall.input') }}</span>
           <span class="sr-only"> — {{ t('toolCall.inputToggleAria') }}</span>
         </button>
         <div v-show="inputOpen" :id="toolInputSectionId">
-          <pre class="mt-2 overflow-x-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug">{{ formattedInput }}</pre>
+          <pre class="bidi-plain mt-2 overflow-x-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug">{{ formattedInput }}</pre>
         </div>
       </div>
     </div>

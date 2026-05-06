@@ -2,7 +2,7 @@
   "settings": {
     "title": "Configuración",
     "openSettings": "Abrir configuración",
-    "done": "Listo",
+    "done": "Hecho",
     "tabs": {
       "appearance": "Apariencia",
       "providers": "Proveedores"
@@ -12,6 +12,26 @@
       "system": "Sistema",
       "light": "Claro",
       "dark": "Oscuro"
+    },
+    "providers": {
+      "formSubtitleAdd": "Añadir proveedor",
+      "formSubtitleUpdate": "Actualizar clave API",
+      "connectedHeading": "Proveedores conectados",
+      "emptyState": "Aún no hay proveedores conectados. Añade una clave API para empezar.",
+      "getKey": "Obtener clave",
+      "updateKey": "Actualizar clave",
+      "removeKeyAria": "Eliminar clave API",
+      "manageKeyHint": "Abre la configuración para gestionar la clave API",
+      "providerLabel": "Proveedor",
+      "apiKeyLabel": "Clave API",
+      "pasteKeyPlaceholder": "Pega tu clave API…",
+      "getApiKeyLink": "Obtener una clave API",
+      "validateSave": "Validar y guardar",
+      "validating": "Validando…",
+      "invalidKey": "Clave no válida",
+      "back": "Atrás",
+      "addProvider": "Añadir proveedor",
+      "allConnected": "Todos los proveedores están conectados"
     }
   }
 }

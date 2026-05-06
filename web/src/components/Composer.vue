@@ -293,10 +293,10 @@ function submit(): void {
         :disabled="busy || disabled"
         :rows="2"
         :placeholder="t('composer.placeholder')"
-        class="block w-full resize-none border-0 bg-transparent pb-1 pl-4 pr-14 pt-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
+        class="block w-full resize-none border-0 bg-transparent pb-1 ps-4 pe-14 pt-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
         @keydown="handleKey"
       />
-      <div class="absolute right-2 top-2 z-10 flex items-center">
+      <div class="absolute end-2 top-2 z-10 flex items-center">
         <Button
           v-if="!busy"
           size="icon"
@@ -320,7 +320,7 @@ function submit(): void {
         <div class="flex min-w-0 flex-shrink-0 flex-wrap items-center gap-2">
           <slot name="actions" />
         </div>
-        <div class="ml-auto flex shrink-0 flex-wrap items-center gap-2">
+        <div class="ms-auto flex shrink-0 flex-wrap items-center gap-2">
           <Button
             type="button"
             size="icon"

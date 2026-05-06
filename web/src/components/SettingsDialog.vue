@@ -235,7 +235,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           {{ t('settings.providers.emptyState') }}
         </div>
 
-        <ul v-else class="max-h-[min(50vh,20rem)] space-y-2 overflow-y-auto pr-0.5">
+        <ul v-else class="max-h-[min(50vh,20rem)] space-y-2 overflow-y-auto pe-0.5">
           <li
             v-for="p in configuredProviders"
             :key="p.id"
@@ -293,8 +293,8 @@ async function removeKey(p: ProviderInfo): Promise<void> {
 
       <!-- Form panel -->
       <div v-else class="space-y-4">
-        <Button variant="ghost" size="sm" class="-ml-2 gap-1 px-2 text-muted-foreground" @click="cancelForm">
-          <ArrowLeft class="size-4" />
+        <Button variant="ghost" size="sm" class="-ms-2 gap-1 px-2 text-muted-foreground" @click="cancelForm">
+          <ArrowLeft class="size-4 rtl:scale-x-[-1]" />
           {{ t('settings.providers.back') }}
         </Button>
 

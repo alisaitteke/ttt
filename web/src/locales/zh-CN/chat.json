@@ -1,0 +1,103 @@
+{
+  "chatView": {
+    "selectPrompt": "从侧边栏选择一个会话，或开始新的会话。",
+    "newChat": "新会话",
+    "settings": "设置"
+  },
+  "chatErrors": {
+    "unknownStream": "未知错误"
+  },
+  "status": {
+    "openNavAria": "打开导航",
+    "newChatAria": "新会话",
+    "newChatLabel": "新会话",
+    "fallbackChatTitle": "新会话",
+    "usageHeading": "对话用量",
+    "costDash": "—",
+    "input": "输入",
+    "cachedRead": "缓存读取",
+    "cachedWrite": "缓存写入",
+    "output": "输出",
+    "reasoning": "推理",
+    "total": "合计",
+    "tokensUnit": "tok",
+    "unpricedHint": "部分轮次缺少定价数据，因此总费用可能被低估。",
+    "priceLessThanMicro": "< $0.0001"
+  },
+  "messages": {
+    "emptyHeading": "告诉助手您希望在设计工具中完成什么",
+    "emptyHint": "试试：「新建一个 1920×1080 的文档，把背景填充为浅蓝色，在正中添加文字『Hello』，并保存为桌面上的 hello.psd。」",
+    "you": "您",
+    "assistantFallback": "助手",
+    "assistantModelSep": " · ",
+    "busy": "正在处理…"
+  },
+  "composer": {
+    "placeholder": "描述您希望助手在设计工具中执行的操作…",
+    "dropCopyingOverlay": "正在复制到此电脑的 ~/.ttt/drops…",
+    "dropFileOverlay": "拖放文件以添加其路径",
+    "dropOverlayHint": "拖放文件夹时，浏览器会隐藏文件夹路径——请使用文件夹按钮。若文件路径被隐藏，我们会复制一份到 ~/.ttt/drops（仅限本地）。",
+    "attachFileTitle": "插入本地文件路径（打开文件选择器；文件不会上传）",
+    "attachFolderTitle": "插入本地文件夹路径（打开文件夹选择器；不会上传任何内容）",
+    "pathPrefixFile": "本地文件路径：",
+    "pathPrefixFolder": "本地文件夹路径：",
+    "folderDropTitle": "为何此处无法拖放文件夹",
+    "folderDropBody": "出于安全原因，网页浏览器在拖放目录时故意不会暴露磁盘上的真实文件夹路径——只会授予其内部文件的访问权限，而不提供完整路径。\n\n若操作系统在拖放时附带 file:// 链接（某些环境会如此），我们会自动使用。否则请使用文件夹按钮打开系统文件夹选择器，或拖放单个文件——若路径不可见，我们可以在 ~/.ttt/drops 下暂存副本。",
+    "folderDropPrimary": "选择文件夹…",
+    "multiFileDropTitle": "每次仅一个文件",
+    "multiFileDropBody": "请拖放单个文件以便读取或暂存其路径。若要使用整个文件夹路径，请改用文件夹按钮。",
+    "fileTooLargeTitle": "文件过大",
+    "fileTooLargeBody": "该文件超过 2 GB 暂存上限。请选择较小的文件，或在浏览器提供时使用 file:// 路径。",
+    "stageFailTitle": "无法暂存文件",
+    "stageFailUnexpectedBody": "保存到 ~/.ttt/drops 时发生意外错误。",
+    "pickerUnavailableTitle": "选择器不可用",
+    "pickerUnavailableBody": "此平台不支持本地文件与文件夹选择器。",
+    "pickFolderFailTitle": "无法选择文件夹",
+    "pickFileFailTitle": "无法选择文件",
+    "pickUnexpectedBody": "发生意外错误。"
+  },
+  "pathModal": {
+    "close": "关闭"
+  },
+  "model": {
+    "triggerAriaPrefix": "模型：",
+    "selectModelFallback": "选择模型",
+    "labelPrefix": "模型：",
+    "panelHeading": "模型",
+    "settingsLink": "设置",
+    "addApiKey": "添加 API 密钥",
+    "manageKeyTitle": "打开设置以管理 API 密钥"
+  },
+  "designTools": {
+    "panelHeading": "设计工具",
+    "selectAll": "全选",
+    "clearAll": "全部清除",
+    "explainNote": "每个选中的工具都会将其 MCP 能力加入模型可用范围。仅启用本会话实际需要的工具。",
+    "columnTool": "工具",
+    "columnStatus": "状态",
+    "countNone": "无工具",
+    "countAll": "全部设计工具",
+    "countSomePrefix": "工具：",
+    "notInstalledStatus": "未安装",
+    "installedStatus": "已安装",
+    "openCreativeCloud": "打开 Creative Cloud",
+    "openingCreativeCloud": "正在打开…",
+    "installLink": "安装",
+    "launchFailed": "启动失败"
+  },
+  "toolCall": {
+    "input": "输入",
+    "inputToggleAria": "显示或隐藏工具参数",
+    "result": "结果",
+    "statusPending": "待定",
+    "statusSuccess": "成功",
+    "statusError": "错误",
+    "revealDarwin": "在访达中显示",
+    "revealWin32": "在文件资源管理器中显示",
+    "revealFallback": "在文件管理器中显示",
+    "previewAlt": "已保存文件预览",
+    "previewUnavailable": "暂无预览",
+    "previewMenuDownload": "下载",
+    "previewMenuAria": "预览操作"
+  }
+}

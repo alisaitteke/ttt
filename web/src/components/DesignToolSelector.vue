@@ -150,7 +150,7 @@ function clearAll(): void {
             />
           </div>
         </div>
-        <span class="hidden min-w-0 flex-1 truncate text-left font-normal md:block">
+        <span class="hidden min-w-0 flex-1 truncate text-start font-normal md:block">
           {{ label }}
         </span>
         <ChevronDown class="size-3.5 shrink-0 opacity-50" />
@@ -210,7 +210,7 @@ function clearAll(): void {
             :key="tool.id"
             role="button"
             :tabindex="rowLocked(tool) ? -1 : 0"
-            class="grid w-full min-w-0 grid-cols-[2rem_minmax(0,2fr)_minmax(0,1fr)_9.5rem] items-center gap-x-3 border-b border-border/30 px-3 py-1.5 text-left text-sm outline-none last:border-b-0 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            class="grid w-full min-w-0 grid-cols-[2rem_minmax(0,2fr)_minmax(0,1fr)_9.5rem] items-center gap-x-3 border-b border-border/30 px-3 py-1.5 text-start text-sm outline-none last:border-b-0 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             :class="[
               rowLocked(tool) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent/80',
               selectedTools.includes(tool.id) && tool.available ? 'bg-accent/50' : '',

@@ -10,9 +10,16 @@ export const LOCALE_OPTIONS = [
   { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
   { code: 'de-DE', label: 'Deutsch', flag: '🇩🇪' },
   { code: 'tr-TR', label: 'Türkçe', flag: '🇹🇷' },
+  { code: 'ar-SA', label: 'العربية', flag: '🇸🇦' },
 ] as const;
 
 export type SupportedLocale = (typeof LOCALE_OPTIONS)[number]['code'];
+
+const RTL_LOCALE_CODES = new Set<SupportedLocale>(['ar-SA']);
+
+export function isRtlLocale(code: SupportedLocale): boolean {
+  return RTL_LOCALE_CODES.has(code);
+}
 
 export function isSupportedLocale(value: string): value is SupportedLocale {
   return LOCALE_OPTIONS.some((o) => o.code === value);

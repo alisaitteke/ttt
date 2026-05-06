@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "homeAria": "الرئيسية",
+    "newChatAria": "محادثة جديدة",
+    "emptyNone": "لا توجد محادثات بعد.",
+    "emptyActive": "لا توجد محادثات نشطة.",
+    "archived": "مؤرشفة",
+    "chatActionsAria": "إجراءات المحادثة: {title}",
+    "menuRename": "إعادة تسمية",
+    "menuArchive": "أرشفة",
+    "menuUnarchive": "إلغاء الأرشفة",
+    "menuDelete": "حذف"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "homeAria": "Startseite",
+    "newChatAria": "Neuer Chat",
+    "emptyNone": "Noch keine Chats.",
+    "emptyActive": "Keine aktiven Chats.",
+    "archived": "Archiviert",
+    "chatActionsAria": "Chat-Aktionen: {title}",
+    "menuRename": "Umbenennen",
+    "menuArchive": "Archivieren",
+    "menuUnarchive": "Archivierung aufheben",
+    "menuDelete": "Löschen"
+  }
+}

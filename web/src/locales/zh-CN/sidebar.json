@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "homeAria": "主页",
+    "newChatAria": "新会话",
+    "emptyNone": "暂无会话。",
+    "emptyActive": "暂无活跃会话。",
+    "archived": "已归档",
+    "chatActionsAria": "会话操作：{title}",
+    "menuRename": "重命名",
+    "menuArchive": "归档",
+    "menuUnarchive": "取消归档",
+    "menuDelete": "删除"
+  }
+}

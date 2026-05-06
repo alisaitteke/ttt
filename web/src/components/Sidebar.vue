@@ -116,9 +116,11 @@ function openSettings(): void {
   />
 
   <aside
-    class="fixed inset-y-0 left-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-r border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
+    class="fixed inset-y-0 start-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-e border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
     :class="
-      mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      mobileOpen
+        ? 'translate-x-0'
+        : 'max-md:-translate-x-full max-md:rtl:translate-x-full'
     "
   >
     <div
@@ -126,7 +128,7 @@ function openSettings(): void {
     >
       <RouterLink
         :to="{ name: 'home' }"
-        class="flex min-w-0 items-center gap-2 rounded-md p-1 -ml-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        class="flex min-w-0 items-center gap-2 rounded-md p-1 -ms-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         :aria-label="t('sidebar.homeAria')"
         @click="closeMobileNav"
       >
@@ -206,11 +208,11 @@ function openSettings(): void {
         <div v-if="archivedChats.length > 0" class="shrink-0 border-t border-border/40 pt-1">
           <button
             type="button"
-            class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left text-xs font-medium text-muted-foreground hover:bg-accent/40"
+            class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-start text-xs font-medium text-muted-foreground hover:bg-accent/40"
             :aria-expanded="archivedOpen"
             @click.stop="toggleArchivedSection"
           >
-            <ChevronRight v-if="!archivedOpen" class="size-3.5 shrink-0" />
+            <ChevronRight v-if="!archivedOpen" class="size-3.5 shrink-0 rtl:scale-x-[-1]" />
             <ChevronDown v-else class="size-3.5 shrink-0" />
             <span>{{ t('sidebar.archived') }}</span>
             <span class="tabular-nums text-[10px] opacity-80">({{ archivedChats.length }})</span>

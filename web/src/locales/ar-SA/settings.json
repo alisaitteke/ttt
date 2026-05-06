@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "title": "الإعدادات",
+    "openSettings": "فتح الإعدادات",
+    "done": "تم",
+    "tabs": {
+      "appearance": "المظهر",
+      "providers": "المزوِّدون"
+    },
+    "theme": {
+      "label": "السمة",
+      "system": "النظام",
+      "light": "فاتح",
+      "dark": "داكن"
+    },
+    "providers": {
+      "formSubtitleAdd": "إضافة مزوِّد",
+      "formSubtitleUpdate": "تحديث مفتاح واجهة برمجة التطبيقات",
+      "connectedHeading": "المزوِّدون المتصلون",
+      "emptyState": "لم يتصل أي مزوِّد بعد. أضف مفتاح واجهة برمجة تطبيقات للبدء.",
+      "getKey": "احصل على المفتاح",
+      "updateKey": "تحديث المفتاح",
+      "removeKeyAria": "إزالة مفتاح واجهة برمجة التطبيقات",
+      "manageKeyHint": "افتح الإعدادات لإدارة مفتاح واجهة برمجة التطبيقات",
+      "providerLabel": "المزوِّد",
+      "apiKeyLabel": "مفتاح واجهة برمجة التطبيقات",
+      "pasteKeyPlaceholder": "الصق مفتاح واجهة برمجة التطبيقات…",
+      "getApiKeyLink": "احصل على مفتاح واجهة برمجة التطبيقات",
+      "validateSave": "التحقق والحفظ",
+      "validating": "جارٍ التحقق…",
+      "invalidKey": "مفتاح غير صالح",
+      "back": "رجوع",
+      "addProvider": "إضافة مزوِّد",
+      "allConnected": "جميع المزوِّدين متصلون"
+    }
+  }
+}

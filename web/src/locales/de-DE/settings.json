@@ -12,6 +12,26 @@
       "system": "System",
       "light": "Hell",
       "dark": "Dunkel"
+    },
+    "providers": {
+      "formSubtitleAdd": "Anbieter hinzufügen",
+      "formSubtitleUpdate": "API-Schlüssel aktualisieren",
+      "connectedHeading": "Verbundene Anbieter",
+      "emptyState": "Noch keine Anbieter verbunden. Fügen Sie einen API-Schlüssel hinzu, um zu starten.",
+      "getKey": "Schlüssel holen",
+      "updateKey": "Schlüssel aktualisieren",
+      "removeKeyAria": "API-Schlüssel entfernen",
+      "manageKeyHint": "Einstellungen öffnen, um den API-Schlüssel zu verwalten",
+      "providerLabel": "Anbieter",
+      "apiKeyLabel": "API-Schlüssel",
+      "pasteKeyPlaceholder": "API-Schlüssel einfügen…",
+      "getApiKeyLink": "API-Schlüssel erhalten",
+      "validateSave": "Prüfen und speichern",
+      "validating": "Wird geprüft…",
+      "invalidKey": "Ungültiger Schlüssel",
+      "back": "Zurück",
+      "addProvider": "Anbieter hinzufügen",
+      "allConnected": "Alle Anbieter verbunden"
     }
   }
 }

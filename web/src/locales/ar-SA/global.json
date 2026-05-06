@@ -1,0 +1,16 @@
+{
+  "locale": {
+    "switchLabel": "اللغة",
+    "searchPlaceholder": "ابحث عن لغة…",
+    "noResults": "لم يُعثَر على لغة."
+  },
+  "app": {
+    "loading": "جارٍ التحميل…",
+    "documentTitle": "TTT - The Tortoise Trainer"
+  },
+  "footer": {
+    "github": "GitHub",
+    "by": "بواسطة",
+    "authorHandle": "alisaitteke"
+  }
+}

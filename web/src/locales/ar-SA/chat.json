@@ -1,0 +1,103 @@
+{
+  "chatView": {
+    "selectPrompt": "اختر محادثة من الشريط الجانبي أو ابدأ محادثة جديدة.",
+    "newChat": "محادثة جديدة",
+    "settings": "الإعدادات"
+  },
+  "chatErrors": {
+    "unknownStream": "خطأ غير معروف"
+  },
+  "status": {
+    "openNavAria": "فتح التنقّل",
+    "newChatAria": "محادثة جديدة",
+    "newChatLabel": "محادثة جديدة",
+    "fallbackChatTitle": "محادثة جديدة",
+    "usageHeading": "استخدام المحادثة",
+    "costDash": "—",
+    "input": "إدخال",
+    "cachedRead": "قراءة مخبأة",
+    "cachedWrite": "كتابة مخبأة",
+    "output": "إخراج",
+    "reasoning": "استدلال",
+    "total": "الإجمالي",
+    "tokensUnit": "رمز",
+    "unpricedHint": "تفتقد بعض المراحل بيانات التسعير، لذا قد يُقلِّل هذا الإجمالي من التقدير الفعلي للتكلفة.",
+    "priceLessThanMicro": "< $0.0001"
+  },
+  "messages": {
+    "emptyHeading": "أخبر المساعد بما تعمل عليه في أدوات التصميم لديك",
+    "emptyHint": "جرّب: \"أنشئ مستندًا جديدًا 1920×1080، املأ الخلفية بالأزرق الفاتح، أضِف النص 'Hello' في الوسط واحفظه باسم hello.psd على سطح المكتب لدي.\"",
+    "you": "أنت",
+    "assistantFallback": "المساعد",
+    "assistantModelSep": " · ",
+    "busy": "جارٍ العمل…"
+  },
+  "composer": {
+    "placeholder": "صف ما تريد أن يفعله الوكيل في أدوات التصميم لديك…",
+    "dropCopyingOverlay": "جارٍ النسخ إلى ~/.ttt/drops على هذا الجهاز…",
+    "dropFileOverlay": "أفلت ملفًا لإضافة مساره",
+    "dropOverlayHint": "تُخفى المتصفّحات مسارات المجلدات عند الإفلات—استخدم زر المجلد. إذا كان مسار ملف مخفيًا، ننسخ نسخة واحدة إلى ~/.ttt/drops (محليًا فقط).",
+    "attachFileTitle": "إدراج مسار ملف محلي (يفتح منتقي الملفات؛ لا يُرفع الملف)",
+    "attachFolderTitle": "إدراج مسار مجلد محلي (يفتح منتقي المجلدات؛ لا يُرفع شيء)",
+    "pathPrefixFile": "مسار الملف المحلي: ",
+    "pathPrefixFolder": "مسار المجلد المحلي: ",
+    "folderDropTitle": "سبب عدم عمل سحب المجلد هنا",
+    "folderDropBody": "لا تفرض المتصفحات عرض مسار المجلد الفعلي على القرص عند إفلاته—تمنح الوصول إلى الملفات داخله فقط دون مسار كامل (هذه قاعدة أمان).\n\nعندما يتضمن نظام التشغيل رابطًا file:// مع الإفلات (في بعض الإعدادات)، نستخدم ذلك تلقائيًا. وإلا فاستخدم زر المجلد لفتح منتقي مجلدات النظام، أو أفلت ملفًا واحدًا—يمكننا تجهيز نسخة تحت ~/.ttt/drops إذا كان المسار مخفيًا.",
+    "folderDropPrimary": "اختر مجلدًا…",
+    "multiFileDropTitle": "ملف واحد في كل مرة",
+    "multiFileDropBody": "أفلت ملفًا واحدًا كي نتمكن من قراءة مساره أو تجهيزه. لمسار مجلد كامل، استخدم زر المجلد بدلاً من ذلك.",
+    "fileTooLargeTitle": "الملف كبير جدًا",
+    "fileTooLargeBody": "يتجاوز هذا الملف حد التجهيز 2 GB. اختر ملفًا أصغر أو استخدم مسارًا file:// عند توفّره من المتصفح.",
+    "stageFailTitle": "تعذّر تجهيز الملف",
+    "stageFailUnexpectedBody": "حدث خطأ غير متوقع أثناء الحفظ إلى ~/.ttt/drops.",
+    "pickerUnavailableTitle": "منتقي الملفات غير متاح",
+    "pickerUnavailableBody": "منتقيات الملفات والمجلدات المحلية غير مدعومة على هذه المنصّة.",
+    "pickFolderFailTitle": "تعذّر اختيار المجلد",
+    "pickFileFailTitle": "تعذّر اختيار الملف",
+    "pickUnexpectedBody": "حدث خطأ غير متوقع."
+  },
+  "pathModal": {
+    "close": "إغلاق"
+  },
+  "model": {
+    "triggerAriaPrefix": "النموذج: ",
+    "selectModelFallback": "اختر نموذجًا",
+    "labelPrefix": "النموذج: ",
+    "panelHeading": "النماذج",
+    "settingsLink": "الإعدادات",
+    "addApiKey": "إضافة مفتاح واجهة برمجة تطبيقات",
+    "manageKeyTitle": "افتح الإعدادات لإدارة مفتاح واجهة برمجة التطبيقات"
+  },
+  "designTools": {
+    "panelHeading": "أدوات التصميم",
+    "selectAll": "تحديد الكل",
+    "clearAll": "مسح الكل",
+    "explainNote": "يضيف كل أداة مُحدَّدة قدرات MCP الخاص بها إلى ما يمكن للنموذج استخدامه. يُفعَّل الأدوات التي تحتاجها فقط لهذه المحادثة.",
+    "columnTool": "أداة",
+    "columnStatus": "الحالة",
+    "countNone": "لا أدوات",
+    "countAll": "جميع أدوات التصميم",
+    "countSomePrefix": "الأدوات: ",
+    "notInstalledStatus": "غير مثبّت",
+    "installedStatus": "مثبّت",
+    "openCreativeCloud": "فتح Creative Cloud",
+    "openingCreativeCloud": "جارٍ الفتح…",
+    "installLink": "تثبيت",
+    "launchFailed": "فشل التشغيل"
+  },
+  "toolCall": {
+    "input": "إدخال",
+    "inputToggleAria": "إظهار أو إخفاء وسائط الأداة",
+    "result": "النتيجة",
+    "statusPending": "قيد الانتظار",
+    "statusSuccess": "نجاح",
+    "statusError": "خطأ",
+    "revealDarwin": "عرض في Finder",
+    "revealWin32": "عرض في مستكشف الملفات",
+    "revealFallback": "إظهار في مدير الملفات",
+    "previewAlt": "معاينة الملف المحفوظ",
+    "previewUnavailable": "المعاينة غير متاحة",
+    "previewMenuDownload": "تنزيل",
+    "previewMenuAria": "إجراءات المعاينة"
+  }
+}

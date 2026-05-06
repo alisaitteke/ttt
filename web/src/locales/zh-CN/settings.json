@@ -12,6 +12,26 @@
       "system": "跟随系统",
       "light": "浅色",
       "dark": "深色"
+    },
+    "providers": {
+      "formSubtitleAdd": "添加提供商",
+      "formSubtitleUpdate": "更新 API 密钥",
+      "connectedHeading": "已连接的提供商",
+      "emptyState": "尚未连接任何提供商。添加 API 密钥以开始使用。",
+      "getKey": "获取密钥",
+      "updateKey": "更新密钥",
+      "removeKeyAria": "移除 API 密钥",
+      "manageKeyHint": "打开设置以管理 API 密钥",
+      "providerLabel": "提供商",
+      "apiKeyLabel": "API 密钥",
+      "pasteKeyPlaceholder": "粘贴您的 API 密钥…",
+      "getApiKeyLink": "获取 API 密钥",
+      "validateSave": "验证并保存",
+      "validating": "正在验证…",
+      "invalidKey": "无效的密钥",
+      "back": "返回",
+      "addProvider": "添加提供商",
+      "allConnected": "所有提供商已连接"
     }
   }
 }

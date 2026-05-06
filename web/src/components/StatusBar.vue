@@ -98,14 +98,14 @@ const costLabel = computed(() => {
 
               <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                 <span class="text-muted-foreground">{{ t('status.input') }}</span>
-                <span class="text-right tabular-nums">
+                <span class="text-end tabular-nums">
                   {{ formatTokens(totals!.inputTokens) }}
                   {{ t('status.tokensUnit') }} · {{ formatUsd(totals!.inputUsd) }}
                 </span>
 
                 <template v-if="totals!.cachedReadTokens > 0">
                   <span class="text-muted-foreground">{{ t('status.cachedRead') }}</span>
-                  <span class="text-right tabular-nums">
+                  <span class="text-end tabular-nums">
                     {{ formatTokens(totals!.cachedReadTokens) }}
                     {{ t('status.tokensUnit') }} · {{ formatUsd(totals!.cachedReadUsd) }}
                   </span>
@@ -113,21 +113,21 @@ const costLabel = computed(() => {
 
                 <template v-if="totals!.cachedWriteTokens > 0">
                   <span class="text-muted-foreground">{{ t('status.cachedWrite') }}</span>
-                  <span class="text-right tabular-nums">
+                  <span class="text-end tabular-nums">
                     {{ formatTokens(totals!.cachedWriteTokens) }}
                     {{ t('status.tokensUnit') }} · {{ formatUsd(totals!.cachedWriteUsd) }}
                   </span>
                 </template>
 
                 <span class="text-muted-foreground">{{ t('status.output') }}</span>
-                <span class="text-right tabular-nums">
+                <span class="text-end tabular-nums">
                   {{ formatTokens(totals!.outputTokens) }}
                   {{ t('status.tokensUnit') }} · {{ formatUsd(totals!.outputUsd) }}
                 </span>
 
                 <template v-if="totals!.reasoningTokens > 0">
                   <span class="text-muted-foreground">{{ t('status.reasoning') }}</span>
-                  <span class="text-right tabular-nums">
+                  <span class="text-end tabular-nums">
                     {{ formatTokens(totals!.reasoningTokens) }} {{ t('status.tokensUnit') }}
                   </span>
                 </template>

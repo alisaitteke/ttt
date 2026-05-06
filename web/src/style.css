@@ -5,6 +5,14 @@
   @import "vue-renderer-markdown/index.css";
 }
 
+@layer components {
+  .assistant-markdown :where(pre, code) {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: start;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -114,6 +122,12 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+  /** Keeps code paths, ASCII keys, and JSON blocks readable inside RTL shells. */
+  .bidi-plain {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: start;
   }
 }
 

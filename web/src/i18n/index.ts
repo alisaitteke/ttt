@@ -4,6 +4,7 @@ import { createI18n } from 'vue-i18n';
 import type { I18n } from 'vue-i18n';
 import {
   DEFAULT_LOCALE,
+  isRtlLocale,
   type SupportedLocale,
 } from '@/i18n/locale-options';
 
@@ -11,6 +12,7 @@ export type { SupportedLocale } from '@/i18n/locale-options';
 export {
   DEFAULT_LOCALE,
   LOCALE_OPTIONS,
+  isRtlLocale,
   isSupportedLocale,
   localeFlag,
   localeLabel,
@@ -34,6 +36,7 @@ export const i18n: I18n = createI18n({
 export function setI18nLanguage(instance: I18n, locale: SupportedLocale): void {
   (instance.global.locale as WritableComputedRef<string>).value = locale;
   document.documentElement.setAttribute('lang', locale);
+  document.documentElement.setAttribute('dir', isRtlLocale(locale) ? 'rtl' : 'ltr');
 }
 
 /** Use in non-Vue modules; `i18n.global.t` is typed as an incompatible union call signature. */

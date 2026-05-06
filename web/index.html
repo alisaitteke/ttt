@@ -1,6 +1,22 @@
 <!doctype html>
-<html lang="en-US">
+<html lang="en-US" dir="ltr">
   <head>
+    <script>
+      (function () {
+        try {
+          var LEGACY = { en: 'en-US', es: 'es-ES', zh: 'zh-CN', de: 'de-DE', tr: 'tr-TR', ar: 'ar-SA' };
+          var SUPPORTED = { 'en-US': 1, 'es-ES': 1, 'zh-CN': 1, 'de-DE': 1, 'tr-TR': 1, 'ar-SA': 1 };
+          var raw = localStorage.getItem('ttt-locale');
+          if (!raw) return;
+          var loc = LEGACY[raw] || raw;
+          if (!SUPPORTED[loc]) return;
+          document.documentElement.setAttribute('lang', loc);
+          document.documentElement.setAttribute('dir', loc === 'ar-SA' ? 'rtl' : 'ltr');
+        } catch (_) {
+          /* ignore */
+        }
+      })();
+    </script>
     <script>
       (function () {
         function apply() {

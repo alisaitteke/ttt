@@ -1,0 +1,103 @@
+{
+  "chatView": {
+    "selectPrompt": "Selecciona un chat en la barra lateral o inicia uno nuevo.",
+    "newChat": "Chat nuevo",
+    "settings": "Configuración"
+  },
+  "chatErrors": {
+    "unknownStream": "Error desconocido"
+  },
+  "status": {
+    "openNavAria": "Abrir navegación",
+    "newChatAria": "Chat nuevo",
+    "newChatLabel": "Chat nuevo",
+    "fallbackChatTitle": "Chat nuevo",
+    "usageHeading": "Uso de la conversación",
+    "costDash": "—",
+    "input": "Entrada",
+    "cachedRead": "Lectura en caché",
+    "cachedWrite": "Escritura en caché",
+    "output": "Salida",
+    "reasoning": "Razonamiento",
+    "total": "Total",
+    "tokensUnit": "tok",
+    "unpricedHint": "Algunos turnos carecen de datos de precio, por lo que este total puede subestimar el coste.",
+    "priceLessThanMicro": "< $0.0001"
+  },
+  "messages": {
+    "emptyHeading": "Di al asistente en qué quieres que trabaje en tus herramientas de diseño",
+    "emptyHint": "Prueba: «Crea un documento nuevo de 1920×1080, rellena el fondo de azul claro, añade el texto «Hola» en el centro y guárdalo como hello.psd en mi Escritorio.»",
+    "you": "Tú",
+    "assistantFallback": "Asistente",
+    "assistantModelSep": " · ",
+    "busy": "Trabajando…"
+  },
+  "composer": {
+    "placeholder": "Describe lo que quieres que haga el agente en tus herramientas de diseño…",
+    "dropCopyingOverlay": "Copiando en ~/.ttt/drops en este equipo…",
+    "dropFileOverlay": "Suelta un archivo para añadir su ruta",
+    "dropOverlayHint": "El navegador oculta las rutas de carpeta al soltar un directorio: usa el botón de carpeta. Si la ruta de un archivo está oculta, copiamos una vez en ~/.ttt/drops (solo local).",
+    "attachFileTitle": "Insertar ruta de archivo local (abre el selector de archivos; el archivo no se sube)",
+    "attachFolderTitle": "Insertar ruta de carpeta local (abre el selector de carpetas; no se sube nada)",
+    "pathPrefixFile": "Ruta de archivo local: ",
+    "pathPrefixFolder": "Ruta de carpeta local: ",
+    "folderDropTitle": "Por qué no funciona arrastrar una carpeta aquí",
+    "folderDropBody": "Los navegadores web no exponen deliberadamente la ruta real de la carpeta en tu disco al soltar un directorio: solo dan acceso a los archivos que hay dentro, sin una ruta completa (es una norma de seguridad).\n\nCuando el sistema operativo incluye un enlace file:// con el soltar (en algunos entornos sí ocurre), lo usamos automáticamente. Si no, usa el botón de carpeta para abrir el selector del sistema, o suelta un solo archivo: podemos preparar una copia bajo ~/.ttt/drops si la ruta está oculta.",
+    "folderDropPrimary": "Elegir carpeta…",
+    "multiFileDropTitle": "Un archivo cada vez",
+    "multiFileDropBody": "Suelta un solo archivo para que podamos leer o preparar su ruta. Para la ruta de una carpeta entera, usa el botón de carpeta.",
+    "fileTooLargeTitle": "Archivo demasiado grande",
+    "fileTooLargeBody": "Este archivo supera el límite de preparación de 2 GB. Elige un archivo más pequeño o usa una ruta file:// cuando el navegador la proporcione.",
+    "stageFailTitle": "No se ha podido preparar el archivo",
+    "stageFailUnexpectedBody": "Ha ocurrido un error inesperado al guardar en ~/.ttt/drops.",
+    "pickerUnavailableTitle": "Selector no disponible",
+    "pickerUnavailableBody": "Los selectores locales de archivos y carpetas no están admitidos en esta plataforma.",
+    "pickFolderFailTitle": "No se ha podido elegir la carpeta",
+    "pickFileFailTitle": "No se ha podido elegir el archivo",
+    "pickUnexpectedBody": "Ha ocurrido un error inesperado."
+  },
+  "pathModal": {
+    "close": "Cerrar"
+  },
+  "model": {
+    "triggerAriaPrefix": "Modelo: ",
+    "selectModelFallback": "Seleccionar modelo",
+    "labelPrefix": "Modelo: ",
+    "panelHeading": "Modelos",
+    "settingsLink": "Configuración",
+    "addApiKey": "Añadir clave API",
+    "manageKeyTitle": "Abre la configuración para gestionar la clave API"
+  },
+  "designTools": {
+    "panelHeading": "Herramientas de diseño",
+    "selectAll": "Seleccionar todo",
+    "clearAll": "Borrar selección",
+    "explainNote": "Cada herramienta seleccionada añade sus capacidades MCP a las que el modelo puede usar. Solo activa las herramientas que realmente necesites para este chat.",
+    "columnTool": "Herramienta",
+    "columnStatus": "Estado",
+    "countNone": "Sin herramientas",
+    "countAll": "Todas las herramientas de diseño",
+    "countSomePrefix": "Herramientas: ",
+    "notInstalledStatus": "No instalado",
+    "installedStatus": "Instalado",
+    "openCreativeCloud": "Abrir Creative Cloud",
+    "openingCreativeCloud": "Abriendo…",
+    "installLink": "Instalar",
+    "launchFailed": "No se ha podido iniciar"
+  },
+  "toolCall": {
+    "input": "Entrada",
+    "inputToggleAria": "Mostrar u ocultar argumentos de la herramienta",
+    "result": "Resultado",
+    "statusPending": "pendiente",
+    "statusSuccess": "correcto",
+    "statusError": "error",
+    "revealDarwin": "Mostrar en el Finder",
+    "revealWin32": "Mostrar en el Explorador de archivos",
+    "revealFallback": "Mostrar en el gestor de archivos",
+    "previewAlt": "Vista previa del archivo guardado",
+    "previewUnavailable": "Vista previa no disponible",
+    "previewMenuDownload": "Descargar",
+    "previewMenuAria": "Acciones de vista previa"
+  }
+}

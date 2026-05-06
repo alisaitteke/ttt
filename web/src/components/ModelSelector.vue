@@ -108,7 +108,7 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
             <button
               v-if="prov.hasApiKey && prov.apiKeyMasked"
               type="button"
-              class="max-w-[10rem] shrink-0 truncate text-left text-[10px] font-medium tabular-nums tracking-tight text-muted-foreground hover:text-foreground hover:underline"
+              class="max-w-[10rem] shrink-0 truncate text-start font-mono text-[10px] font-medium tabular-nums tracking-tight text-muted-foreground hover:text-foreground hover:underline bidi-plain"
               :title="t('model.manageKeyTitle')"
               @click.stop="openSettings"
             >
@@ -124,12 +124,12 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
               {{ t('model.addApiKey') }}
             </button>
           </div>
-          <div class="ml-3 mr-2 border-l border-border/50 py-1 pl-3">
+          <div class="ms-3 me-2 border-s border-border/50 py-1 ps-3">
             <button
               v-for="mdl in prov.models"
               :key="mdl.id"
               type="button"
-              class="flex w-full items-center gap-2 rounded-sm py-2 pr-3 pl-1 text-left text-sm"
+              class="flex w-full items-center gap-2 rounded-sm py-2 pe-3 ps-1 text-start text-sm"
               :class="[
                 prov.hasApiKey
                   ? 'hover:bg-accent'

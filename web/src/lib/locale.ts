@@ -10,8 +10,10 @@ export const LOCALE_STORAGE_KEY = 'ttt-locale';
 const LEGACY_LOCALE_MAP: Record<string, SupportedLocale> = {
   en: 'en-US',
   es: 'es-ES',
+  zh: 'zh-CN',
   de: 'de-DE',
   tr: 'tr-TR',
+  ar: 'ar-SA',
 };
 
 export function getStoredLocale(): SupportedLocale | null {

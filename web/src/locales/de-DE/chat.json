@@ -1,0 +1,103 @@
+{
+  "chatView": {
+    "selectPrompt": "Wählen Sie einen Chat in der Seitenleiste oder starten Sie einen neuen.",
+    "newChat": "Neuer Chat",
+    "settings": "Einstellungen"
+  },
+  "chatErrors": {
+    "unknownStream": "Unbekannter Fehler"
+  },
+  "status": {
+    "openNavAria": "Navigation öffnen",
+    "newChatAria": "Neuer Chat",
+    "newChatLabel": "Neuer Chat",
+    "fallbackChatTitle": "Neuer Chat",
+    "usageHeading": "Nutzung der Unterhaltung",
+    "costDash": "—",
+    "input": "Eingabe",
+    "cachedRead": "Zwischengespeichertes Lesen",
+    "cachedWrite": "Zwischengespeichertes Schreiben",
+    "output": "Ausgabe",
+    "reasoning": "Reasoning",
+    "total": "Gesamt",
+    "tokensUnit": "Tok.",
+    "unpricedHint": "Für einige Runden fehlen Preisangaben; diese Summe kann die Kosten daher unterschätzen.",
+    "priceLessThanMicro": "< 0,0001 $"
+  },
+  "messages": {
+    "emptyHeading": "Sagen Sie dem Assistenten, woran er in Ihren Design-Tools arbeiten soll",
+    "emptyHint": "Beispiel: „Legen Sie ein neues 1920×1080-Dokument an, füllen Sie den Hintergrund hellblau, setzen Sie den Text ‚Hello‘ mittig und speichern Sie es als hello.psd auf dem Schreibtisch.“",
+    "you": "Sie",
+    "assistantFallback": "Assistent",
+    "assistantModelSep": " · ",
+    "busy": "Arbeitet…"
+  },
+  "composer": {
+    "placeholder": "Beschreiben Sie, was der Agent in Ihren Design-Tools tun soll…",
+    "dropCopyingOverlay": "Wird nach ~/.ttt/drops auf diesem Computer kopiert…",
+    "dropFileOverlay": "Datei ablegen, um ihren Pfad hinzuzufügen",
+    "dropOverlayHint": "Ordnerpfade blendet der Browser beim Ablegen eines Verzeichnisses aus – verwenden Sie den Ordner-Button. Wenn ein Dateipfad verborgen ist, kopieren wir einmal nach ~/.ttt/drops (nur lokal).",
+    "attachFileTitle": "Lokalen Dateipfad einfügen (öffnet eine Dateiauswahl; die Datei wird nicht hochgeladen)",
+    "attachFolderTitle": "Lokalen Ordnerpfad einfügen (öffnet eine Ordnerauswahl; es wird nichts hochgeladen)",
+    "pathPrefixFile": "Lokaler Dateipfad: ",
+    "pathPrefixFolder": "Lokaler Ordnerpfad: ",
+    "folderDropTitle": "Warum Ordner per Drag & Drop hier nicht funktioniert",
+    "folderDropBody": "Web-Browser liefern beim Ablegen eines Ordners absichtlich keinen echten Pfad auf Ihrer Festplatte – sie erteilen nur Zugriff auf darin enthaltene Dateien, ohne einen vollständigen Pfad (Sicherheitsregel).\n\nWenn das Betriebssystem beim Ablegen einen file://-Link mitschickt (in manchen Setups), nutzen wir das automatisch. Andernfalls den Ordner-Button verwenden, um die System-Ordnerauswahl zu öffnen, oder eine einzelne Datei ablegen – wir können eine Kopie unter ~/.ttt/drops ablegen, wenn der Pfad verborgen ist.",
+    "folderDropPrimary": "Ordner wählen…",
+    "multiFileDropTitle": "Nur eine Datei gleichzeitig",
+    "multiFileDropBody": "Legen Sie eine einzelne Datei ab, damit wir ihren Pfad lesen oder zwischenspeichern können. Für einen ganzen Ordnerpfad verwenden Sie stattdessen den Ordner-Button.",
+    "fileTooLargeTitle": "Datei zu groß",
+    "fileTooLargeBody": "Diese Datei übersteigt das 2-GB-Limit für die Zwischenspeicherung. Wählen Sie eine kleinere Datei oder verwenden Sie einen file://-Pfad, wenn der Browser einen bereitstellt.",
+    "stageFailTitle": "Datei konnte nicht zwischengespeichert werden",
+    "stageFailUnexpectedBody": "Beim Speichern nach ~/.ttt/drops ist ein unerwarteter Fehler aufgetreten.",
+    "pickerUnavailableTitle": "Auswahl nicht verfügbar",
+    "pickerUnavailableBody": "Lokale Datei- und Ordnerauswahl wird auf dieser Plattform nicht unterstützt.",
+    "pickFolderFailTitle": "Ordner konnte nicht gewählt werden",
+    "pickFileFailTitle": "Datei konnte nicht gewählt werden",
+    "pickUnexpectedBody": "Es ist ein unerwarteter Fehler aufgetreten."
+  },
+  "pathModal": {
+    "close": "Schließen"
+  },
+  "model": {
+    "triggerAriaPrefix": "Modell: ",
+    "selectModelFallback": "Modell wählen",
+    "labelPrefix": "Modell: ",
+    "panelHeading": "Modelle",
+    "settingsLink": "Einstellungen",
+    "addApiKey": "API-Schlüssel hinzufügen",
+    "manageKeyTitle": "Einstellungen öffnen, um den API-Schlüssel zu verwalten"
+  },
+  "designTools": {
+    "panelHeading": "Design-Tools",
+    "selectAll": "Alle auswählen",
+    "clearAll": "Alle abwählen",
+    "explainNote": "Jedes ausgewählte Tool ergänzt die MCP-Fähigkeiten des Modells. Aktivieren Sie nur Tools, die Sie für diesen Chat wirklich brauchen.",
+    "columnTool": "Tool",
+    "columnStatus": "Status",
+    "countNone": "Keine Tools",
+    "countAll": "Alle Design-Tools",
+    "countSomePrefix": "Tools: ",
+    "notInstalledStatus": "Nicht installiert",
+    "installedStatus": "Installiert",
+    "openCreativeCloud": "Creative Cloud öffnen",
+    "openingCreativeCloud": "Wird geöffnet…",
+    "installLink": "Installieren",
+    "launchFailed": "Start fehlgeschlagen"
+  },
+  "toolCall": {
+    "input": "Eingabe",
+    "inputToggleAria": "Tool-Argumente ein- oder ausblenden",
+    "result": "Ergebnis",
+    "statusPending": "ausstehend",
+    "statusSuccess": "Erfolg",
+    "statusError": "Fehler",
+    "revealDarwin": "Im Finder anzeigen",
+    "revealWin32": "Im Explorer anzeigen",
+    "revealFallback": "Im Dateimanager anzeigen",
+    "previewAlt": "Vorschau der gespeicherten Datei",
+    "previewUnavailable": "Keine Vorschau verfügbar",
+    "previewMenuDownload": "Herunterladen",
+    "previewMenuAria": "Vorschau-Aktionen"
+  }
+}
