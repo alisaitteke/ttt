@@ -1,7 +1,7 @@
 {
   "name": "@alisaitteke/ttt",
   "version": "0.1.0",
-  "description": "TTT (The Tortoise Trainer) — provider-driven MCP server for local design tools (Photoshop today; Adobe CC, Figma and more next)",
+  "description": "TTT (The Tortoise Trainer) — provider-driven local MCP orchestrator with optional bundled web UI for Adobe automation, Docker, and more backends (scaffolded integrations: Figma, OpenClaw, Hermes)",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -36,8 +36,11 @@
     "mcp",
     "model-context-protocol",
     "design-automation",
+    "local-automation",
+    "orchestrator",
     "ai",
     "photoshop",
+    "docker",
     "figma",
     "after-effects",
     "creative-cloud",

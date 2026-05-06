@@ -1,24 +1,25 @@
 # TTT — The Tortoise Trainer
 
-> A provider-driven MCP server for **local design tools**. Photoshop and After Effects today; Adobe CC, Figma, OpenClaw and more next.
+> A provider-driven **local MCP orchestrator**: one MCP server (and optional bundled web UI) unifies Adobe desktop automation, Docker Engine tooling, and other backends behind a shared tool registry.
 
-> **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc., Figma Inc., or any other vendor whose product TTT integrates with.
+> **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc., Figma Inc., Docker Inc., or any other vendor whose product TTT integrates with.
 
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/ttt.svg)](https://www.npmjs.com/package/@alisaitteke/ttt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
-TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over the design tools sitting on your local machine.
+TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, with more integrations following the same pattern.
 
-The architecture is **provider-driven**: each design tool (Photoshop, Illustrator, After Effects, Figma, OpenClaw, Hermes, ...) lives in its own folder under `src/providers/` and contributes its own MCP tools.
+The architecture is **provider-driven**: each backend contributes MCP tools from its own tree under `src/providers/`; the server rolls them together in `src/providers/index.ts`.
 
-## Supported Design Tools
+## Supported tools & backends
 
 | Provider | Status | Tool Prefix | Notes |
 |---|---|---|---|
 | **Photoshop** | ✅ Full | `photoshop_` | 50+ tools covering document/layer/text/filter/adjustment operations |
 | **After Effects** | ✅ Partial | `aftereffects_` | ~18 tools for composition/layer management, animation basics |
+| **Docker** | ✅ Full | `docker_` (+ `dockerhub_*`, `ghcr_*`) | Containers, images, networks, volumes, Compose, exec, system, and registry tooling against a local daemon |
 | **Illustrator** | 🚧 Scaffolded | `illustrator_` | Provider structure in place, tools not yet implemented |
 | **Figma** | 🚧 Scaffolded | `figma_` | Planned: REST API / plugin bridge |
 | **OpenClaw** | 🚧 Scaffolded | `openclaw_` | Planned: REST API integration |
@@ -26,7 +27,7 @@ The architecture is **provider-driven**: each design tool (Photoshop, Illustrato
 
 ## 🖥️ Standalone UI (no IDE required)
 
-Don't want to wire this into Claude Desktop or Cursor? The same package ships a fully local web UI that lets you chat with an AI model and drive your design tools through this MCP server underneath.
+Don't want to wire this into Claude Desktop or Cursor? The same package ships a fully local web UI that lets you chat with an AI model and invoke TTT MCP tools—including Adobe automation and Docker—through the server underneath.
 
 ![Standalone UI Screenshot](./images/frame_generic_light.png)
 
@@ -54,11 +55,11 @@ Pick any of the following on first launch — bring your own API key:
 1. Pick a provider and paste your API key.
 2. The key is validated against the provider, then stored locally at `~/.ttt/data.db` (SQLite, `chmod 600`). It never leaves your machine.
 3. Type natural-language prompts. The UI streams the model's reply, runs tool calls in real time, and renders each tool call as an inspectable card (input + result).
-4. Switch provider, model, or **design tools** anytime from the composer bar — chats, costs and tool history are persisted across sessions.
+4. Switch provider, model, or **enabled backends** (Photoshop, After Effects, Docker, …) anytime from the composer bar — chats, costs and tool history are persisted across sessions.
 
-### Per-chat tool selection
+### Per-chat backend selection
 
-The UI lets you pick which design tools are active for each chat. Select Photoshop + After Effects together, or just Photoshop, or experiment with combinations. The agent only sees the tools you've enabled.
+The UI lets you pick which backends are active for each chat (Photoshop, After Effects, Docker, …). Combine them—for example Photoshop + Docker—or narrow to one backend. The agent only sees prefixes you enable for that conversation.
 
 ### CLI flags
 
@@ -70,7 +71,7 @@ ui [--port 5174] [--host 127.0.0.1] [--no-open]
 
 ### Notes
 
-- The agent only sees tools exposed by **TTT** (today: `photoshop_*` and `aftereffects_*` tools) — built-in shell, file and web tools are disabled.
+- The agent only sees tools exposed by **TTT** for the prefixes active in that chat—for example `photoshop_*`, `aftereffects_*`, and `docker_*` / `dockerhub_*` / `ghcr_*` when Docker is enabled. Built-in shell, file, and web tools are disabled.
 - Tech stack: Vue 3 + Tailwind v4 + [shadcn-vue](https://www.shadcn-vue.com/) on the frontend; [Hono](https://hono.dev/) + the [Vercel AI SDK](https://sdk.vercel.ai/) on the backend. The agent loop talks to this same TTT MCP server over STDIO — the same code path as the IDE integration.
 
 ---
@@ -157,14 +158,13 @@ Save the project as intro.aep to Desktop.
 
 ## Features
 
-- ✅ **Provider-driven architecture**: MCP tools are grouped by design tool; each provider contributes its own tools via `src/providers/<id>/index.ts`
-- ✅ **Cross-platform**: Photoshop on Windows (COM) and macOS (AppleScript); After Effects on macOS (JXA) and Windows (`afterfx.exe -r`, untested)
-- ✅ **Multi-tool support**: Photoshop + After Effects exposed in a single MCP server; per-chat tool selection in the standalone UI
-- ✅ **ExtendScript/JXA API**: Universal compatibility via AppleScript/COM automation (Photoshop) and JXA/file I/O (After Effects)
-- ✅ **Auto-detection**: Automatically finds installed Adobe apps; custom paths via env vars
-- ✅ **History control**: Undo/redo operations, view history states (Photoshop)
-- ✅ **Context tracking**: Every tool returns document/layer state for AI awareness
-- ✅ **Actions & scripting**: Play recorded actions, execute custom ExtendScript (Photoshop)
+- ✅ **Provider-driven MCP**: Backends live under `src/providers/` (e.g. `adobe/photoshop/`, `docker/`) and register tools through a shared `Provider` interface; `src/providers/index.ts` is the single entry that composes the live server.
+- ✅ **Unified local orchestration**: One MCP process exposes every enabled backend; Cursor, Claude Desktop, and the standalone UI all hit the same registry and handlers.
+- ✅ **Standalone UI**: Local chat with model choice, persisted history, and **per-chat backend selection** (Photoshop, After Effects, Docker, …).
+- ✅ **Adobe desktop automation (supported apps)**: Photoshop via AppleScript (macOS) / COM (Windows) with ExtendScript execution; After Effects on macOS via JXA and file-backed script I/O; Windows After Effects via `afterfx.exe -r` (⚠️ untested). Auto-discovery with optional `PHOTOSHOP_PATH` / `AFTER_EFFECTS_PATH`.
+- ✅ **Docker Engine**: Full `docker_*` surface plus `dockerhub_*` and `ghcr_*` registry tools when the local daemon is running and reachable.
+- ✅ **Photoshop-specific depth**: Undo/redo, history states, playing actions, and custom ExtendScript—all scoped to the Photoshop provider, not universal across every tool name.
+- 🚧 **More backends**: Illustrator, Figma, OpenClaw, and Hermes ship as scaffolds today; they follow the same provider pattern as Adobe and Docker.
 
 ## Installation
 
@@ -360,15 +360,15 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Context Tracking
 
-Each tool returns comprehensive context information about the current state, including:
+Where a provider attaches it, responses include richer operational context (not every `docker_*` reply mirrors Photoshop document payloads). Examples:
 
-- **Document Info**: Name, dimensions, resolution, color mode, layer count (Photoshop)
-- **Active Layer Info**: Name, type, opacity, blend mode, visibility, lock state (Photoshop)
-- **Selection State**: Whether a selection is active (Photoshop)
-- **Composition Info**: Name, dimensions, frame rate, duration (After Effects)
-- **Operation Result**: Specific details about what was changed
+- **Document info**: Name, dimensions, resolution, color mode, layer count (Photoshop)
+- **Active layer**: Name, type, opacity, blend mode, visibility, lock state (Photoshop)
+- **Selection state**: Whether a selection is active (Photoshop)
+- **Composition**: Name, dimensions, frame rate, duration (After Effects)
+- **Operation result**: What changed for this invocation
 
-This allows AI assistants to maintain awareness of which document/layer/composition they're working on across multiple commands.
+This helps assistants stay aligned with the current document, layer, or composition across multiple calls when that data is available.
 
 ---
 
@@ -475,7 +475,7 @@ npm run format
 
 ## Architecture
 
-TTT is **provider-driven**: the MCP server core knows nothing about any specific design tool. Each provider lives in its own folder, owns its detection / connection / lifecycle, and registers its MCP tools through a shared `Provider` interface. Adding a new design tool is a matter of dropping a folder under `src/providers/` and listing it in `src/providers/index.ts`.
+TTT is **provider-driven**: the MCP server core is backend-agnostic. Each provider owns detection, connections, lifecycle, and tool registration through the shared `Provider` interface—whether that is Adobe apps, Docker, or a future REST bridge. Adding a backend is dropping a folder under `src/providers/` and listing it in `src/providers/index.ts`.
 
 ```
 src/
@@ -504,6 +504,9 @@ src/
 │   │       ├── extendscript.ts      # AE ExtendScript snippets
 │   │       ├── tools/               # aftereffects_* MCP tools
 │   │       └── index.ts             # registers the After Effects provider
+│   ├── docker/                      # ✅ Docker Engine (docker_* + registry tools)
+│   │   ├── dispatch-docker-tool.ts  # Bridges embedded docker-mcp tools
+│   │   └── index.ts                 # Registers the Docker provider
 │   ├── figma/                       # 🚧 scaffold
 │   ├── openclaw/                    # 🚧 scaffold
 │   └── hermes/                      # 🚧 scaffold
