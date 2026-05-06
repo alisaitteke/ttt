@@ -9,6 +9,7 @@ import getPort from 'get-port';
 import open from 'open';
 import { getTttHomeDir } from '@ttt/lib/ttt-paths.js';
 import { startUIServer } from '@ttt/ui/server.js';
+import { printAsciiLogo } from '@ttt/utils/logo.js';
 import { Logger } from '@ttt/utils/logger.js';
 
 const BG_CHILD_ENV = 'TTT_UI_BACKGROUND_CHILD';
@@ -114,7 +115,7 @@ function spawnDetached(): never {
     process.stderr.write(
       `${c.yellow}!${c.reset} ttt ui is already running (PID ${existing.pid})\n` +
       `  ${c.dim}${existing.url}${c.reset}\n\n` +
-      `  Run ${c.bold}ttt ui --stop${c.reset} to stop it.\n\n`
+      `  Run ${c.bold}ttt stop${c.reset} to stop it.\n\n`
     );
     process.exit(1);
   }
@@ -145,8 +146,8 @@ function spawnDetached(): never {
     `  ${c.dim}State${c.reset}   ${c.cyan}${statePath}${c.reset}\n\n` +
     `  ${c.dim}The URL will be written to state file when ready.${c.reset}\n\n` +
     `  ${c.dim}────────────────────────────────────────────${c.reset}\n\n` +
-    `  ${c.bold}ttt ui --stop${c.reset}${c.dim}         Stop the background server${c.reset}\n` +
-    `  ${c.bold}ttt ui --help${c.reset}${c.dim}         Show all options${c.reset}\n\n`
+    `  ${c.bold}ttt stop${c.reset}${c.dim}              Stop the background UI${c.reset}\n` +
+    `  ${c.bold}ttt --help${c.reset}${c.dim}            Show all options${c.reset}\n\n`
   );
   process.exit(0);
 }
@@ -210,15 +211,15 @@ export function printUiHelp(): void {
     `  ${c.bold}${flags.padEnd(26)}${c.reset}${c.dim}${desc}${c.reset}\n`;
 
   process.stdout.write(
-    `\n  ${c.bold}ttt ui${c.reset}  ${c.dim}v${PKG_VERSION} — Browser UI for the TTT MCP server${c.reset}\n\n` +
+    `\n  ${c.bold}ttt${c.reset}  ${c.dim}v${PKG_VERSION} — Browser UI for the TTT MCP server${c.reset}\n\n` +
     `  ${c.dim}USAGE${c.reset}\n\n` +
-    `  ttt ui ${c.dim}[options]${c.reset}\n\n`  +
+    `  ttt ${c.dim}[options]${c.reset}\n\n` +
     `  ${c.dim}OPTIONS${c.reset}\n\n` +
     row('-p, --port <number>', 'Port to listen on  (default: auto)') +
     row('    --host <host>',   'Bind address       (default: 127.0.0.1)') +
     row('    --no-open',       'Do not open browser automatically') +
-    row('-D, --detach',        'Run server in the background') +
-    row('    --stop',          'Stop the background server') +
+    row('-D, --detach',        'Run UI in the background') +
+    row('    --stop',          'Stop the background UI') +
     row('-h, --help',          'Show this help') +
     `\n  ${c.dim}STORAGE${c.reset}\n\n` +
     `  API keys    OS credential store (Keychain on macOS)\n` +
@@ -265,7 +266,8 @@ export async function runUiCli(argv: string[]): Promise<void> {
   }
 
   process.stdout.write(
-    `\n  ${c.green}${c.bold}✓${c.reset}  ${c.bold}TTT UI${c.reset}  ${c.dim}v${PKG_VERSION}${c.reset}\n\n` +
+    `\n${printAsciiLogo(c)}\n\n` +
+    `  ${c.green}${c.bold}✓${c.reset}  ${c.bold}TTT UI${c.reset}  ${c.dim}v${PKG_VERSION}${c.reset}\n\n` +
     `  ${c.dim}URL${c.reset}     ${c.cyan}${c.bold}${url}${c.reset}\n` +
     (isBackgroundChild ? '' :
       `\n  ${c.dim}────────────────────────────────────────────${c.reset}\n\n` +
