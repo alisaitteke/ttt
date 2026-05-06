@@ -12,15 +12,15 @@
 Run the UI **in the background** (you can close the terminal afterward). After it starts, open the URL from `ui-background.json` in your TTT data directory (`TTT_HOME`, default `~/.ttt`). Details: [Running the UI in the background](#running-the-ui-in-the-background-detached).
 
 ```bash
-npx -p @alisaitteke/ttt ui -D
+npx -p @alisaitteke/ttt start -D
 ```
 
-Same as **`npx -p @alisaitteke/ttt ui --detach`**.
+Same as **`npx -p @alisaitteke/ttt start --detach`**.
 
 Or run in the **foreground** (random free port; opens your browser):
 
 ```bash
-npx -p @alisaitteke/ttt ui
+npx -p @alisaitteke/ttt start
 ```
 
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
@@ -68,9 +68,9 @@ Pick any of the following on first launch — bring your own API key:
 
 ### WhatsApp (Messaging)
 
-WhatsApp is integrated as an optional **connection adapter** inside **`ttt-ui`**, not as a classic filesystem/process backend:
+WhatsApp is integrated as an optional **connection adapter** inside the **standalone UI**, not as a classic filesystem/process backend:
 
-1. Run the standalone UI (`npx -p @alisaitteke/ttt ui` or detached mode).
+1. Run the standalone UI (`npx -p @alisaitteke/ttt start` or detached mode).
 2. Open **Settings → Messaging**, choose **WhatsApp**, and link your phone with **QR code** (same flow as WhatsApp “Linked devices”).
 3. Enable **WhatsApp** for the chats where you want `whatsapp_*` tools — alongside Photoshop, Docker, etc., if you like.
 
@@ -83,19 +83,27 @@ WhatsApp is integrated as an optional **connection adapter** inside **`ttt-ui`**
 
 When you chat **inside this UI**, the server runs MCP tooling with an internal HTTP **bridge** so WhatsApp calls hit the live Baileys socket in the same process.
 
-**Cursor / Claude Desktop (stdio MCP only):** The registry includes `whatsapp_*`, but those handlers need `TTT_CONNECTION_BRIDGE_URL` and `TTT_CONNECTION_BRIDGE_SECRET` pointing at your UI session. That secret is generated **per UI server run** and is injected automatically when the UI spawns MCP — **not** when an IDE launches `npx @alisaitteke/ttt` alone. For WhatsApp, prefer chatting from **`ttt-ui`** unless you wire bridge credentials yourself in advanced setups.
+**Cursor / Claude Desktop (stdio MCP only):** The registry includes `whatsapp_*`, but those handlers need `TTT_CONNECTION_BRIDGE_URL` and `TTT_CONNECTION_BRIDGE_SECRET` pointing at your UI session. That secret is generated **per UI server run** and is injected automatically when the UI spawns MCP — **not** when an IDE launches `npx @alisaitteke/ttt mcp` alone. For WhatsApp, prefer chatting from the **standalone UI** unless you wire bridge credentials yourself in advanced setups.
 
 ### Per-chat backend selection
 
 The UI lets you pick which backends are active for each chat (Photoshop, After Effects, Docker, WhatsApp, …). Combine them—for example Photoshop + Docker—or narrow to one backend. The agent only sees prefixes you enable for that conversation.
 
-### CLI flags
+### CLI commands
 
 ```bash
-ttt-ui [-D] [--detach] [--port 5174] [--host 127.0.0.1] [--no-open] [--stop]
-# or
-ui [-D] [--detach] [--port 5174] [--host 127.0.0.1] [--no-open] [--stop]
+ttt start [-D] [--detach] [--port 5174] [--host 127.0.0.1] [--no-open]
+ttt stop
+ttt mcp
 ```
+
+| Command | What it does |
+|---|---|
+| `ttt start` | Start the browser UI in the foreground (random free port; opens your browser). |
+| `ttt start -D` / `ttt start --detach` | Start the UI in the background; the parent process exits after spawn. |
+| `ttt stop` | Stop the detached UI recorded in `ui-background.json`. |
+| `ttt mcp` | Run the MCP server over stdio (used by Cursor / Claude Desktop). |
+| `ttt --help` / `ttt --version` | Show help / version. |
 
 ### Running the UI in the background (detached)
 
@@ -103,36 +111,36 @@ The standalone UI is a **long-lived HTTP server** on your machine. If you do not
 
 **What it does**
 
-- **`-D` / `--detach`** — Starts the UI server in the background. The parent `ttt-ui` process exits immediately after spawning the server.
-- **`--stop`** — Sends `SIGTERM` to the detached server recorded in the state file and removes that file when the process exits.
+- **`ttt start -D` / `ttt start --detach`** — Starts the UI server in the background. The parent process exits immediately after spawning the server.
+- **`ttt stop`** — Sends `SIGTERM` to the detached server recorded in the state file and removes that file when the process exits.
 - **State file** — `${TTT_HOME}/ui-background.json` (default `TTT_HOME` is `~/.ttt`). It contains the listening URL, port, host, PID, and start time once the server is ready.
 
 **Requirements**
 
 - **Port** — Omitted port picks a random free port (same as foreground); pass **`--port`** if you want a stable URL every time.
-- **`--stop` uses the same `TTT_HOME`** — If you override data directory with `TTT_HOME`, use the same value when stopping.
+- **`ttt stop` uses the same `TTT_HOME`** — If you override data directory with `TTT_HOME`, use the same value when stopping.
 
 **Examples**
 
 ```bash
-# Foreground (default): random free port, browser opens
-npx -p @alisaitteke/ttt ui
+# Foreground: random free port, browser opens
+npx -p @alisaitteke/ttt start
 
 # Background: random port; URL written to ui-background.json when ready
-npx -p @alisaitteke/ttt ui --detach
+npx -p @alisaitteke/ttt start --detach
 
 # Background on a fixed port; skip auto-opening the browser from the child process
-npx -p @alisaitteke/ttt ui --detach --no-open --port 5174
+npx -p @alisaitteke/ttt start --detach --no-open --port 5174
 
 # Stop the detached server (default ~/.ttt/ui-background.json)
-npx -p @alisaitteke/ttt ui --stop
+npx -p @alisaitteke/ttt stop
 ```
 
-Read `ui-background.json` for the exact URL. If a daemon is already running, a second detach (`--detach` or `-D`) is rejected until you `--stop` or the old process dies (stale state is cleared automatically).
+Read `ui-background.json` for the exact URL. If a daemon is already running, a second detach (`--detach` or `-D`) is rejected until you `ttt stop` or the old process dies (stale state is cleared automatically).
 
 **Not the same as the MCP command**
 
-The main package entry (`npx @alisaitteke/ttt`) is the **MCP server over stdio** for Cursor, Claude Desktop, and the UI’s own agent loop. It is meant to be spawned by those hosts, not left running as a detached terminal service. Background mode applies to **`ttt-ui` / `ui`** only.
+`npx @alisaitteke/ttt mcp` runs the **MCP server over stdio** for Cursor, Claude Desktop, and the UI’s own agent loop. It is meant to be spawned by those hosts, not left running as a detached terminal service. Background mode applies to **`ttt start`** only.
 
 ### Notes
 
@@ -228,7 +236,7 @@ Save the project as intro.aep to Desktop.
 - ✅ **Standalone UI**: Local chat with model choice, persisted history, and **per-chat backend selection** (Photoshop, After Effects, Docker, WhatsApp, …).
 - ✅ **Adobe desktop automation (supported apps)**: Photoshop via AppleScript (macOS) / COM (Windows) with ExtendScript execution; After Effects on macOS via JXA and file-backed script I/O; Windows After Effects via `afterfx.exe -r` (⚠️ untested). Auto-discovery with optional `PHOTOSHOP_PATH` / `AFTER_EFFECTS_PATH`.
 - ✅ **Docker Engine**: Full `docker_*` surface plus `dockerhub_*` and `ghcr_*` registry tools when the local daemon is running and reachable.
-- ✅ **WhatsApp (beta, UI-hosted)**: `whatsapp_*` tools for status, recipient checks, send text/image (public URL), and optional extended read tools with explicit UI consent; session via Baileys in **`ttt-ui`** with QR linking under Settings → Messaging.
+- ✅ **WhatsApp (beta, UI-hosted)**: `whatsapp_*` tools for status, recipient checks, send text/image (public URL), and optional extended read tools with explicit UI consent; session via Baileys in the **standalone UI** with QR linking under Settings → Messaging.
 - ✅ **Photoshop-specific depth**: Undo/redo, history states, playing actions, and custom ExtendScript—all scoped to the Photoshop provider, not universal across every tool name.
 - 🚧 **More backends**: Illustrator, Figma, OpenClaw, and Hermes ship as scaffolds today; they follow the same provider pattern as Adobe and Docker.
 
@@ -236,10 +244,10 @@ Save the project as intro.aep to Desktop.
 
 ### Using NPX (Recommended)
 
-No installation required! Just configure your MCP client:
+No installation required! Just configure your MCP client to launch:
 
 ```bash
-npx @alisaitteke/ttt
+npx -y @alisaitteke/ttt mcp
 ```
 
 ### From Source
@@ -262,7 +270,7 @@ Add to your Cursor settings (`.cursor/config.json` or workspace settings):
   "mcpServers": {
     "ttt": {
       "command": "npx",
-      "args": ["-y", "@alisaitteke/ttt"],
+      "args": ["-y", "@alisaitteke/ttt", "mcp"],
       "env": {
         "LOG_LEVEL": "1"
       }
@@ -280,7 +288,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "ttt": {
       "command": "npx",
-      "args": ["-y", "@alisaitteke/ttt"],
+      "args": ["-y", "@alisaitteke/ttt", "mcp"],
       "env": {
         "LOG_LEVEL": "1"
       }
@@ -428,7 +436,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 <details>
 <summary><strong>WhatsApp tools</strong> (<code>whatsapp_*</code> prefix — beta, UI-linked session)</summary>
 
-Requires **`ttt-ui`** running with WhatsApp linked under **Settings → Messaging**. Use `whatsapp_status` before sends when the session might have dropped (there is no `whatsapp_ping`). Recipient `to` fields use **digits only** (country code, no `+` or spaces).
+Requires the **standalone UI** (`ttt start`) running with WhatsApp linked under **Settings → Messaging**. Use `whatsapp_status` before sends when the session might have dropped (there is no `whatsapp_ping`). Recipient `to` fields use **digits only** (country code, no `+` or spaces).
 
 ### Session & recipients
 - `whatsapp_status` — Linked-session reachability (connection hint).
@@ -532,7 +540,7 @@ After Effects scripts use file-based I/O to return results, and this preference 
 
 #### Tools return “require the TTT web UI” or bridge errors
 
-WhatsApp runs inside the **`ttt-ui`** process. Link the device under **Settings → Messaging**, enable **WhatsApp** for that chat, and use the standalone UI (or supply bridge env vars yourself for advanced setups). A Cursor/Claude-only MCP spawn does **not** get the ephemeral bridge secret.
+WhatsApp runs inside the **standalone UI** process (`ttt start`). Link the device under **Settings → Messaging**, enable **WhatsApp** for that chat, and use the standalone UI (or supply bridge env vars yourself for advanced setups). A Cursor/Claude-only MCP spawn does **not** get the ephemeral bridge secret.
 
 #### QR fails or “outdated web client” / session rejected
 

@@ -10,7 +10,7 @@ export interface LogoAnsiColors {
 export function printAsciiLogo(c: LogoAnsiColors): string {
   return (
     `${c.cyan}${c.bold}` +
-    `  ████████  ████████  ████████\n` +
+    `██████████████████████████████\n` +
     `     ██        ██        ██   \n` +
     `     ██        ██        ██   \n` +
     `     ██        ██        ██   \n` +
