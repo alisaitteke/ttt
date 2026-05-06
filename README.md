@@ -9,6 +9,14 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
+## Demo
+
+Short demo of the bundled web UI:
+
+<video controls playsinline width="100%" src="https://raw.githubusercontent.com/alisaitteke/ttt/master/images/demo-ps-gp-wp.mp4">
+  <a href="https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4">Open the demo video on GitHub</a>
+</video>
+
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
 
 The architecture is **provider-driven**: each backend contributes MCP tools from its own tree under `src/providers/`; the server rolls them together in `src/providers/index.ts`.
