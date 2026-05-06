@@ -3,5 +3,14 @@
     "switchLabel": "Dil",
     "searchPlaceholder": "Dil ara…",
     "noResults": "Sonuç bulunamadı."
+  },
+  "app": {
+    "loading": "Yükleniyor…",
+    "documentTitle": "TTT - The Tortoise Trainer"
+  },
+  "footer": {
+    "github": "GitHub",
+    "by": "tarafından",
+    "authorHandle": "alisaitteke"
   }
 }

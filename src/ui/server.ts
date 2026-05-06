@@ -3,9 +3,11 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { homedir, platform as osPlatform } from 'node:os';
 import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve } from 'node:path';
+import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/desktop.js';
 import { Logger } from '../utils/logger.js';
@@ -46,6 +48,33 @@ const WEB_DIST = resolve(__dirname, '..', '..', 'web', 'dist');
 
 /** Max size for drag-drop staging (browser → ~/.ttt/drops). Loopback-only endpoint. */
 const STAGE_DROP_MAX_BYTES = 2 * 1024 * 1024 * 1024;
+
+/** Max size for GET /api/files/download (streamed; same path rules as reveal). */
+const FILE_DOWNLOAD_MAX_BYTES = STAGE_DROP_MAX_BYTES;
+
+/** Max size for GET /api/files/preview (images only; same path rules as reveal). */
+const FILE_PREVIEW_MAX_BYTES = 25 * 1024 * 1024;
+
+function downloadAttachmentBasename(absolutePath: string): string {
+  const base = basename(absolutePath).trim() || 'download';
+  const safe = base.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_');
+  return safe || 'download';
+}
+
+const PREVIEW_IMAGE_MIME: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+  '.svg': 'image/svg+xml',
+};
+
+function imagePreviewMimeForPath(absolutePath: string): string | null {
+  const ext = extname(absolutePath).toLowerCase();
+  return PREVIEW_IMAGE_MIME[ext] ?? null;
+}
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -132,6 +161,81 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       }
       logger.error('reveal failed', e);
       return c.json({ error: 'reveal_failed', message: msg }, 500);
+    }
+  });
+
+  app.get('/api/files/preview', async (c) => {
+    const q = c.req.query('path');
+    if (!q || typeof q !== 'string') {
+      return c.json({ error: 'missing_path' }, 400);
+    }
+    try {
+      const abs = await assertRevealableTarget(q.trim());
+      const st = await stat(abs);
+      if (!st.isFile()) {
+        return c.json({ error: 'not_a_file' }, 400);
+      }
+      if (st.size > FILE_PREVIEW_MAX_BYTES) {
+        return c.json({ error: 'file_too_large' }, 413);
+      }
+      const mime = imagePreviewMimeForPath(abs);
+      if (!mime) {
+        return c.json({ error: 'not_previewable' }, 415);
+      }
+      const buf = await readFile(abs);
+      return new Response(buf, {
+        headers: {
+          'content-type': mime,
+          'cache-control': 'private, max-age=60',
+        },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'path_not_found' || msg === 'empty_path') {
+        return c.json({ error: msg }, 404);
+      }
+      if (msg === 'path_outside_home') {
+        return c.json({ error: msg }, 403);
+      }
+      logger.error('file preview failed', e);
+      return c.json({ error: 'preview_failed', message: msg }, 500);
+    }
+  });
+
+  app.get('/api/files/download', async (c) => {
+    const q = c.req.query('path');
+    if (!q || typeof q !== 'string') {
+      return c.json({ error: 'missing_path' }, 400);
+    }
+    try {
+      const abs = await assertRevealableTarget(q.trim());
+      const st = await stat(abs);
+      if (!st.isFile()) {
+        return c.json({ error: 'not_a_file' }, 400);
+      }
+      if (st.size > FILE_DOWNLOAD_MAX_BYTES) {
+        return c.json({ error: 'file_too_large' }, 413);
+      }
+      const nodeStream = createReadStream(abs);
+      const body = Readable.toWeb(nodeStream);
+      const name = downloadAttachmentBasename(abs);
+      return new Response(body, {
+        headers: {
+          'content-type': 'application/octet-stream',
+          'content-disposition': `attachment; filename="${name}"`,
+          'content-length': String(st.size),
+        },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'path_not_found' || msg === 'empty_path') {
+        return c.json({ error: msg }, 404);
+      }
+      if (msg === 'path_outside_home') {
+        return c.json({ error: msg }, 403);
+      }
+      logger.error('file download failed', e);
+      return c.json({ error: 'download_failed', message: msg }, 500);
     }
   });
 
@@ -406,6 +510,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
           apiKey,
           modelId: chat.model,
           designTools: chat.tools ?? [],
+          exportChatId: chat.id,
           abortSignal: controller.signal,
           onAssistantBuffer: (b) => {
             buffer = b;

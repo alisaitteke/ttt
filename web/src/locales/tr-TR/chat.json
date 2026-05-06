@@ -1,0 +1,103 @@
+{
+  "chatView": {
+    "selectPrompt": "Kenar çubuğundan bir sohbet seçin veya yeni bir sohbet başlatın.",
+    "newChat": "Yeni sohbet",
+    "settings": "Ayarlar"
+  },
+  "chatErrors": {
+    "unknownStream": "Bilinmeyen hata"
+  },
+  "status": {
+    "openNavAria": "Gezinmeyi aç",
+    "newChatAria": "Yeni sohbet",
+    "newChatLabel": "Yeni sohbet",
+    "fallbackChatTitle": "Yeni sohbet",
+    "usageHeading": "Konuşma kullanımı",
+    "costDash": "—",
+    "input": "Girdi",
+    "cachedRead": "Önbellekten okuma",
+    "cachedWrite": "Önbelleğe yazma",
+    "output": "Çıktı",
+    "reasoning": "Akıl yürütme",
+    "total": "Toplam",
+    "tokensUnit": "jeton",
+    "unpricedHint": "Bazı turlarda fiyatlandırma verisi olmadığı için bu toplam maliyeti düşük gösterebilir.",
+    "priceLessThanMicro": "< $0.0001"
+  },
+  "messages": {
+    "emptyHeading": "Tasarım araçlarınızda ne üzerinde çalışılacağını asistana söyleyin",
+    "emptyHint": "Örnek: \"Yeni bir 1920×1080 belge oluştur, arka planı açık maviye boya, ortaya 'Hello' metnini ekle ve hello.psd olarak Masaüstüme kaydet.\"",
+    "you": "Siz",
+    "assistantFallback": "Asistan",
+    "assistantModelSep": " · ",
+    "busy": "Çalışıyor…"
+  },
+  "composer": {
+    "placeholder": "Tasarım araçlarınızda asistanın ne yapmasını istediğinizi açıklayın…",
+    "dropCopyingOverlay": "Bu bilgisayarda ~/.ttt/drops konumuna kopyalanıyor…",
+    "dropFileOverlay": "Yolunu eklemek için bir dosya bırakın",
+    "dropOverlayHint": "Tarayıcı bir klasör bıraktığınızda klasör yolunu gizler—klasör düğmesini kullanın. Dosya yolu gizlenirse, yalnızca bu makinede ~/.ttt/drops altına bir kez kopyalarız.",
+    "attachFileTitle": "Yerel dosya yolunu ekle (dosya seçiciyi açar; dosya yüklenmez)",
+    "attachFolderTitle": "Yerel klasör yolunu ekle (klasör seçiciyi açar; hiçbir şey yüklenmez)",
+    "pathPrefixFile": "Yerel dosya yolu: ",
+    "pathPrefixFolder": "Yerel klasör yolu: ",
+    "folderDropTitle": "Klasör sürüklemesi burada neden çalışmaz",
+    "folderDropBody": "Web tarayıcıları, bir klasör bıraktığınızda diskinizdeki gerçek klasör yolunu bilinçli olarak açığa çıkarmaz—yalnızca içindeki dosyalara erişim verir, tam yol olmadan (bu bir güvenlik kuralıdır).\n\nİşletim sistemi bırakma ile birlikte bir file:// bağlantısı içerdiğinde (bazı kurulumlar), bunu otomatik kullanırız. Aksi halde sisteminizin klasör seçicisini açmak için klasör düğmesini kullanın veya tek bir dosya bırakın—yol gizlenirse ~/.ttt/drops altında kopyalayabiliriz.",
+    "folderDropPrimary": "Klasör seç…",
+    "multiFileDropTitle": "Her seferinde bir dosya",
+    "multiFileDropBody": "Yolunu okuyabilmemiz veya hazırlayabilmemiz için tek bir dosya bırakın. Tüm bir klasör yolu için bunun yerine klasör düğmesini kullanın.",
+    "fileTooLargeTitle": "Dosya çok büyük",
+    "fileTooLargeBody": "Bu dosya 2 GB hazırlama sınırını aşıyor. Daha küçük bir dosya seçin veya tarayıcı bir file:// yolu sağladığında onu kullanın.",
+    "stageFailTitle": "Dosya hazırlanamadı",
+    "stageFailUnexpectedBody": "~/.ttt/drops konumuna kaydedilirken beklenmeyen bir hata oluştu.",
+    "pickerUnavailableTitle": "Seçici kullanılamıyor",
+    "pickerUnavailableBody": "Yerel dosya ve klasör seçicileri bu platformda desteklenmiyor.",
+    "pickFolderFailTitle": "Klasör seçilemedi",
+    "pickFileFailTitle": "Dosya seçilemedi",
+    "pickUnexpectedBody": "Beklenmeyen bir hata oluştu."
+  },
+  "pathModal": {
+    "close": "Kapat"
+  },
+  "model": {
+    "triggerAriaPrefix": "Model: ",
+    "selectModelFallback": "Model seç",
+    "labelPrefix": "Model: ",
+    "panelHeading": "Modeller",
+    "settingsLink": "Ayarlar",
+    "addApiKey": "API anahtarı ekle",
+    "manageKeyTitle": "API anahtarını yönetmek için ayarları açın"
+  },
+  "designTools": {
+    "panelHeading": "Tasarım araçları",
+    "selectAll": "Tümünü seç",
+    "clearAll": "Tümünü temizle",
+    "explainNote": "Seçilen her araç, modelin kullanabileceği MCP yeteneklerine eklenir. Bu sohbet için gerçekten ihtiyacınız olan araçları etkinleştirin.",
+    "columnTool": "Araç",
+    "columnStatus": "Durum",
+    "countNone": "Araç yok",
+    "countAll": "Tüm tasarım araçları",
+    "countSomePrefix": "Araçlar: ",
+    "notInstalledStatus": "Yüklü değil",
+    "installedStatus": "Yüklü",
+    "openCreativeCloud": "Creative Cloud'u aç",
+    "openingCreativeCloud": "Açılıyor…",
+    "installLink": "Yükle",
+    "launchFailed": "Başlatılamadı"
+  },
+  "toolCall": {
+    "input": "Girdi",
+    "inputToggleAria": "Araç argümanlarını göster veya gizle",
+    "result": "Sonuç",
+    "statusPending": "beklemede",
+    "statusSuccess": "başarılı",
+    "statusError": "hata",
+    "revealDarwin": "Finder'da göster",
+    "revealWin32": "Dosya Gezgini'nde göster",
+    "revealFallback": "Dosya yöneticisinde göster",
+    "previewAlt": "Kaydedilen dosya önizlemesi",
+    "previewUnavailable": "Önizleme yok",
+    "previewMenuDownload": "İndir",
+    "previewMenuAria": "Önizleme işlemleri"
+  }
+}

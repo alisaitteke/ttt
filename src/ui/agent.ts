@@ -3,6 +3,7 @@ import { Experimental_StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { stepCountIs, streamText, type LanguageModelUsage, type ModelMessage } from 'ai';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sanitizeExportChatSegment, TTT_EXPORT_CHAT_ID_ENV } from '../lib/ttt-paths.js';
 import type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from './providers/registry.js';
 import {
   DESIGN_TOOLS,
@@ -50,6 +51,8 @@ export interface RunChatOptions {
   apiKey: string;
   modelId: string;
   designTools?: DesignToolId[];
+  /** When set, default exports use ~/.ttt/exports/<id>/ (passed to the MCP child as env). */
+  exportChatId?: string;
   abortSignal: AbortSignal;
   onAssistantBuffer?: (buf: AssistantBuffer) => void;
   onFinish?: (info: RunChatFinishInfo) => void;
@@ -117,7 +120,8 @@ Guidelines:
 - Only MCP tools exposed by this TTT server are available. Do not attempt shell,
   filesystem, web, or general coding operations unless the user switches context.
 - When saving files via tools, the \`path\` argument is optional; relative paths
-  resolve under ~/.ttt/exports; absolute paths are used as given.${groqExtras}
+  resolve under ~/.ttt/exports/<active-chat-id> in the web UI (under
+  ~/.ttt/exports when no chat scope, e.g. CLI); absolute paths are used as given.${groqExtras}
 `.trim();
 }
 
@@ -127,11 +131,20 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
 
   try {
     const spawnArgs = IS_DEV_SOURCE ? ['--import', 'tsx', MCP_SERVER_ENTRY] : [MCP_SERVER_ENTRY];
+    const mcpEnv: Record<string, string> = {
+      ...sanitizedEnv(),
+      LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
+    };
+    const exportSeg = sanitizeExportChatSegment(opts.exportChatId);
+    if (exportSeg) {
+      mcpEnv[TTT_EXPORT_CHAT_ID_ENV] = exportSeg;
+    }
+
     mcp = await createMCPClient({
       transport: new Experimental_StdioMCPTransport({
         command: process.execPath,
         args: spawnArgs,
-        env: { ...sanitizedEnv(), LOG_LEVEL: process.env.LOG_LEVEL ?? '2' },
+        env: mcpEnv,
       }),
     });
 

@@ -39,7 +39,6 @@
     "dropOverlayHint": "Folder paths are hidden by the browser when you drop a directory—use the folder button. If a file path is hidden, we copy once to ~/.ttt/drops (local only).",
     "attachFileTitle": "Insert local file path (opens a file picker; the file is not uploaded)",
     "attachFolderTitle": "Insert local folder path (opens a folder picker; nothing is uploaded)",
-    "shortcutHint": "Press Enter to send · Shift+Enter for newline",
     "pathPrefixFile": "Local file path: ",
     "pathPrefixFolder": "Local folder path: ",
     "folderDropTitle": "Why folder drag does not work here",
@@ -88,12 +87,17 @@
   },
   "toolCall": {
     "input": "Input",
+    "inputToggleAria": "Show or hide tool arguments",
     "result": "Result",
     "statusPending": "pending",
     "statusSuccess": "success",
     "statusError": "error",
     "revealDarwin": "Show in Finder",
     "revealWin32": "Show in File Explorer",
-    "revealFallback": "Reveal in file manager"
+    "revealFallback": "Reveal in file manager",
+    "previewAlt": "Saved file preview",
+    "previewUnavailable": "Preview not available",
+    "previewMenuDownload": "Download",
+    "previewMenuAria": "Preview actions"
   }
 }

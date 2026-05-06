@@ -84,9 +84,13 @@ const actionsAriaLabel = computed(() =>
           <MoreHorizontal class="size-3.5" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="bottom" class="w-36 min-w-0">
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        class="w-max max-w-[min(24rem,calc(100vw-2rem))]"
+      >
         <DropdownMenuItem class="gap-2" @select="emit('start-rename')">
-          <Pencil class="size-3.5" />
+          <Pencil class="size-3.5 shrink-0" />
           {{ t('sidebar.menuRename') }}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -94,11 +98,11 @@ const actionsAriaLabel = computed(() =>
           class="gap-2"
           @select="emit('archive', chat.id)"
         >
-          <Archive class="size-3.5" />
+          <Archive class="size-3.5 shrink-0" />
           {{ t('sidebar.menuArchive') }}
         </DropdownMenuItem>
         <DropdownMenuItem v-else class="gap-2" @select="emit('unarchive', chat.id)">
-          <ArchiveRestore class="size-3.5" />
+          <ArchiveRestore class="size-3.5 shrink-0" />
           {{ t('sidebar.menuUnarchive') }}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -106,7 +110,7 @@ const actionsAriaLabel = computed(() =>
           class="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
           @select="emit('delete', chat.id)"
         >
-          <Trash2 class="size-3.5" />
+          <Trash2 class="size-3.5 shrink-0" />
           {{ t('sidebar.menuDelete') }}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "homeAria": "Ana sayfa",
+    "newChatAria": "Yeni sohbet",
+    "emptyNone": "Henüz sohbet yok.",
+    "emptyActive": "Aktif sohbet yok.",
+    "archived": "Arşivlenen",
+    "chatActionsAria": "Sohbet işlemleri: {title}",
+    "menuRename": "Yeniden adlandır",
+    "menuArchive": "Arşivle",
+    "menuUnarchive": "Arşivden çıkar",
+    "menuDelete": "Sil"
+  }
+}

@@ -12,6 +12,26 @@
       "system": "Sistem",
       "light": "Açık",
       "dark": "Koyu"
+    },
+    "providers": {
+      "formSubtitleAdd": "Sağlayıcı ekle",
+      "formSubtitleUpdate": "API anahtarını güncelle",
+      "connectedHeading": "Bağlı sağlayıcılar",
+      "emptyState": "Henüz bağlı sağlayıcı yok. Başlamak için bir API anahtarı ekleyin.",
+      "getKey": "Anahtar al",
+      "updateKey": "Anahtarı güncelle",
+      "removeKeyAria": "API anahtarını kaldır",
+      "manageKeyHint": "API anahtarını yönetmek için ayarları açın",
+      "providerLabel": "Sağlayıcı",
+      "apiKeyLabel": "API anahtarı",
+      "pasteKeyPlaceholder": "API anahtarınızı yapıştırın…",
+      "getApiKeyLink": "API anahtarı al",
+      "validateSave": "Doğrula ve kaydet",
+      "validating": "Doğrulanıyor…",
+      "invalidKey": "Geçersiz anahtar",
+      "back": "Geri",
+      "addProvider": "Sağlayıcı ekle",
+      "allConnected": "Tüm sağlayıcılar bağlı"
     }
   }
 }

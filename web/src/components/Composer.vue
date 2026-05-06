@@ -274,7 +274,7 @@ function submit(): void {
     >
       <div
         v-if="fileDragActive || dropping"
-        class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-primary/70 bg-background/90 px-4 text-center backdrop-blur-[1px]"
+        class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-primary/70 bg-background/90 px-4 text-center backdrop-blur-[1px]"
       >
         <p class="text-sm font-medium text-foreground">
           {{
@@ -293,13 +293,34 @@ function submit(): void {
         :disabled="busy || disabled"
         :rows="2"
         :placeholder="t('composer.placeholder')"
-        class="block w-full resize-none border-0 bg-transparent px-4 pt-3 pb-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
+        class="block w-full resize-none border-0 bg-transparent pb-1 pl-4 pr-14 pt-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
         @keydown="handleKey"
       />
-      <div class="flex flex-wrap items-center gap-2 px-2 pb-2">
+      <div class="absolute right-2 top-2 z-10 flex items-center">
+        <Button
+          v-if="!busy"
+          size="icon"
+          :disabled="!draft.trim() || disabled"
+          class="size-8 shrink-0 rounded-full disabled:opacity-40"
+          @click="submit"
+        >
+          <ArrowUp class="size-4" />
+        </Button>
+        <Button
+          v-else
+          size="icon"
+          variant="secondary"
+          class="size-8 shrink-0 rounded-full"
+          @click="emit('abort')"
+        >
+          <Square class="size-3.5" />
+        </Button>
+      </div>
+      <div class="flex w-full flex-wrap items-center gap-2 px-2 pb-2">
         <div class="flex min-w-0 flex-shrink-0 flex-wrap items-center gap-2">
           <slot name="actions" />
-          <span class="h-4 w-px shrink-0 bg-border/60" aria-hidden="true" />
+        </div>
+        <div class="ml-auto flex shrink-0 flex-wrap items-center gap-2">
           <Button
             type="button"
             size="icon"
@@ -323,29 +344,6 @@ function submit(): void {
             <FolderOpen class="size-4" />
           </Button>
         </div>
-        <span
-          class="hidden min-w-0 flex-1 text-right text-[11px] leading-snug text-muted-foreground opacity-60 select-none md:inline-block md:text-xs"
-        >
-          {{ t('composer.shortcutHint') }}
-        </span>
-        <Button
-          v-if="!busy"
-          size="icon"
-          :disabled="!draft.trim() || disabled"
-          class="size-8 shrink-0 rounded-full disabled:opacity-40"
-          @click="submit"
-        >
-          <ArrowUp class="size-4" />
-        </Button>
-        <Button
-          v-else
-          size="icon"
-          variant="secondary"
-          class="size-8 shrink-0 rounded-full"
-          @click="emit('abort')"
-        >
-          <Square class="size-3.5" />
-        </Button>
       </div>
     </div>
     <PathMessageModal
