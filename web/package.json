@@ -17,10 +17,15 @@
     "reka-ui": "^2.0.0",
     "tailwind-merge": "^2.5.5",
     "vue": "^3.5.13",
+    "vue-i18n": "^11.4.0",
     "vue-renderer-markdown": "^0.0.62",
     "vue-router": "^4.6.4"
   },
+  "overrides": {
+    "vue-i18n": "^11.4.0"
+  },
   "devDependencies": {
+    "@intlify/unplugin-vue-i18n": "^11.1.2",
     "@lobehub/icons-static-svg": "^1.88.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.10.5",

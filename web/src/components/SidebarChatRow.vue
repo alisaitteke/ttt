@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2 } from 'lucide-vue-next';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { ChatSummary } from '@/lib/api';
 
 const props = defineProps<{
   chat: ChatSummary;
   activeChatId: string | null;
-  menuOpen: boolean;
   isRenaming: boolean;
   renameDraft: string;
   /** When true, row is in the archived list (show Unarchive). */
@@ -15,7 +21,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [id: string];
-  'toggle-menu': [];
   'update:renameDraft': [v: string];
   'start-rename': [];
   rename: [id: string, title: string];
@@ -25,16 +30,6 @@ const emit = defineEmits<{
   unarchive: [id: string];
 }>();
 
-function toggleMenu(event: Event): void {
-  event.stopPropagation();
-  emit('toggle-menu');
-}
-
-function startRename(event: Event): void {
-  event.stopPropagation();
-  emit('start-rename');
-}
-
 function commitRename(id: string) {
   const title = props.renameDraft.trim();
   if (title) emit('rename', id, title);
@@ -43,21 +38,6 @@ function commitRename(id: string) {
 
 function cancelRename() {
   emit('cancel-rename');
-}
-
-function onDelete(id: string, event: Event) {
-  event.stopPropagation();
-  emit('delete', id);
-}
-
-function onArchive(id: string, event: Event) {
-  event.stopPropagation();
-  emit('archive', id);
-}
-
-function onUnarchive(id: string, event: Event) {
-  event.stopPropagation();
-  emit('unarchive', id);
 }
 </script>
 
@@ -85,49 +65,43 @@ function onUnarchive(id: string, event: Event) {
       </div>
     </div>
 
-    <button
-      class="invisible flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-background/50 group-hover:visible"
-      :class="{ visible: menuOpen }"
-      @click="toggleMenu($event)"
-    >
-      <MoreHorizontal class="size-3.5" />
-    </button>
-
-    <div
-      v-if="menuOpen"
-      class="absolute right-1 top-9 z-10 w-36 rounded-md border border-border bg-popover p-1 text-sm shadow-md"
-      @click.stop
-    >
-      <button
-        class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-accent"
-        @click="startRename($event)"
-      >
-        <Pencil class="size-3.5" />
-        Rename
-      </button>
-      <button
-        v-if="!inArchivedList"
-        class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-accent"
-        @click="onArchive(chat.id, $event)"
-      >
-        <Archive class="size-3.5" />
-        Archive
-      </button>
-      <button
-        v-else
-        class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-accent"
-        @click="onUnarchive(chat.id, $event)"
-      >
-        <ArchiveRestore class="size-3.5" />
-        Unarchive
-      </button>
-      <button
-        class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-destructive hover:bg-destructive/10"
-        @click="onDelete(chat.id, $event)"
-      >
-        <Trash2 class="size-3.5" />
-        Delete
-      </button>
-    </div>
+    <DropdownMenu :modal="false">
+      <DropdownMenuTrigger as-child>
+        <button
+          type="button"
+          class="invisible flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-background/50 group-hover:visible data-[state=open]:visible"
+          :aria-label="`Chat actions: ${chat.title}`"
+          @click.stop
+        >
+          <MoreHorizontal class="size-3.5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom" class="w-36 min-w-0">
+        <DropdownMenuItem class="gap-2" @select="emit('start-rename')">
+          <Pencil class="size-3.5" />
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          v-if="!inArchivedList"
+          class="gap-2"
+          @select="emit('archive', chat.id)"
+        >
+          <Archive class="size-3.5" />
+          Archive
+        </DropdownMenuItem>
+        <DropdownMenuItem v-else class="gap-2" @select="emit('unarchive', chat.id)">
+          <ArchiveRestore class="size-3.5" />
+          Unarchive
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          class="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+          @select="emit('delete', chat.id)"
+        >
+          <Trash2 class="size-3.5" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   </div>
 </template>

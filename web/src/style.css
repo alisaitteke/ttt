@@ -107,6 +107,16 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   :root {
     --font-mnemonic: "Source Sans 3 Variable", "Source Sans 3", ui-sans-serif, system-ui, sans-serif;

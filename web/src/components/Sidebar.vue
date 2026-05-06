@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+import { ChevronDown, ChevronRight, Plus, Settings2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle.vue';
 import SidebarChatRow from '@/components/SidebarChatRow.vue';
 import type { ChatSummary } from '@/lib/api';
 
@@ -21,9 +21,11 @@ const emit = defineEmits<{
   archive: [id: string];
   unarchive: [id: string];
   'update:mobileOpen': [open: boolean];
+  'open-settings': [];
 }>();
 
-const menuOpenFor = ref<string | null>(null);
+const { t } = useI18n();
+
 const renamingId = ref<string | null>(null);
 const renameDraft = ref('');
 const archivedOpen = ref(false);
@@ -59,14 +61,9 @@ function onEscape(e: KeyboardEvent): void {
 onMounted(() => window.addEventListener('keydown', onEscape));
 onUnmounted(() => window.removeEventListener('keydown', onEscape));
 
-function toggleMenuFor(id: string): void {
-  menuOpenFor.value = menuOpenFor.value === id ? null : id;
-}
-
 function startRenameFor(chat: ChatSummary): void {
   renamingId.value = chat.id;
   renameDraft.value = chat.title;
-  menuOpenFor.value = null;
 }
 
 function cancelRename(): void {
@@ -83,17 +80,14 @@ function formatDate(ts: number): string {
 }
 
 function onRowDelete(id: string): void {
-  menuOpenFor.value = null;
   emit('delete', id);
 }
 
 function onRowArchive(id: string): void {
-  menuOpenFor.value = null;
   emit('archive', id);
 }
 
 function onRowUnarchive(id: string): void {
-  menuOpenFor.value = null;
   emit('unarchive', id);
 }
 
@@ -103,6 +97,11 @@ function onRowRename(id: string, title: string): void {
 
 function toggleArchivedSection(): void {
   archivedOpen.value = !archivedOpen.value;
+}
+
+function openSettings(): void {
+  closeMobileNav();
+  emit('open-settings');
 }
 </script>
 
@@ -121,7 +120,6 @@ function toggleArchivedSection(): void {
     :class="
       mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
     "
-    @click="menuOpenFor = null"
   >
     <div
       class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 px-4"
@@ -147,7 +145,16 @@ function toggleArchivedSection(): void {
           <span class="text-[10px] tabular-nums text-muted-foreground">v{{ npmVersion }}</span>
         </div>
       </RouterLink>
-      <ThemeToggle />
+      <Button
+        variant="ghost"
+        size="icon"
+        type="button"
+        class="shrink-0"
+        :aria-label="t('settings.openSettings')"
+        @click="openSettings"
+      >
+        <Settings2 class="size-4" />
+      </Button>
     </div>
 
     <div class="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-2">
@@ -180,13 +187,11 @@ function toggleArchivedSection(): void {
               :key="chat.id"
               :chat="chat"
               :active-chat-id="activeChatId"
-              :menu-open="menuOpenFor === chat.id"
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="false"
               :format-date="formatDate"
               @select="emit('select', $event)"
-              @toggle-menu="toggleMenuFor(chat.id)"
               @start-rename="startRenameFor(chat)"
               @update:rename-draft="renameDraft = $event"
               @rename="onRowRename"
@@ -216,13 +221,11 @@ function toggleArchivedSection(): void {
               :key="chat.id"
               :chat="chat"
               :active-chat-id="activeChatId"
-              :menu-open="menuOpenFor === chat.id"
               :is-renaming="renamingId === chat.id"
               :rename-draft="renameDraft"
               :in-archived-list="true"
               :format-date="formatDate"
               @select="emit('select', $event)"
-              @toggle-menu="toggleMenuFor(chat.id)"
               @start-rename="startRenameFor(chat)"
               @update:rename-draft="renameDraft = $event"
               @rename="onRowRename"

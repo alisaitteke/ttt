@@ -23,6 +23,12 @@ const creativeCloudDesktopInstalled = ref(false);
 const loading = ref(true);
 const fatalError = ref<string | null>(null);
 const settingsOpen = ref(false);
+const settingsInitialTab = ref<'appearance' | 'providers'>('appearance');
+
+function handleOpenSettings(tab?: 'appearance' | 'providers'): void {
+  settingsInitialTab.value = tab ?? 'appearance';
+  settingsOpen.value = true;
+}
 const sidebarMobileOpen = ref(false);
 
 const chat = useChatStore();
@@ -147,6 +153,7 @@ onMounted(refresh);
           @delete="handleDelete"
           @archive="handleArchive"
           @unarchive="handleUnarchive"
+          @open-settings="handleOpenSettings('appearance')"
         />
         <ChatView
           class="min-w-0 flex-1"
@@ -157,12 +164,12 @@ onMounted(refresh);
           :settings-open="settingsOpen"
           :sidebar-mobile-open="sidebarMobileOpen"
           @new-chat="handleNewChat"
-          @open-settings="settingsOpen = true"
+          @open-settings="handleOpenSettings($event)"
           @open-sidebar="openMobileSidebar"
         />
         <SettingsDialog
-          v-if="settingsOpen"
-          @close="settingsOpen = false"
+          v-model:open="settingsOpen"
+          :initial-tab="settingsInitialTab"
           @saved="handleSettingsSaved"
         />
       </div>

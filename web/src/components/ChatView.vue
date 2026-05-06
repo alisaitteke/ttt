@@ -29,7 +29,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'new-chat': [];
-  'open-settings': [];
+  'open-settings': [tab?: 'appearance' | 'providers'];
   'open-sidebar': [];
 }>();
 
@@ -78,7 +78,7 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
           <MessageSquarePlus class="size-4" />
           New chat
         </Button>
-        <Button variant="outline" class="gap-2" @click="emit('open-settings')">
+        <Button variant="outline" class="gap-2" @click="emit('open-settings', 'appearance')">
           <Settings2 class="size-4" />
           Settings
         </Button>
@@ -121,7 +121,7 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
               :disabled="props.store.sending.value"
               @update:provider="onProviderChange"
               @update:model="onModelChange"
-              @open-settings="emit('open-settings')"
+              @open-settings="emit('open-settings', $event)"
             />
           </div>
         </template>

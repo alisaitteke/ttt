@@ -16,7 +16,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:provider': [value: ProviderId];
   'update:model': [value: string];
-  'open-settings': [];
+  'open-settings': [tab: 'appearance' | 'providers'];
 }>();
 
 const open = ref(false);
@@ -35,7 +35,7 @@ const triggerAriaLabel = computed(
 
 function openSettings(): void {
   open.value = false;
-  emit('open-settings');
+  emit('open-settings', 'providers');
 }
 
 function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {

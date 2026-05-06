@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "switchLabel": "Dil",
+    "searchPlaceholder": "Dil ara…",
+    "noResults": "Sonuç bulunamadı."
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "openSettings": "Ayarları aç",
+    "done": "Tamam",
+    "tabs": {
+      "appearance": "Görünüm",
+      "providers": "Sağlayıcılar"
+    },
+    "theme": {
+      "label": "Tema",
+      "system": "Sistem",
+      "light": "Açık",
+      "dark": "Koyu"
+    }
+  }
+}

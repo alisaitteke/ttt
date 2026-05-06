@@ -1,6 +1,8 @@
 import vue from '@vitejs/plugin-vue';
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 
@@ -8,11 +10,21 @@ const rootPackagePath = fileURLToPath(new URL('../package.json', import.meta.url
 const rootPackageVersion =
   JSON.parse(readFileSync(rootPackagePath, 'utf-8')).version ?? '0.0.0';
 
+const webRoot = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
   define: {
     'import.meta.env.VITE_TTT_NPM_VERSION': JSON.stringify(rootPackageVersion),
+    __VUE_I18N_LEGACY_API__: false,
+    __VUE_I18N_FULL_INSTALL__: false,
   },
-  plugins: [vue(), tailwindcss()],
+  plugins: [
+    vue(),
+    VueI18nPlugin({
+      include: resolve(webRoot, 'src/locales/**'),
+    }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

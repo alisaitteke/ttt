@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   ArrowLeft,
   Check,
@@ -8,9 +9,17 @@ import {
   Trash2,
   X,
 } from 'lucide-vue-next';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import SettingsAppearancePanel from './SettingsAppearancePanel.vue';
 import ProviderIcon from './ProviderIcon.vue';
 import {
   apiDeleteKey,
@@ -21,12 +30,20 @@ import {
   type ProviderInfo,
 } from '@/lib/api';
 
+const props = defineProps<{
+  open: boolean;
+  initialTab: 'appearance' | 'providers';
+}>();
+
 const emit = defineEmits<{
-  close: [];
+  'update:open': [boolean];
   saved: [];
 }>();
 
+const { t } = useI18n();
+
 const providers = ref<ProviderInfo[]>([]);
+const settingsTab = ref<'appearance' | 'providers'>('providers');
 const panel = ref<'list' | 'form'>('list');
 const formMode = ref<'add' | 'replace'>('add');
 /** Add: null until user picks from grid (or auto-pick if only one). Replace: set when opening. */
@@ -53,6 +70,17 @@ async function refresh(): Promise<void> {
 }
 
 onMounted(refresh);
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      settingsTab.value = props.initialTab;
+    } else {
+      cancelForm();
+    }
+  }
+);
 
 function openAddForm(): void {
   formMode.value = 'add';
@@ -130,25 +158,70 @@ async function removeKey(p: ProviderInfo): Promise<void> {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-background/70 p-4 backdrop-blur"
-    @click.self="emit('close')"
-  >
-    <div class="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-lg">
-      <div class="mb-4 flex items-center justify-between">
-        <div class="min-w-0">
-          <h2 class="text-base font-semibold">Settings</h2>
-          <p v-if="panel === 'form'" class="mt-0.5 text-xs text-muted-foreground">
+  <Dialog :open="open" @update:open="emit('update:open', $event)">
+    <DialogContent class="gap-0 p-5">
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <DialogTitle class="text-base font-semibold leading-snug">{{
+            t('settings.title')
+          }}</DialogTitle>
+          <p v-if="panel === 'form'" class="mt-1 text-xs text-muted-foreground">
             {{ formMode === 'add' ? 'Add provider' : 'Update API key' }}
           </p>
         </div>
-        <Button variant="ghost" size="icon" @click="emit('close')">
-          <X class="size-4" />
-        </Button>
+        <DialogClose as-child>
+          <Button variant="ghost" size="icon" type="button" class="shrink-0">
+            <X class="size-4" />
+          </Button>
+        </DialogClose>
       </div>
 
       <!-- List panel -->
-      <div v-if="panel === 'list'" class="space-y-3">
+      <div v-if="panel === 'list'" class="space-y-4">
+        <div
+          class="flex rounded-lg border border-border bg-muted/40 p-1"
+          role="tablist"
+          :aria-label="t('settings.title')"
+        >
+          <button
+            type="button"
+            role="tab"
+            class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            :aria-selected="settingsTab === 'providers'"
+            :class="
+              cn(
+                settingsTab === 'providers'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )
+            "
+            @click="settingsTab = 'providers'"
+          >
+            {{ t('settings.tabs.providers') }}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            :aria-selected="settingsTab === 'appearance'"
+            :class="
+              cn(
+                settingsTab === 'appearance'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )
+            "
+            @click="settingsTab = 'appearance'"
+          >
+            {{ t('settings.tabs.appearance') }}
+          </button>
+        </div>
+
+        <div v-show="settingsTab === 'appearance'" role="tabpanel">
+          <SettingsAppearancePanel />
+        </div>
+
+        <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
         <h3 class="text-sm font-medium">Connected providers</h3>
 
         <div
@@ -210,6 +283,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
             </div>
           </li>
         </ul>
+        </div>
       </div>
 
       <!-- Form panel -->
@@ -285,7 +359,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
 
       <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <template v-if="panel === 'list'">
+          <template v-if="panel === 'list' && settingsTab === 'providers'">
             <Button
               variant="outline"
               :disabled="availableToAdd.length === 0"
@@ -298,8 +372,10 @@ async function removeKey(p: ProviderInfo): Promise<void> {
             </span>
           </template>
         </div>
-        <Button variant="secondary" @click="emit('close')">Done</Button>
+        <DialogClose as-child>
+          <Button variant="secondary" type="button">{{ t('settings.done') }}</Button>
+        </DialogClose>
       </div>
-    </div>
-  </div>
+    </DialogContent>
+  </Dialog>
 </template>

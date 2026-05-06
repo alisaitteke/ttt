@@ -1,0 +1,22 @@
+{
+  "locale": {
+    "switchLabel": "Language",
+    "searchPlaceholder": "Search language…",
+    "noResults": "No language found."
+  },
+  "settings": {
+    "title": "Settings",
+    "openSettings": "Open settings",
+    "done": "Done",
+    "tabs": {
+      "appearance": "Appearance",
+      "providers": "Providers"
+    },
+    "theme": {
+      "label": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  }
+}
