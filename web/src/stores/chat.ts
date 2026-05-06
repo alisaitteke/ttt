@@ -132,8 +132,8 @@ export function useChatStore() {
     }
   }
 
-  async function newChat(opts: { provider?: ProviderId; model?: string }): Promise<ChatSummary> {
-    const created = await apiCreateChat(opts);
+  async function newChat(opts?: { provider?: ProviderId; model?: string }): Promise<ChatSummary> {
+    const created = await apiCreateChat(opts ?? {});
     chats.value = [created, ...chats.value];
     activeChatId.value = created.id;
     messages.splice(0, messages.length);

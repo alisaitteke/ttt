@@ -85,11 +85,7 @@ watch(
 );
 
 async function handleNewChat(): Promise<void> {
-  if (!status.value) return;
-  const created = await chat.newChat({
-    provider: status.value.activeProvider,
-    model: status.value.activeModel,
-  });
+  const created = await chat.newChat();
   await router.push({ name: 'chat', params: { id: created.id } });
 }
 
