@@ -5,7 +5,7 @@
     "done": "Tamam",
     "tabs": {
       "appearance": "Görünüm",
-      "providers": "Sağlayıcılar",
+      "providers": "AI Modelleri",
       "connections": "İletişim araçları",
       "integrations": "Entegrasyonlar"
     },
@@ -14,6 +14,9 @@
       "system": "Sistem",
       "light": "Açık",
       "dark": "Koyu"
+    },
+    "locale": {
+      "responseHint": "Yapay zekâ ile istediğiniz dilde konuşabilirsiniz; yanıtlar yukarıda seçtiğiniz dilde olacaktır."
     },
     "providers": {
       "formSubtitleAdd": "Sağlayıcı ekle",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "Entegrasyonlar",
       "description": "LLM dışı özellikler için API anahtarları (ör. GIF araması). Model sağlayıcılarından ayrıdır.",
+      "connectedHeading": "Bağlı entegrasyonlar",
+      "emptyState": "Henüz entegrasyon yok. Katalogdan bir tane ekleyin.",
+      "addIntegration": "Entegrasyon ekle",
+      "pickerHint": "Bağlamak için bir entegrasyon seçin.",
+      "allConnected": "Mevcut entegrasyonların hepsi yapılandırıldı.",
+      "searchPlaceholder": "Entegrasyon ara…",
+      "noSearchResults": "Aramanızla eşleşen entegrasyon yok.",
       "loading": "Yükleniyor…",
+      "comingSoonHeading": "Yakında",
+      "comingSoonBadge": "Yakında",
       "giphy": {
         "title": "GIPHY",
         "getKey": "Geliştirici paneli",

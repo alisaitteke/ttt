@@ -5,7 +5,7 @@
     "done": "تم",
     "tabs": {
       "appearance": "المظهر",
-      "providers": "المزوِّدون",
+      "providers": "نماذج الذكاء الاصطناعي",
       "connections": "المراسلة",
       "integrations": "التكاملات"
     },
@@ -14,6 +14,9 @@
       "system": "النظام",
       "light": "فاتح",
       "dark": "داكن"
+    },
+    "locale": {
+      "responseHint": "يمكنك التحدث مع الذكاء الاصطناعي بأي لغة تختارها؛ ستكون الردود باللغة التي حددتها أعلاه."
     },
     "providers": {
       "formSubtitleAdd": "إضافة مزوِّد",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "التكاملات",
       "description": "مفاتيح API لميزات خارج نموذج اللغة (مثل البحث عن ملفات GIF). منفصلة عن مزودي النماذج.",
+      "connectedHeading": "التكاملات المتصلة",
+      "emptyState": "لا توجد تكاملات بعد. أضف تكاملاً من القائمة.",
+      "addIntegration": "إضافة تكامل",
+      "pickerHint": "اختر تكاملاً للربط.",
+      "allConnected": "تم إعداد جميع التكاملات المتاحة.",
+      "searchPlaceholder": "بحث في التكاملات…",
+      "noSearchResults": "لا توجد تكاملات مطابقة لبحثك.",
       "loading": "جارٍ التحميل…",
+      "comingSoonHeading": "قريبًا",
+      "comingSoonBadge": "قريبًا",
       "giphy": {
         "title": "GIPHY",
         "getKey": "لوحة المطورين",

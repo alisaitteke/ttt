@@ -89,16 +89,17 @@ function registerCoreWhatsAppTools(registry: ToolRegistry): void {
     tool: {
       name: 'whatsapp_send_image',
       description:
-        'Send one image from an http(s) URL via WhatsApp (Baileys fetches the URL). Optional caption. Same consent and ToS rules as text; `to` = digits only. The image URL must be publicly reachable by the host running TTT UI.',
+        'Send one photo or looping GIF via WhatsApp from a public http(s) URL (Baileys downloads it on the TTT host). Optional caption. `to` = digits only. For animated GIFs (e.g. Giphy), pass an .mp4 URL (`mp4_url` from giphy_search) or a .gif URL (`gif_url`) — not .webp preview URLs, which send as a static image. Same consent and ToS rules as text.',
       inputSchema: {
         type: 'object',
         properties: {
           to: { type: 'string', description: 'Recipient phone digits (country code, no +).' },
           imageUrl: {
             type: 'string',
-            description: 'Public http(s) URL of the image (e.g. PNG or JPEG).',
+            description:
+              'Public http(s) URL: JPEG/PNG/WebP as image; .mp4 or .gif as inline looping GIF (WhatsApp gifPlayback). For Giphy results, prefer mp4_url or gif_url over preview_url.',
           },
-          caption: { type: 'string', description: 'Optional image caption.' },
+          caption: { type: 'string', description: 'Optional caption.' },
         },
         required: ['to', 'imageUrl'],
       },

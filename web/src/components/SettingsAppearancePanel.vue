@@ -2,7 +2,7 @@
 import type { Component } from 'vue';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Monitor, Moon, Sun } from 'lucide-vue-next';
+import { AlertTriangle, Monitor, Moon, Sun } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,13 @@ const themeChoices: { value: ThemePreference; icon: Component; labelKey: string 
     <div class="space-y-2">
       <Label class="text-muted-foreground">{{ t('locale.switchLabel') }}</Label>
       <LocaleSwitcher />
+      <div
+        class="flex gap-2 rounded-md border border-amber-200/80 bg-amber-50/90 px-2.5 py-2 text-xs leading-relaxed text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+        role="note"
+      >
+        <AlertTriangle class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        <p>{{ t('settings.locale.responseHint') }}</p>
+      </div>
     </div>
 
     <div class="space-y-2">

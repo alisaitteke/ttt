@@ -61,6 +61,23 @@ function assertPublicHttpUrl(raw: string): string {
   return parsed.toString();
 }
 
+/**
+ * WhatsApp renders looping GIF-style messages when Baileys sends `video` + `gifPlayback: true`
+ * (see WA `videoMessage.gifPlayback`). Sending the same asset as `image` shows a static picture
+ * — including .webp previews. Use an .mp4 (e.g. Giphy `mp4_url`) or .gif URL for animation.
+ */
+function shouldSendUrlAsWhatsAppGifPlayback(urlStr: string): boolean {
+  try {
+    const u = new URL(urlStr);
+    const path = u.pathname.toLowerCase();
+    if (path.endsWith('.mp4')) return true;
+    if (path.endsWith('.gif')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function requireLinkedSock(sock: WASocket | null, opened: boolean): asserts sock is WASocket {
   if (!sock || !opened) {
     throw new Error(
@@ -261,10 +278,19 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
         const url = assertPublicHttpUrl(imageUrl);
         requireLinkedSock(this.sock, this.opened);
         const jid = jidFromPhoneDigits(to);
-        await this.sock.sendMessage(jid, {
-          image: { url },
-          ...(caption ? { caption } : {}),
-        });
+        const cap = caption ? { caption } : {};
+        if (shouldSendUrlAsWhatsAppGifPlayback(url)) {
+          await this.sock.sendMessage(jid, {
+            video: { url },
+            gifPlayback: true,
+            ...cap,
+          });
+        } else {
+          await this.sock.sendMessage(jid, {
+            image: { url },
+            ...cap,
+          });
+        }
         return JSON.stringify({ ok: true, to: jid }, null, 2);
       }
       case 'whatsapp_list_chats': {

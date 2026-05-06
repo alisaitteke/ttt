@@ -16,11 +16,27 @@ interface GiphyGif {
   title: string;
   url?: string;
   images?: {
+    fixed_height?: GiphyImageRendition;
     fixed_height_small?: GiphyImageRendition;
+    downsized?: GiphyImageRendition;
+    downsized_medium?: GiphyImageRendition;
     downsized_small?: { mp4?: string };
-    original?: { mp4?: string; webp?: string; url?: string };
+    original?: GiphyImageRendition;
     preview_gif?: { url?: string };
   };
+}
+
+function pickAnimatedGifUrl(images: GiphyGif['images']): string {
+  if (!images) return '';
+  return (
+    images.downsized?.url ||
+    images.downsized_medium?.url ||
+    images.fixed_height_small?.url ||
+    images.fixed_height?.url ||
+    images.preview_gif?.url ||
+    images.original?.url ||
+    ''
+  );
 }
 
 class GiphyProvider implements Provider {
@@ -33,7 +49,7 @@ class GiphyProvider implements Provider {
       tool: {
         name: 'giphy_search',
         description:
-          'Search GIPHY for animated GIFs by keyword. Returns titles, ids, and media URLs. Use returned URLs exactly as given (do not strip or alter query parameters). When you show GIF results to the user, include visible "Powered by GIPHY" attribution (GIPHY API terms). Requires a GIPHY API key: Settings → Integrations in the TTT web UI, or the TTT_GIPHY_API_KEY environment variable.',
+          'Search GIPHY for animated GIFs by keyword. Returns titles, ids, page links, and media URLs: gif_url (animated .gif), preview_url (often .webp), mp4_url. Use returned URLs exactly as given (do not strip or alter query parameters). When you show GIF results to the user, include visible "Powered by GIPHY" attribution (GIPHY API terms). Requires a GIPHY API key: Settings → Integrations in the TTT web UI, or the TTT_GIPHY_API_KEY environment variable.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -162,6 +178,7 @@ class GiphyProvider implements Provider {
 
         for (const g of data) {
           const img = g.images;
+          const gifUrl = pickAnimatedGifUrl(img);
           const preview =
             img?.fixed_height_small?.webp ||
             img?.fixed_height_small?.url ||
@@ -171,10 +188,12 @@ class GiphyProvider implements Provider {
             img?.downsized_small?.mp4 ||
             img?.original?.mp4 ||
             img?.fixed_height_small?.mp4 ||
+            img?.fixed_height?.mp4 ||
             '';
           const page = g.url ?? `https://giphy.com/gifs/${g.id}`;
           lines.push(`- **${g.title || '(no title)'}** (id: ${g.id})`);
           lines.push(`  - page: ${page}`);
+          if (gifUrl) lines.push(`  - gif_url: ${gifUrl}`);
           if (preview) lines.push(`  - preview_url: ${preview}`);
           if (mp4) lines.push(`  - mp4_url: ${mp4}`);
           lines.push('');

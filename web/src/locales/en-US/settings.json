@@ -5,7 +5,7 @@
     "done": "Done",
     "tabs": {
       "appearance": "Appearance",
-      "providers": "Providers",
+      "providers": "AI Models",
       "connections": "Messaging",
       "integrations": "Integrations"
     },
@@ -14,6 +14,9 @@
       "system": "System",
       "light": "Light",
       "dark": "Dark"
+    },
+    "locale": {
+      "responseHint": "You can chat with the AI in any language; assistant replies will use the language you selected above."
     },
     "providers": {
       "formSubtitleAdd": "Add provider",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "Integrations",
       "description": "API keys for non-LLM capabilities (e.g. GIF search). Separate from model providers.",
+      "connectedHeading": "Connected integrations",
+      "emptyState": "No integrations configured yet. Add one from the catalog.",
+      "addIntegration": "Add integration",
+      "pickerHint": "Choose an integration to connect.",
+      "allConnected": "All available integrations are configured.",
+      "searchPlaceholder": "Search integrations…",
+      "noSearchResults": "No integrations match your search.",
       "loading": "Loading…",
+      "comingSoonHeading": "Coming soon",
+      "comingSoonBadge": "Coming soon",
       "giphy": {
         "title": "GIPHY",
         "getKey": "Developer dashboard",

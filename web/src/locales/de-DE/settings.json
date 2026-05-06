@@ -5,7 +5,7 @@
     "done": "Fertig",
     "tabs": {
       "appearance": "Darstellung",
-      "providers": "Anbieter",
+      "providers": "KI-Modelle",
       "connections": "Messaging",
       "integrations": "Integrationen"
     },
@@ -14,6 +14,9 @@
       "system": "System",
       "light": "Hell",
       "dark": "Dunkel"
+    },
+    "locale": {
+      "responseHint": "Sie können mit der KI in beliebiger Sprache schreiben; die Antworten verwenden die oben gewählte Sprache."
     },
     "providers": {
       "formSubtitleAdd": "Anbieter hinzufügen",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "Integrationen",
       "description": "API-Schlüssel für Nicht-LLM-Funktionen (z. B. GIF-Suche). Getrennt von Modellanbietern.",
+      "connectedHeading": "Verbundene Integrationen",
+      "emptyState": "Noch keine Integrationen konfiguriert. Fügen Sie eine aus dem Katalog hinzu.",
+      "addIntegration": "Integration hinzufügen",
+      "pickerHint": "Wählen Sie eine Integration zum Verbinden.",
+      "allConnected": "Alle verfügbaren Integrationen sind eingerichtet.",
+      "searchPlaceholder": "Integrationen durchsuchen…",
+      "noSearchResults": "Keine passenden Integrationen.",
       "loading": "Wird geladen…",
+      "comingSoonHeading": "Demnächst",
+      "comingSoonBadge": "Demnächst",
       "giphy": {
         "title": "GIPHY",
         "getKey": "Entwickler-Dashboard",

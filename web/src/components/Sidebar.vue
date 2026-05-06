@@ -136,8 +136,6 @@ watch(
   { immediate: true }
 );
 
-const npmVersion = import.meta.env.VITE_TTT_NPM_VERSION;
-
 function closeMobileNav(): void {
   emit('update:mobileOpen', false);
 }
@@ -216,24 +214,18 @@ function openSettings(): void {
     >
       <RouterLink
         :to="{ name: 'home' }"
-        class="flex min-w-0 items-center gap-2 rounded-md p-1 -ms-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        class="group flex min-w-0 items-center rounded-md p-1 -ms-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         :aria-label="t('sidebar.homeAria')"
         @click="closeMobileNav"
       >
         <img
-          src="/ttt-logo.svg?v=0.8"
+          src="/logo.svg?v=7"
           alt=""
-          width="32"
-          height="32"
-          class="size-8 shrink-0 object-contain"
+          width="105"
+          height="35"
+          class="h-7 w-auto max-w-[min(128px,40vw)] shrink-0 object-contain object-left opacity-70 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 dark:invert"
           aria-hidden="true"
         />
-        <div class="flex min-w-0 flex-col items-start gap-px leading-none">
-          <span
-            class="inline-block [font-family:var(--font-mnemonic)] text-2xl font-black leading-none tracking-[-0.06em] [transform:translateY(0.04em)]"
-          >TTT</span>
-          <span class="text-[10px] tabular-nums text-muted-foreground">v{{ npmVersion }}</span>
-        </div>
       </RouterLink>
       <Button
         variant="ghost"

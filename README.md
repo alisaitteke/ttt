@@ -29,7 +29,19 @@ The architecture is **provider-driven**: each backend contributes MCP tools from
 
 Don't want to wire this into Claude Desktop or Cursor? The same package ships a fully local web UI that lets you chat with an AI model and invoke TTT MCP tools—including Adobe automation and Docker—through the server underneath.
 
-![Standalone UI Screenshot](./images/frame_generic_light.png)
+### Quick start
+
+Run the UI **in the background** (you can close the terminal afterward). After it starts, open the URL from `ui-background.json` in your TTT data directory (`TTT_HOME`, default `~/.ttt`). Details: [Running the UI in the background](#running-the-ui-in-the-background-detached).
+
+```bash
+npx -p @alisaitteke/ttt ui -D
+```
+
+Same as **`npx -p @alisaitteke/ttt ui --detach`**.
+
+Optional: add `--no-open` if you don’t want the detached process to try opening the browser automatically.
+
+Or run in the **foreground** (random free port; opens your browser):
 
 ```bash
 npx -p @alisaitteke/ttt ui
@@ -37,7 +49,9 @@ npx -p @alisaitteke/ttt ui
 npx -p @alisaitteke/ttt ttt-ui
 ```
 
-That's it. A local server starts on `127.0.0.1` (random free port) and your default browser opens the chat UI automatically.
+![Standalone UI Screenshot](./images/frame_generic_light.png)
+
+That's it. In foreground mode, a local server starts on `127.0.0.1` (random free port unless you pass `--port`) and your default browser opens the chat UI automatically.
 
 ### Supported providers
 
@@ -68,10 +82,47 @@ The UI lets you pick which backends are active for each chat (Photoshop, After E
 ### CLI flags
 
 ```bash
-ttt-ui [--port 5174] [--host 127.0.0.1] [--no-open]
+ttt-ui [-D] [--detach] [--port 5174] [--host 127.0.0.1] [--no-open] [--stop]
 # or
-ui [--port 5174] [--host 127.0.0.1] [--no-open]
+ui [-D] [--detach] [--port 5174] [--host 127.0.0.1] [--no-open] [--stop]
 ```
+
+### Running the UI in the background (detached)
+
+The standalone UI is a **long-lived HTTP server** on your machine. If you do not want to keep a terminal window open, run it **detached** so the process keeps serving after the shell exits. This works on **macOS and Windows** (the CLI uses a detached child process and hides the console window on Windows).
+
+**What it does**
+
+- **`-D` / `--detach`** — Starts the UI server in the background. The parent `ttt-ui` process exits immediately after spawning the server.
+- **`--stop`** — Sends `SIGTERM` to the detached server recorded in the state file and removes that file when the process exits.
+- **State file** — `${TTT_HOME}/ui-background.json` (default `TTT_HOME` is `~/.ttt`). It contains the listening URL, port, host, PID, and start time once the server is ready.
+
+**Requirements**
+
+- **Port** — Omitted port picks a random free port (same as foreground); pass **`--port`** if you want a stable URL every time.
+- **`--stop` uses the same `TTT_HOME`** — If you override data directory with `TTT_HOME`, use the same value when stopping.
+
+**Examples**
+
+```bash
+# Foreground (default): random free port, browser opens
+npx -p @alisaitteke/ttt ui
+
+# Background: random port; URL written to ui-background.json when ready
+npx -p @alisaitteke/ttt ui --detach
+
+# Background on a fixed port; skip auto-opening the browser from the child process
+npx -p @alisaitteke/ttt ui --detach --no-open --port 5174
+
+# Stop the detached server (default ~/.ttt/ui-background.json)
+npx -p @alisaitteke/ttt ui --stop
+```
+
+Read `ui-background.json` for the exact URL. If a daemon is already running, a second detach (`--detach` or `-D`) is rejected until you `--stop` or the old process dies (stale state is cleared automatically).
+
+**Not the same as the MCP command**
+
+The main package entry (`npx @alisaitteke/ttt`) is the **MCP server over stdio** for Cursor, Claude Desktop, and the UI’s own agent loop. It is meant to be spawned by those hosts, not left running as a detached terminal service. Background mode applies to **`ttt-ui` / `ui`** only.
 
 ### Notes
 
@@ -229,6 +280,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Environment Variables
 
+- `TTT_HOME`: (Optional) Override the TTT data directory (default `~/.ttt`). Used for SQLite, exports, credential-relative paths, and the detached UI state file (`ui-background.json`). See [Running the UI in the background](#running-the-ui-in-the-background-detached).
 - `PHOTOSHOP_PATH`: (Optional) Specify custom Photoshop installation path
 - `AFTER_EFFECTS_PATH`: (Optional) Specify custom After Effects installation path
 - `LOG_LEVEL`: Logging level (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)

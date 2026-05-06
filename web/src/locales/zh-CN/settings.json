@@ -5,7 +5,7 @@
     "done": "完成",
     "tabs": {
       "appearance": "外观",
-      "providers": "提供商",
+      "providers": "AI 模型",
       "connections": "消息",
       "integrations": "集成"
     },
@@ -14,6 +14,9 @@
       "system": "跟随系统",
       "light": "浅色",
       "dark": "深色"
+    },
+    "locale": {
+      "responseHint": "您可以使用任意语言与 AI 交流；回复将使用上方选择的界面语言。"
     },
     "providers": {
       "formSubtitleAdd": "添加提供商",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "集成",
       "description": "非 LLM 功能的 API 密钥（例如 GIF 搜索）。与模型提供商分开管理。",
+      "connectedHeading": "已连接的集成",
+      "emptyState": "尚未配置集成。请从目录中添加。",
+      "addIntegration": "添加集成",
+      "pickerHint": "选择一个要连接的集成。",
+      "allConnected": "所有可用集成均已配置。",
+      "searchPlaceholder": "搜索集成…",
+      "noSearchResults": "没有与搜索匹配的集成。",
       "loading": "加载中…",
+      "comingSoonHeading": "即将推出",
+      "comingSoonBadge": "即将推出",
       "giphy": {
         "title": "GIPHY",
         "getKey": "开发者控制台",

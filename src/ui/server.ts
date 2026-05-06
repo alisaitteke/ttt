@@ -38,7 +38,11 @@ import {
   setProviderConfig,
   type ProviderId,
 } from '@ttt/ui/config.js';
-import { getGiphyApiKey } from '@ttt/ui/integrations/giphy-key.js';
+import {
+  getIntegration,
+  listComingSoonIntegrations,
+  listIntegrations,
+} from '@ttt/ui/integrations/registry.js';
 import { getProvider, listProviders } from '@ttt/ui/providers/registry.js';
 import { sanitizeDesignToolIds, type DesignToolId } from '@ttt/ui/providers/design-tools.js';
 import {
@@ -391,31 +395,53 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   // ---- Integrations (GIPHY, …) -------------------------------------------
 
-  app.get('/api/integrations/giphy', async (c) => {
-    const key = await getGiphyApiKey();
-    return c.json({
-      configured: Boolean(key),
-      apiKeyMasked: maskApiKey(key),
-    });
+  app.get('/api/integrations', async (c) => {
+    const active = await Promise.all(
+      listIntegrations().map(async (integration) => {
+        const key = await integration.getEffectiveKey();
+        return {
+          id: integration.id,
+          label: integration.label,
+          apiKeyHelpUrl: integration.apiKeyHelpUrl,
+          hasApiKey: Boolean(key),
+          apiKeyMasked: maskApiKey(key),
+          availability: 'active' as const,
+        };
+      })
+    );
+    const comingSoon = listComingSoonIntegrations().map((entry) => ({
+      id: entry.id,
+      label: entry.label,
+      apiKeyHelpUrl: entry.apiKeyHelpUrl,
+      hasApiKey: false,
+      apiKeyMasked: null,
+      availability: 'coming_soon' as const,
+    }));
+    return c.json([...active, ...comingSoon]);
   });
 
-  app.post('/api/integrations/giphy/key', async (c) => {
+  app.post('/api/integrations/:id/key', async (c) => {
+    const integration = getIntegration(c.req.param('id'));
+    if (!integration) return c.json({ error: 'unknown_integration' }, 404);
     const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
     if (!body.apiKey || typeof body.apiKey !== 'string') {
       return c.json({ error: 'missing_key' }, 400);
     }
     const trimmed = body.apiKey.trim();
-    if (!trimmed || trimmed.length > 256) {
+    if (!integration.validateApiKeyFormat(trimmed)) {
       return c.json({ error: 'invalid_format' }, 400);
     }
-    await setIntegrationCredentialSecret('giphy', trimmed);
-    invalidateDesignToolsListCache();
-    return c.json({ ok: true as const, apiKeyMasked: maskApiKey(trimmed) });
+    await setIntegrationCredentialSecret(integration.id, trimmed);
+    integration.onCredentialChanged?.();
+    const key = await integration.getEffectiveKey();
+    return c.json({ ok: true as const, apiKeyMasked: maskApiKey(key) });
   });
 
-  app.delete('/api/integrations/giphy/key', async (c) => {
-    await deleteIntegrationCredentialSecret('giphy');
-    invalidateDesignToolsListCache();
+  app.delete('/api/integrations/:id/key', async (c) => {
+    const integration = getIntegration(c.req.param('id'));
+    if (!integration) return c.json({ error: 'unknown_integration' }, 404);
+    await deleteIntegrationCredentialSecret(integration.id);
+    integration.onCredentialChanged?.();
     return c.json({ ok: true as const });
   });
 

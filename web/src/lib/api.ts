@@ -264,22 +264,33 @@ export const apiDeleteKey = (id: ProviderId) =>
 
 // ---- Integrations (non-LLM) -------------------------------------------
 
-export interface GiphyIntegrationStatus {
-  configured: boolean;
+/** Integrations that accept API keys via settings (has a server adapter). */
+export type IntegrationAdapterId = 'giphy';
+
+/** Catalog ids including placeholders (e.g. coming soon). */
+export type IntegrationId = IntegrationAdapterId | 'homeassistant';
+
+export type IntegrationAvailability = 'active' | 'coming_soon';
+
+export interface IntegrationInfo {
+  id: IntegrationId;
+  label: string;
+  apiKeyHelpUrl: string;
+  hasApiKey: boolean;
   apiKeyMasked: string | null;
+  availability: IntegrationAvailability;
 }
 
-export const apiGetGiphyIntegration = () =>
-  api<GiphyIntegrationStatus>('/api/integrations/giphy');
+export const apiListIntegrations = () => api<IntegrationInfo[]>('/api/integrations');
 
-export const apiSaveGiphyKey = (apiKey: string) =>
-  api<{ ok: true; apiKeyMasked: string | null }>('/api/integrations/giphy/key', {
+export const apiSaveIntegrationKey = (id: IntegrationId, apiKey: string) =>
+  api<{ ok: true; apiKeyMasked: string | null }>(`/api/integrations/${id}/key`, {
     method: 'POST',
     body: JSON.stringify({ apiKey }),
   });
 
-export const apiDeleteGiphyKey = () =>
-  api<{ ok: true }>('/api/integrations/giphy/key', { method: 'DELETE' });
+export const apiDeleteIntegrationKey = (id: IntegrationId) =>
+  api<{ ok: true }>(`/api/integrations/${id}/key`, { method: 'DELETE' });
 
 // ---- Chats ------------------------------------------------------------
 

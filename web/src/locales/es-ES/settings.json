@@ -5,7 +5,7 @@
     "done": "Hecho",
     "tabs": {
       "appearance": "Apariencia",
-      "providers": "Proveedores",
+      "providers": "Modelos de IA",
       "connections": "Mensajería",
       "integrations": "Integraciones"
     },
@@ -14,6 +14,9 @@
       "system": "Sistema",
       "light": "Claro",
       "dark": "Oscuro"
+    },
+    "locale": {
+      "responseHint": "Puedes hablar con la IA en el idioma que quieras; las respuestas usarán el idioma seleccionado arriba."
     },
     "providers": {
       "formSubtitleAdd": "Añadir proveedor",
@@ -46,7 +49,16 @@
     "integrations": {
       "heading": "Integraciones",
       "description": "Claves API para funciones que no son del LLM (p. ej. búsqueda de GIF). Separadas de los proveedores de modelos.",
+      "connectedHeading": "Integraciones conectadas",
+      "emptyState": "Aún no hay integraciones. Añade una desde el catálogo.",
+      "addIntegration": "Añadir integración",
+      "pickerHint": "Elige una integración para conectar.",
+      "allConnected": "Todas las integraciones disponibles están configuradas.",
+      "searchPlaceholder": "Buscar integraciones…",
+      "noSearchResults": "Ninguna integración coincide con la búsqueda.",
       "loading": "Cargando…",
+      "comingSoonHeading": "Próximamente",
+      "comingSoonBadge": "Próximamente",
       "giphy": {
         "title": "GIPHY",
         "getKey": "Panel de desarrolladores",
