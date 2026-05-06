@@ -307,7 +307,9 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
   try {
     const waPrefs = await readWhatsAppPreferences();
     const giphyKey = await getGiphyApiKey();
-    const spawnArgs = IS_DEV_SOURCE ? ['--import', 'tsx', MCP_SERVER_ENTRY] : [MCP_SERVER_ENTRY];
+    const spawnArgs = IS_DEV_SOURCE 
+      ? ['--import', 'tsx/esm', MCP_SERVER_ENTRY, 'mcp'] 
+      : [MCP_SERVER_ENTRY, 'mcp'];
     const mcpEnv: Record<string, string> = {
       ...sanitizedEnv(),
       LOG_LEVEL: process.env.LOG_LEVEL ?? '2',

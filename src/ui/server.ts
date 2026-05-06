@@ -177,6 +177,10 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   installBaileysConnectionClosedGuards(logger);
   const app = new Hono();
 
+  // When `port` is `0`, the OS assigns an ephemeral port — keep a ref so
+  // middleware and the connection bridge use the real listening port once known.
+  const listenPortRef = { current: opts.port };
+
   // Initialize the SQLite database eagerly so the first request is fast and
   // any migration error surfaces during startup instead of mid-request.
   getDB();
@@ -186,8 +190,16 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   app.use('/api/*', async (c, next) => {
     const origin = c.req.header('origin');
-    if (origin && !isLoopbackOrigin(origin, opts.port)) {
-      return c.json({ error: 'invalid_origin' }, 403);
+    if (origin) {
+      // When `listenPortRef` is still `0` (before the listen callback), allow any
+      // loopback origin so SPA + first API calls while the OS assigns a port
+      // are not rejected (`--port 0` flow used by the Tauri host).
+      const port = listenPortRef.current;
+      const ok =
+        port === 0 ? isLoopbackOriginHostOnly(origin) : isLoopbackOrigin(origin, port);
+      if (!ok) {
+        return c.json({ error: 'invalid_origin' }, 403);
+      }
     }
     return next();
   });
@@ -794,11 +806,14 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
         persistAssistant();
         await stream.writeSSE({ event: 'done', data: '{}' });
       } catch (err) {
-        logger.error('chat error', err);
+        const errorDetails = err instanceof Error 
+          ? { name: err.name, message: err.message, stack: err.stack }
+          : err;
+        logger.error('chat error', errorDetails);
         persistAssistant();
         await stream.writeSSE({
           event: 'error',
-          data: JSON.stringify({ message: (err as Error).message }),
+          data: JSON.stringify({ message: (err as Error).message || String(err) }),
         });
       } finally {
         abortControllers.delete(requestId);
@@ -861,45 +876,60 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   });
 
   const bridgeSecret = randomBytes(32).toString('hex');
-  setConnectionBridgeConfig({
-    baseUrl: `http://${opts.host}:${opts.port}`,
-    secret: bridgeSecret,
-  });
 
-  const server: ServerType = serve(
-    { fetch: app.fetch, port: opts.port, hostname: opts.host },
-    (info) => logger.info(`Listening on http://${opts.host}:${info.port}`)
-  );
+  return await new Promise<UIServer>((resolve, reject) => {
+    const server: ServerType = serve(
+      { fetch: app.fetch, port: opts.port, hostname: opts.host },
+      (info) => {
+        const port =
+          typeof info.port === 'number' && Number.isFinite(info.port) ? info.port : listenPortRef.current;
+        listenPortRef.current = port;
+        logger.info(`Listening on http://${opts.host}:${port}`);
+        setConnectionBridgeConfig({
+          baseUrl: `http://${opts.host}:${port}`,
+          secret: bridgeSecret,
+        });
 
-  getConnectionAdapter('whatsapp').subscribe((ev) => {
-    if (ev.type === 'connected' || ev.type === 'disconnected' || ev.type === 'stream_error') {
-      invalidateDesignToolsListCache();
-    }
-  });
+        getConnectionAdapter('whatsapp').subscribe((ev) => {
+          if (
+            ev.type === 'connected' ||
+            ev.type === 'disconnected' ||
+            ev.type === 'stream_error'
+          ) {
+            invalidateDesignToolsListCache();
+          }
+        });
 
-  void (async () => {
-    try {
-      if (await hasPersistedWhatsAppAuth()) {
-        void getConnectionAdapter('whatsapp')
-          .ensureSocket()
-          .catch((e) => logger.warn('whatsapp startup connect failed', e));
+        void (async () => {
+          try {
+            if (await hasPersistedWhatsAppAuth()) {
+              void getConnectionAdapter('whatsapp')
+                .ensureSocket()
+                .catch((e) => logger.warn('whatsapp startup connect failed', e));
+            }
+          } catch (e) {
+            logger.warn('whatsapp startup auth check failed', e);
+          }
+        })();
+
+        resolve({
+          url: `http://${opts.host}:${port}`,
+          close: () =>
+            new Promise<void>((resolveClose) => {
+              for (const controller of abortControllers.values()) controller.abort();
+              abortControllers.clear();
+              setConnectionBridgeConfig(null);
+              void getConnectionAdapter('whatsapp').disconnect().catch(() => undefined);
+              server.close(() => resolveClose());
+            }),
+        });
       }
-    } catch (e) {
-      logger.warn('whatsapp startup auth check failed', e);
-    }
-  })();
+    );
 
-  return {
-    url: `http://${opts.host}:${opts.port}`,
-    close: () =>
-      new Promise<void>((resolveClose) => {
-        for (const controller of abortControllers.values()) controller.abort();
-        abortControllers.clear();
-        setConnectionBridgeConfig(null);
-        void getConnectionAdapter('whatsapp').disconnect().catch(() => undefined);
-        server.close(() => resolveClose());
-      }),
-  };
+    server.once('error', (err) => {
+      reject(err);
+    });
+  });
 }
 
 async function assertRevealableTarget(inputPath: string): Promise<string> {
@@ -1071,6 +1101,15 @@ function revealPathInFileManager(absolutePath: string): Promise<void> {
     });
   }
   throw new Error('unsupported_platform');
+}
+
+function isLoopbackOriginHostOnly(origin: string): boolean {
+  try {
+    const u = new URL(origin);
+    return u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '[::1]';
+  } catch {
+    return false;
+  }
 }
 
 function isLoopbackOrigin(origin: string, port: number): boolean {

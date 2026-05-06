@@ -47,3 +47,10 @@ app_data
 .mcpregistry_github_token
 
 *.tgz
+
+# Tauri desktop staging (large; produced by scripts/tauri-prepare-bundle.mjs)
+src-tauri/bundle-resources/nodejs/
+src-tauri/bundle-resources/server/
+src-tauri/bundle-resources/.staging/
+.keys/tauri-updater.key
+src-tauri/target/

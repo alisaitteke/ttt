@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TTT",
+  "version": "0.2.7",
+  "identifier": "io.github.alisaitteke.ttt",
+  "build": {
+    "beforeDevCommand": "cross-env TAURI=1 npm run dev:ui",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "npm run build && node scripts/tauri-prepare-bundle.mjs",
+    "frontendDist": "../web/dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    },
+    "windows": []
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVDMTJDNjdFNTZEOUYyMDEKUldRQjh0bFdmc1lTN1BLRVVpRWtYM3V2U1ZINnRwZXp1L1J3R25veCtIQ2lQQTFROTZ4WE51cGQK",
+      "windows": {
+        "installMode": "passive"
+      },
+      "endpoints": [
+        "https://github.com/alisaitteke/ttt/releases/latest/download/latest.json"
+      ]
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": ["ttt"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": ["bundle-resources"]
+  }
+}

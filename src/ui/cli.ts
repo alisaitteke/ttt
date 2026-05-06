@@ -186,7 +186,7 @@ function parseFlags(argv: string[]): CliFlags {
     const arg = argv[i];
     if (arg === '--port' || arg === '-p') {
       const val = Number(argv[++i]);
-      if (Number.isFinite(val) && val > 0) flags.port = val;
+      if (Number.isFinite(val) && val >= 0) flags.port = val;
     } else if (arg === '--host') {
       flags.host = argv[++i] ?? flags.host;
     } else if (arg === '--no-open') {
@@ -254,6 +254,10 @@ export async function runUiCli(argv: string[]): Promise<void> {
 
   const url = server.url;
 
+  if (process.env.TTT_TAURI_HOST === '1') {
+    process.stdout.write(`TTT_READY ${url}\n`);
+  }
+
   if (isBackgroundChild) {
     mkdirSync(getTttHomeDir(), { recursive: true, mode: 0o700 });
     await writeBackgroundState({
@@ -295,8 +299,14 @@ export async function runUiCli(argv: string[]): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-// Standalone entry — used when spawned directly as a background child process.
-if (process.env[BG_CHILD_ENV] === '1') {
+// Standalone entry — runs in both dev mode and background child process
+// Only skip if this file is being imported as a module (not executed directly)
+const isMainModule = 
+  import.meta.url === `file://${process.argv[1]}` || 
+  process.argv[1]?.endsWith('cli.ts') ||
+  process.argv[1]?.endsWith('cli.js');
+
+if (isMainModule) {
   runUiCli(process.argv.slice(2)).catch((err) => {
     process.stderr.write(`Failed to start TTT UI: ${(err as Error).message}\n`);
     process.exit(1);

@@ -32,9 +32,13 @@ export default defineConfig({
     },
   },
   server: {
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
-    open: true,
+    open: process.env.TAURI === '1' ? false : true,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5174',

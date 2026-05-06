@@ -1,0 +1,88 @@
+name: Desktop release (Tauri)
+
+# Builds native installers on tag pushes (`v*`).
+#
+# Required secrets:
+# - TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (minisign; see README)
+#
+# Optional signing / notarization:
+# APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID,
+# WINDOWS_CERTIFICATE, WINDOWS_CERTIFICATE_PASSWORD.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            tauri_args: '--target universal-apple-darwin'
+            bundle_targets: darwin-arm64,darwin-x64
+          - platform: ubuntu-22.04
+            tauri_args: ''
+            bundle_targets: linux-x64
+          - platform: windows-latest
+            tauri_args: ''
+            bundle_targets: win-x64
+
+    runs-on: ${{ matrix.platform }}
+
+    env:
+      NODE_VERSION_FOR_DESKTOP: '22.14.0'
+      TAURI_BUNDLE_TARGETS: ${{ matrix.bundle_targets }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust targets (mac universal)
+        if: matrix.platform == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Linux desktop dependencies (WebKitGTK)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      - name: Install root JS dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build Tauri installers and updater manifest
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_VERSION_FOR_DESKTOP: ${{ env.NODE_VERSION_FOR_DESKTOP }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: TTT Desktop ${{ github.ref_name }}
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.tauri_args }}

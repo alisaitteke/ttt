@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/ttt.svg)](https://www.npmjs.com/package/@alisaitteke/ttt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)]()
 [![Patreon](https://img.shields.io/badge/Patreon-Support-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/tttanimals)
 
 [![Standalone UI — click to watch demo](./images/frame_generic_light.png)](https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4)
@@ -23,6 +23,47 @@ Or run in the **foreground** (random free port; opens your browser):
 ```bash
 npx @alisaitteke/ttt start
 ```
+
+### Desktop app (without `npx`)
+
+Native installers ship on **[GitHub Releases](https://github.com/alisaitteke/ttt/releases/latest)** alongside npm. Each build is a **[Tauri 2](https://tauri.app/start/)** shell that bundles **Node.js** and the exact same standalone UI/backend as **`ttt start`**. MCP over stdio for Cursor / Claude Desktop remains **`npx @alisaitteke/ttt mcp`**.
+
+| Platform | Typical artifacts |
+| --- | --- |
+| macOS | Universal `.dmg` |
+| Windows | `.msi` / NSIS installers (see release) |
+| Linux | `.AppImage`, `.deb` |
+
+**Linux note:** Credential storage (`keytar`) expects Secret Service libraries at runtime (e.g. `libsecret-1-0` on Debian/Ubuntu).
+
+**Develop the shell locally (macOS / Rust installed):**
+
+```bash
+npm install
+npm run tauri:dev   # Runs `dev:ui` with TAURI=1 and opens the Tauri tray window pointing at Vite port 5173
+```
+
+Production-style bundle (downloads Node runtimes listed in `TAURI_BUNDLE_TARGETS`):
+
+```bash
+npm run build
+TAURI_BUNDLE_TARGETS=darwin-arm64,darwin-x64 node scripts/tauri-prepare-bundle.mjs   # omit second target on single-arch staging
+npm run tauri:build
+```
+
+Iterate without re-running `npm ci`:
+
+```bash
+TAURI_PREPARE_SKIP_NPM_CI=1 TAURI_BUNDLE_TARGETS=darwin-arm64 node scripts/tauri-prepare-bundle.mjs
+```
+
+**Release CI:** tagging `v*` runs [`.github/workflows/release.yml`](.github/workflows/release.yml). Configure Secrets for code signing (`TAURI_SIGNING_PRIVATE_KEY` + updater password). Regenerate updater keys anytime with:
+
+```bash
+CI=true npx @tauri-apps/cli signer generate -w .keys/tauri-updater.key -p "" --force
+```
+
+Copy the `.pub` file text into `src-tauri/tauri.conf.json → plugins.updater.pubkey` (never commit the `.key`; add it under repository secrets).
 
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
 
