@@ -11,6 +11,7 @@ export interface ChatRow {
   model: string;
   sessionId: string | null;
   tools: DesignToolId[] | null;
+  archived: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -45,6 +46,7 @@ interface RawChatRow {
   model: string;
   session_id: string | null;
   tools: string | null;
+  archived: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -74,6 +76,7 @@ function rowToChat(row: RawChatRow): ChatRow {
     model: row.model,
     sessionId: row.session_id,
     tools,
+    archived: row.archived === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -125,13 +128,14 @@ export function createChat(input: {
     model: input.model,
     sessionId: null,
     tools: input.tools != null ? sanitizeDesignToolIds(input.tools) : null,
+    archived: false,
     createdAt: now,
     updatedAt: now,
   };
   getDB()
     .prepare(
-      `INSERT INTO chats (id, title, provider, model, session_id, tools, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO chats (id, title, provider, model, session_id, tools, archived, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       chat.id,
@@ -140,6 +144,7 @@ export function createChat(input: {
       chat.model,
       chat.sessionId,
       chat.tools ? JSON.stringify(chat.tools) : null,
+      0,
       chat.createdAt,
       chat.updatedAt
     );
@@ -195,4 +200,10 @@ export function updateChatTools(id: string, tools: DesignToolId[]): void {
   getDB()
     .prepare(`UPDATE chats SET tools = ?, updated_at = ? WHERE id = ?`)
     .run(JSON.stringify(cleaned), Date.now(), id);
+}
+
+export function setChatArchived(id: string, archived: boolean): void {
+  getDB()
+    .prepare(`UPDATE chats SET archived = ?, updated_at = ? WHERE id = ?`)
+    .run(archived ? 1 : 0, Date.now(), id);
 }

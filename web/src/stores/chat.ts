@@ -6,6 +6,7 @@ import {
   apiGetChat,
   apiListChats,
   apiRenameChat,
+  apiSetChatArchived,
   streamChat,
   type ChatSummary,
   type PersistedToolCall,
@@ -156,6 +157,11 @@ export function useChatStore() {
     if (idx !== -1) chats.value[idx] = { ...chats.value[idx], title };
   }
 
+  async function setChatArchived(id: string, archived: boolean): Promise<void> {
+    await apiSetChatArchived(id, archived);
+    await loadChats();
+  }
+
   function ensureAssistantMessage(): ChatMessage {
     const last = messages[messages.length - 1];
     if (last && last.role === 'assistant') return last;
@@ -270,6 +276,7 @@ export function useChatStore() {
     newChat,
     removeChat,
     rename,
+    setChatArchived,
     send,
     abort,
   };

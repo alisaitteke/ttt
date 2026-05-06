@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { MessageSquarePlus } from 'lucide-vue-next';
+import { MessageSquarePlus, Settings2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import StatusBar from './StatusBar.vue';
 import MessageList from './MessageList.vue';
@@ -68,14 +68,21 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
       :totals="activeChat ? props.store.chatTotals.value : null"
       :sidebar-mobile-open="props.sidebarMobileOpen"
       @open-sidebar="emit('open-sidebar')"
+      @new-chat="emit('new-chat')"
     />
 
     <div v-if="!activeChat" class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
       <p class="text-sm text-muted-foreground">Select a chat from the sidebar or start a new one.</p>
-      <Button @click="emit('new-chat')">
-        <MessageSquarePlus class="size-4" />
-        New chat
-      </Button>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <Button @click="emit('new-chat')">
+          <MessageSquarePlus class="size-4" />
+          New chat
+        </Button>
+        <Button variant="outline" class="gap-2" @click="emit('open-settings')">
+          <Settings2 class="size-4" />
+          Settings
+        </Button>
+      </div>
     </div>
 
     <template v-else>

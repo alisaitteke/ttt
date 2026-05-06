@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
-import { MessageSquarePlus, MoreHorizontal, Pencil, Settings2, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronRight, Plus } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle.vue';
+import SidebarChatRow from '@/components/SidebarChatRow.vue';
 import type { ChatSummary } from '@/lib/api';
 
 const props = defineProps<{
@@ -17,13 +18,29 @@ const emit = defineEmits<{
   select: [id: string];
   rename: [id: string, title: string];
   delete: [id: string];
-  'open-settings': [];
+  archive: [id: string];
+  unarchive: [id: string];
   'update:mobileOpen': [open: boolean];
 }>();
 
 const menuOpenFor = ref<string | null>(null);
 const renamingId = ref<string | null>(null);
 const renameDraft = ref('');
+const archivedOpen = ref(false);
+
+const activeChats = computed(() => props.chats.filter((c) => !c.archived));
+const archivedChats = computed(() => props.chats.filter((c) => c.archived));
+
+watch(
+  () => [props.activeChatId, archivedChats.value] as const,
+  () => {
+    const id = props.activeChatId;
+    if (id && archivedChats.value.some((c) => c.id === id)) {
+      archivedOpen.value = true;
+    }
+  },
+  { immediate: true }
+);
 
 const npmVersion = import.meta.env.VITE_TTT_NPM_VERSION;
 
@@ -35,11 +52,6 @@ function onOverlayClick(): void {
   closeMobileNav();
 }
 
-function openSettings(): void {
-  closeMobileNav();
-  emit('open-settings');
-}
-
 function onEscape(e: KeyboardEvent): void {
   if (e.key === 'Escape' && props.mobileOpen) closeMobileNav();
 }
@@ -47,32 +59,18 @@ function onEscape(e: KeyboardEvent): void {
 onMounted(() => window.addEventListener('keydown', onEscape));
 onUnmounted(() => window.removeEventListener('keydown', onEscape));
 
-function toggleMenu(id: string, event: Event): void {
-  event.stopPropagation();
+function toggleMenuFor(id: string): void {
   menuOpenFor.value = menuOpenFor.value === id ? null : id;
 }
 
-function startRename(chat: ChatSummary, event: Event): void {
-  event.stopPropagation();
+function startRenameFor(chat: ChatSummary): void {
   renamingId.value = chat.id;
   renameDraft.value = chat.title;
   menuOpenFor.value = null;
 }
 
-function commitRename(id: string): void {
-  const title = renameDraft.value.trim();
-  if (title) emit('rename', id, title);
-  renamingId.value = null;
-}
-
 function cancelRename(): void {
   renamingId.value = null;
-}
-
-function onDelete(id: string, event: Event): void {
-  event.stopPropagation();
-  menuOpenFor.value = null;
-  emit('delete', id);
 }
 
 function formatDate(ts: number): string {
@@ -82,6 +80,29 @@ function formatDate(ts: number): string {
     return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function onRowDelete(id: string): void {
+  menuOpenFor.value = null;
+  emit('delete', id);
+}
+
+function onRowArchive(id: string): void {
+  menuOpenFor.value = null;
+  emit('archive', id);
+}
+
+function onRowUnarchive(id: string): void {
+  menuOpenFor.value = null;
+  emit('unarchive', id);
+}
+
+function onRowRename(id: string, title: string): void {
+  emit('rename', id, title);
+}
+
+function toggleArchivedSection(): void {
+  archivedOpen.value = !archivedOpen.value;
 }
 </script>
 
@@ -129,83 +150,90 @@ function formatDate(ts: number): string {
       <ThemeToggle />
     </div>
 
-    <div class="px-3 pt-3">
-      <Button class="w-full justify-start gap-2" variant="outline" @click="emit('new-chat')">
-        <MessageSquarePlus class="size-4" />
-        New chat
-      </Button>
-    </div>
-
-    <div class="mt-3 flex-1 overflow-y-auto px-2">
-      <div v-if="props.chats.length === 0" class="px-2 py-6 text-center text-xs text-muted-foreground">
-        No chats yet.
-      </div>
-      <div v-else class="space-y-0.5">
-        <div
-          v-for="chat in props.chats"
-          :key="chat.id"
-          class="group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
-          :class="{ 'bg-accent/45': chat.id === props.activeChatId }"
-          @click="emit('select', chat.id)"
+    <div class="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-2">
+      <div class="shrink-0 px-1 pb-2">
+        <Button
+          type="button"
+          variant="ghost"
+          class="h-10 w-full"
+          aria-label="New chat"
+          @click="emit('new-chat')"
         >
-          <div class="min-w-0 flex-1">
-            <input
-              v-if="renamingId === chat.id"
-              v-model="renameDraft"
-              class="w-full rounded border border-input bg-background px-1 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              autofocus
-              @click.stop
-              @blur="commitRename(chat.id)"
-              @keydown.enter.prevent="commitRename(chat.id)"
-              @keydown.escape.prevent="cancelRename"
-            />
-            <div v-else class="truncate" :title="chat.title">{{ chat.title }}</div>
-            <div class="text-[10px] text-muted-foreground">
-              {{ formatDate(chat.updatedAt) }} · {{ chat.provider }}
-            </div>
-          </div>
+          <Plus class="size-4" />
+        </Button>
+      </div>
 
-          <button
-            class="invisible flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-background/50 group-hover:visible"
-            :class="{ visible: menuOpenFor === chat.id }"
-            @click="toggleMenu(chat.id, $event)"
-          >
-            <MoreHorizontal class="size-3.5" />
-          </button>
-
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-0">
           <div
-            v-if="menuOpenFor === chat.id"
-            class="absolute right-1 top-9 z-10 w-32 rounded-md border border-border bg-popover p-1 text-sm shadow-md"
-            @click.stop
+            v-if="activeChats.length === 0 && archivedChats.length === 0"
+            class="px-2 py-6 text-center text-xs text-muted-foreground"
           >
-            <button
-              class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-accent"
-              @click="startRename(chat, $event)"
-            >
-              <Pencil class="size-3.5" />
-              Rename
-            </button>
-            <button
-              class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-destructive hover:bg-destructive/10"
-              @click="onDelete(chat.id, $event)"
-            >
-              <Trash2 class="size-3.5" />
-              Delete
-            </button>
+            No chats yet.
+          </div>
+          <div v-else-if="activeChats.length === 0" class="px-2 py-6 text-center text-xs text-muted-foreground">
+            No active chats.
+          </div>
+          <div v-else class="space-y-0.5">
+            <SidebarChatRow
+              v-for="chat in activeChats"
+              :key="chat.id"
+              :chat="chat"
+              :active-chat-id="activeChatId"
+              :menu-open="menuOpenFor === chat.id"
+              :is-renaming="renamingId === chat.id"
+              :rename-draft="renameDraft"
+              :in-archived-list="false"
+              :format-date="formatDate"
+              @select="emit('select', $event)"
+              @toggle-menu="toggleMenuFor(chat.id)"
+              @start-rename="startRenameFor(chat)"
+              @update:rename-draft="renameDraft = $event"
+              @rename="onRowRename"
+              @cancel-rename="cancelRename"
+              @delete="onRowDelete"
+              @archive="onRowArchive"
+              @unarchive="onRowUnarchive"
+            />
+          </div>
+        </div>
+
+        <div v-if="archivedChats.length > 0" class="shrink-0 border-t border-border/40 pt-1">
+          <button
+            type="button"
+            class="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left text-xs font-medium text-muted-foreground hover:bg-accent/40"
+            :aria-expanded="archivedOpen"
+            @click.stop="toggleArchivedSection"
+          >
+            <ChevronRight v-if="!archivedOpen" class="size-3.5 shrink-0" />
+            <ChevronDown v-else class="size-3.5 shrink-0" />
+            <span>Archived</span>
+            <span class="tabular-nums text-[10px] opacity-80">({{ archivedChats.length }})</span>
+          </button>
+          <div v-if="archivedOpen" class="max-h-[40vh] space-y-0.5 overflow-y-auto pb-1">
+            <SidebarChatRow
+              v-for="chat in archivedChats"
+              :key="chat.id"
+              :chat="chat"
+              :active-chat-id="activeChatId"
+              :menu-open="menuOpenFor === chat.id"
+              :is-renaming="renamingId === chat.id"
+              :rename-draft="renameDraft"
+              :in-archived-list="true"
+              :format-date="formatDate"
+              @select="emit('select', $event)"
+              @toggle-menu="toggleMenuFor(chat.id)"
+              @start-rename="startRenameFor(chat)"
+              @update:rename-draft="renameDraft = $event"
+              @rename="onRowRename"
+              @cancel-rename="cancelRename"
+              @delete="onRowDelete"
+              @archive="onRowArchive"
+              @unarchive="onRowUnarchive"
+            />
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="flex h-9 shrink-0 items-stretch border-t border-border/50 bg-background/10 backdrop-blur-xl dark:bg-background/[0.08]">
-      <Button
-        variant="ghost"
-        class="m-0 h-full w-full min-h-0 justify-start gap-2 rounded-none px-4 py-0 text-xs font-medium shadow-none"
-        @click="openSettings"
-      >
-        <Settings2 class="size-4 shrink-0" />
-        Settings
-      </Button>
     </div>
   </aside>
 </template>

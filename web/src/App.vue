@@ -104,6 +104,14 @@ async function handleDelete(id: string): Promise<void> {
   }
 }
 
+async function handleArchive(id: string): Promise<void> {
+  await chat.setChatArchived(id, true);
+}
+
+async function handleUnarchive(id: string): Promise<void> {
+  await chat.setChatArchived(id, false);
+}
+
 async function handleSettingsSaved(): Promise<void> {
   await refresh();
 }
@@ -137,7 +145,8 @@ onMounted(refresh);
           @select="handleSelect"
           @rename="(id, title) => chat.rename(id, title)"
           @delete="handleDelete"
-          @open-settings="settingsOpen = true"
+          @archive="handleArchive"
+          @unarchive="handleUnarchive"
         />
         <ChatView
           class="min-w-0 flex-1"

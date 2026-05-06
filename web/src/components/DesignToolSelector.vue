@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { ChevronDown, Check, Lock } from 'lucide-vue-next';
+import { ChevronDown, Check, Info, Lock } from 'lucide-vue-next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import AdobeAppIcon from './AdobeAppIcon.vue';
@@ -132,13 +132,17 @@ function clearAll(): void {
         :aria-label="label"
       >
         <div class="flex shrink-0 -space-x-1.5">
-          <AdobeAppIcon
-            v-for="id in selectedTools.slice(0, 3)"
+          <div
+            v-for="(id, index) in selectedTools.slice(0, 3)"
             :key="id"
-            :app="designTools.find((t) => t.id === id)?.iconKey ?? 'ps'"
-            :size="14"
-            class="ring-1 ring-background"
-          />
+            class="relative inline-flex shrink-0 items-center justify-center rounded-[3px] bg-muted p-px ring-1 ring-background"
+            :style="{ zIndex: index + 1 }"
+          >
+            <AdobeAppIcon
+              :app="designTools.find((t) => t.id === id)?.iconKey ?? 'ps'"
+              :size="14"
+            />
+          </div>
         </div>
         <span class="hidden min-w-0 flex-1 truncate text-left font-normal md:block">
           {{ label }}
@@ -172,6 +176,16 @@ function clearAll(): void {
             </button>
           </div>
         </div>
+      </div>
+      <div
+        class="flex gap-2 border-b border-border/50 bg-muted/30 px-3 py-2"
+        role="note"
+      >
+        <Info class="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <p class="min-w-0 text-[10px] leading-snug text-muted-foreground">
+          Each selected tool adds its MCP capabilities to what the model can use. Only enable tools you
+          actually need for this chat.
+        </p>
       </div>
       <div class="w-full min-w-0">
         <div class="max-h-[min(24rem,70vh)] overflow-x-hidden overflow-y-auto">

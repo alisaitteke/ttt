@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Menu } from 'lucide-vue-next';
+import { Menu, MessageSquarePlus } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -19,6 +19,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'open-sidebar': [];
+  'new-chat': [];
 }>();
 
 const tokenFormatter = new Intl.NumberFormat('en-US');
@@ -76,70 +77,84 @@ const costLabel = computed(() => {
       {{ chat?.title ?? 'New chat' }}
     </div>
 
-    <TooltipProvider v-if="chat && hasData">
-      <Tooltip>
-        <TooltipTrigger
-          class="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium tabular-nums text-muted-foreground hover:bg-muted"
-        >
-          {{ costLabel ?? '—' }}
-        </TooltipTrigger>
-        <TooltipContent align="end" class="w-64">
-          <div class="space-y-2">
-            <div class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Conversation usage
-            </div>
-
-            <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-              <span class="text-muted-foreground">Input</span>
-              <span class="text-right tabular-nums">
-                {{ formatTokens(totals!.inputTokens) }} tok · {{ formatUsd(totals!.inputUsd) }}
-              </span>
-
-              <template v-if="totals!.cachedReadTokens > 0">
-                <span class="text-muted-foreground">Cached read</span>
-                <span class="text-right tabular-nums">
-                  {{ formatTokens(totals!.cachedReadTokens) }} tok · {{ formatUsd(totals!.cachedReadUsd) }}
-                </span>
-              </template>
-
-              <template v-if="totals!.cachedWriteTokens > 0">
-                <span class="text-muted-foreground">Cached write</span>
-                <span class="text-right tabular-nums">
-                  {{ formatTokens(totals!.cachedWriteTokens) }} tok · {{ formatUsd(totals!.cachedWriteUsd) }}
-                </span>
-              </template>
-
-              <span class="text-muted-foreground">Output</span>
-              <span class="text-right tabular-nums">
-                {{ formatTokens(totals!.outputTokens) }} tok · {{ formatUsd(totals!.outputUsd) }}
-              </span>
-
-              <template v-if="totals!.reasoningTokens > 0">
-                <span class="text-muted-foreground">Reasoning</span>
-                <span class="text-right tabular-nums">
-                  {{ formatTokens(totals!.reasoningTokens) }} tok
-                </span>
-              </template>
-            </div>
-
-            <div class="border-t border-border pt-2 text-xs">
-              <div class="flex items-center justify-between font-medium">
-                <span>Total</span>
-                <span class="tabular-nums">
-                  {{ formatTokens(totals!.totalTokens) }} tok · {{ formatUsd(totals!.totalUsd) }}
-                </span>
+    <div class="flex shrink-0 items-center gap-2">
+      <TooltipProvider v-if="chat && hasData">
+        <Tooltip>
+          <TooltipTrigger
+            class="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium tabular-nums text-muted-foreground hover:bg-muted"
+          >
+            {{ costLabel ?? '—' }}
+          </TooltipTrigger>
+          <TooltipContent align="end" class="w-64">
+            <div class="space-y-2">
+              <div class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Conversation usage
               </div>
-            </div>
 
-            <p
-              v-if="hasUnpricedTurn"
-              class="text-[11px] leading-snug text-muted-foreground"
-            >
-              Some turns lack pricing data, so this total may underestimate cost.
-            </p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+              <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <span class="text-muted-foreground">Input</span>
+                <span class="text-right tabular-nums">
+                  {{ formatTokens(totals!.inputTokens) }} tok · {{ formatUsd(totals!.inputUsd) }}
+                </span>
+
+                <template v-if="totals!.cachedReadTokens > 0">
+                  <span class="text-muted-foreground">Cached read</span>
+                  <span class="text-right tabular-nums">
+                    {{ formatTokens(totals!.cachedReadTokens) }} tok · {{ formatUsd(totals!.cachedReadUsd) }}
+                  </span>
+                </template>
+
+                <template v-if="totals!.cachedWriteTokens > 0">
+                  <span class="text-muted-foreground">Cached write</span>
+                  <span class="text-right tabular-nums">
+                    {{ formatTokens(totals!.cachedWriteTokens) }} tok · {{ formatUsd(totals!.cachedWriteUsd) }}
+                  </span>
+                </template>
+
+                <span class="text-muted-foreground">Output</span>
+                <span class="text-right tabular-nums">
+                  {{ formatTokens(totals!.outputTokens) }} tok · {{ formatUsd(totals!.outputUsd) }}
+                </span>
+
+                <template v-if="totals!.reasoningTokens > 0">
+                  <span class="text-muted-foreground">Reasoning</span>
+                  <span class="text-right tabular-nums">
+                    {{ formatTokens(totals!.reasoningTokens) }} tok
+                  </span>
+                </template>
+              </div>
+
+              <div class="border-t border-border pt-2 text-xs">
+                <div class="flex items-center justify-between font-medium">
+                  <span>Total</span>
+                  <span class="tabular-nums">
+                    {{ formatTokens(totals!.totalTokens) }} tok · {{ formatUsd(totals!.totalUsd) }}
+                  </span>
+                </div>
+              </div>
+
+              <p
+                v-if="hasUnpricedTurn"
+                class="text-[11px] leading-snug text-muted-foreground"
+              >
+                Some turns lack pricing data, so this total may underestimate cost.
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="h-9 shrink-0 gap-2 px-3"
+        aria-label="New chat"
+        @click="emit('new-chat')"
+      >
+        <MessageSquarePlus class="size-4 shrink-0" />
+        <span class="hidden sm:inline">New chat</span>
+      </Button>
+    </div>
   </header>
 </template>

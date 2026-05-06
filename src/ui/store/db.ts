@@ -59,6 +59,12 @@ function migrate(db: DatabaseType): void {
   if (!hasToolsColumn) {
     db.exec('ALTER TABLE chats ADD COLUMN tools TEXT');
   }
+
+  const colsAfter = db.pragma('table_info(chats)') as Array<{ name: string }>;
+  const hasArchivedColumn = colsAfter.some((col) => col.name === 'archived');
+  if (!hasArchivedColumn) {
+    db.exec('ALTER TABLE chats ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
+  }
 }
 
 export function getDataDir(): string {

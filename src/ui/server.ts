@@ -33,6 +33,7 @@ import {
   getMessages,
   listChats,
   renameChat,
+  setChatArchived,
   updateChatModel,
   updateChatTools,
 } from './store/chats.js';
@@ -301,6 +302,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       provider: ProviderId;
       model: string;
       tools: DesignToolId[];
+      archived: boolean;
     }>;
     const id = c.req.param('id');
     if (body.title !== undefined) {
@@ -320,6 +322,11 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     }
     if (body.tools !== undefined) {
       updateChatTools(id, body.tools);
+    }
+    if (body.archived !== undefined) {
+      const chat = getChat(id);
+      if (!chat) return c.json({ error: 'not_found' }, 404);
+      setChatArchived(id, body.archived);
     }
     return c.json({ ok: true });
   });

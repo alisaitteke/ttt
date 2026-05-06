@@ -81,6 +81,7 @@ export interface ChatSummary {
   provider: ProviderId;
   model: string;
   tools: DesignToolId[] | null;
+  archived?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -238,6 +239,12 @@ export const apiUpdateChatTools = (id: string, tools: DesignToolId[]) =>
   api<{ ok: true }>(`/api/chats/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ tools }),
+  });
+
+export const apiSetChatArchived = (id: string, archived: boolean) =>
+  api<{ ok: true }>(`/api/chats/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ archived }),
   });
 
 export const apiDeleteChat = (id: string) =>
