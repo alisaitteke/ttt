@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "المظهر",
       "providers": "المزوِّدون",
-      "connections": "المراسلة"
+      "connections": "المراسلة",
+      "integrations": "التكاملات"
     },
     "theme": {
       "label": "السمة",
@@ -41,6 +42,22 @@
       "statusDisconnected": "غير متصل",
       "setUp": "إعداد",
       "manage": "إدارة"
+    },
+    "integrations": {
+      "heading": "التكاملات",
+      "description": "مفاتيح API لميزات خارج نموذج اللغة (مثل البحث عن ملفات GIF). منفصلة عن مزودي النماذج.",
+      "loading": "جارٍ التحميل…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "لوحة المطورين",
+        "noteAttribution": "تتطلب GIPHY إظهار عبارة \"Powered by GIPHY\" حيث تُعرض نتائج GIF.",
+        "noteRateLimit": "مفاتيح الاختبار (beta) محدودة (نحو 100 طلب/ساعة). مفاتيح الإنتاج تتطلب موافقة GIPHY.",
+        "noteEnv": "يمكنك أيضاً ضبط TTT_GIPHY_API_KEY في البيئة؛ يتجاوز المفتاح المحفوظ.",
+        "apiKeyLabel": "مفتاح GIPHY API",
+        "placeholder": "الصق مفتاح GIPHY API…",
+        "save": "حفظ المفتاح",
+        "removeKey": "إزالة المفتاح"
+      }
     }
   }
 }

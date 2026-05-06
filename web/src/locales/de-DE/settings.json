@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "Darstellung",
       "providers": "Anbieter",
-      "connections": "Messaging"
+      "connections": "Messaging",
+      "integrations": "Integrationen"
     },
     "theme": {
       "label": "Design",
@@ -41,6 +42,22 @@
       "statusDisconnected": "Nicht verbunden",
       "setUp": "Einrichten",
       "manage": "Verwalten"
+    },
+    "integrations": {
+      "heading": "Integrationen",
+      "description": "API-Schlüssel für Nicht-LLM-Funktionen (z. B. GIF-Suche). Getrennt von Modellanbietern.",
+      "loading": "Wird geladen…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "Entwickler-Dashboard",
+        "noteAttribution": "GIPHY verlangt sichtbare „Powered by GIPHY“-Attribution, wo GIF-Ergebnisse gezeigt werden.",
+        "noteRateLimit": "Beta-API-Schlüssel sind begrenzt (ca. 100 Anfragen/Stunde). Produktionsschlüssel erfordern GIPHY-Freigabe.",
+        "noteEnv": "Alternativ TTT_GIPHY_API_KEY in der Umgebung setzen; das überschreibt den gespeicherten Schlüssel.",
+        "apiKeyLabel": "GIPHY API-Schlüssel",
+        "placeholder": "GIPHY API-Schlüssel einfügen…",
+        "save": "Schlüssel speichern",
+        "removeKey": "Schlüssel entfernen"
+      }
     }
   }
 }

@@ -2,6 +2,8 @@
   "connections": {
     "whatsapp": {
       "title": "Vincular WhatsApp",
+      "betaBadge": "Beta",
+      "betaNotice": "La integración con WhatsApp está en beta: el comportamiento puede cambiar y pueden producirse incidencias.",
       "blurb": "Escanea el código QR con WhatsApp en el teléfono (Dispositivos vinculados). API no oficial — úsala con responsabilidad.",
       "linked": "Vinculado. Puedes cerrar.",
       "waitingQr": "Preparando código QR…",
@@ -13,6 +15,7 @@
         "body": "Opcional: permitir herramientas MCP que leen chats y contactos sincronizados en la caché de Baileys de este dispositivo. Acceso no oficial a WhatsApp — usted es responsable del uso lícito y de los Términos de WhatsApp. Puede desactivarlo en cualquier momento.",
         "checkbox": "Permitir que la IA lea chats y contactos sincronizados (herramientas ampliadas)"
       },
+      "sessionResetHint": "Se borró la sesión local para que el próximo enlace QR pueda pedir el historial completo. Quita el dispositivo vinculado antiguo en el teléfono si sigue apareciendo y escanea el código nuevo.",
       "errors": {
         "clientVersion": "WhatsApp rechazó el enlace (cliente web obsoleto). Actualiza la aplicación e inténtalo de nuevo.",
         "sessionRejected": "WhatsApp rechazó la sesión. Desconecta y borra la sesión, luego inténtalo de nuevo."

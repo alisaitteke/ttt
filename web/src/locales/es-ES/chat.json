@@ -86,7 +86,10 @@
     "launchFailed": "No se ha podido iniciar",
     "notLinkedStatus": "No vinculado",
     "linkedStatus": "Vinculado",
-    "connectCta": "Conectar"
+    "connectCta": "Conectar",
+    "apiKeyNotSet": "Sin clave API",
+    "apiKeySet": "Clave API configurada",
+    "addApiKeyCta": "Añadir clave API"
   },
   "toolCall": {
     "input": "Entrada",

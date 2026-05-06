@@ -2,6 +2,8 @@
   "connections": {
     "whatsapp": {
       "title": "WhatsApp bağla",
+      "betaBadge": "Beta",
+      "betaNotice": "WhatsApp entegrasyonu beta aşamasındadır; davranış değişebilir ve sorunlarla karşılaşabilirsiniz.",
       "blurb": "Telefonunuzdaki WhatsApp ile QR kodu tarayın (Bağlı cihazlar). Resmi olmayan API — sorumlu kullanın ve WhatsApp kullanım koşullarına uyun.",
       "linked": "Bağlandı. Bu pencereyi kapatabilirsiniz.",
       "waitingQr": "QR kod hazırlanıyor…",
@@ -13,6 +15,7 @@
         "body": "İsteğe bağlı: Bu cihazdaki Baileys önbelleğinden senkronize sohbetleri ve kişileri okuyan MCP araçlarına izin ver (sohbet listesi, son mesajlar, kişi arama). Resmi olmayan WhatsApp erişimidir; yasal kullanım ve WhatsApp koşulları sizin sorumluluğunuzdadır. İstediğiniz zaman kapatabilirsiniz.",
         "checkbox": "Yapay zekanın senkron sohbet ve kişileri okumasına izin ver (genişletilmiş araçlar)"
       },
+      "sessionResetHint": "Tam geçmiş ancak ilk QR eşlemesinde istenebilir; yerel oturum silindi. Telefonda eski \"Bağlı cihaz\" görünüyorsa kaldırın, ardından yeni kodu tarayın.",
       "errors": {
         "clientVersion": "WhatsApp bağlantıyı reddetti (eski web istemcisi). Uygulamayı güncelleyip yeniden deneyin.",
         "sessionRejected": "WhatsApp oturumu reddetti. Önce bağlantıyı kesip oturumu silin, sonra yeniden deneyin."

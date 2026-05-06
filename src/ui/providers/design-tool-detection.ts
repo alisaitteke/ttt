@@ -12,6 +12,7 @@ import {
 import { probeDockerAvailable } from '@ttt/ui/providers/docker-detection.js';
 import { probeDaVinciResolveInstalled, probeFigmaDesktopInstalled } from '@ttt/ui/providers/third-party-design-desktop.js';
 import { getConnectionAdapter } from '@ttt/connections/registry.js';
+import { getGiphyApiKey } from '@ttt/ui/integrations/giphy-key.js';
 
 type DetectorCtor = new () => { detect(): Promise<unknown> };
 
@@ -66,6 +67,10 @@ export async function enrichDesignToolsWithInstallStatus(
           };
         }
         return { ...t };
+      }
+      if (t.kind === 'api_key' && t.id === 'giphy') {
+        const key = await getGiphyApiKey();
+        return { ...t, apiKeyConfigured: Boolean(key) };
       }
       const installed = await probeDesignToolInstalled(t.id);
       if (installed === null) return { ...t };

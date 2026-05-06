@@ -29,6 +29,7 @@ const { t } = useI18n();
 
 const status = ref<'idle' | 'pairing' | 'connected' | 'error'>('idle');
 const errorMessage = ref<string | null>(null);
+const pairingInfo = ref<string | null>(null);
 const qrDataUrl = ref<string | null>(null);
 const extendedData = ref(false);
 const prefsLoading = ref(false);
@@ -70,7 +71,15 @@ async function loadPrefs(): Promise<void> {
 async function onExtendedToggle(checked: boolean): Promise<void> {
   extendedData.value = checked;
   try {
-    await apiPatchWhatsAppPreferences({ extendedDataTools: checked });
+    const res = await apiPatchWhatsAppPreferences({ extendedDataTools: checked });
+    if (res.sessionReset) {
+      pairingInfo.value = t('connections.whatsapp.sessionResetHint');
+      status.value = 'pairing';
+      qrDataUrl.value = null;
+      errorMessage.value = null;
+      closeStream();
+      await startPairing();
+    }
   } catch {
     /* revert on failure */
     extendedData.value = !checked;
@@ -95,10 +104,9 @@ async function startPairing(): Promise<void> {
     try {
       const d = JSON.parse((ev as MessageEvent).data) as { connected?: boolean };
       if (d.connected) {
+        pairingInfo.value = null;
         status.value = 'connected';
         qrDataUrl.value = null;
-        void bustDesignToolsCache();
-        emit('linked');
       }
     } catch {
       /* ignore */
@@ -113,6 +121,7 @@ async function startPairing(): Promise<void> {
     }
   });
   es.addEventListener('connected', () => {
+    pairingInfo.value = null;
     status.value = 'connected';
     qrDataUrl.value = null;
     void bustDesignToolsCache();
@@ -168,7 +177,10 @@ watch(
     if (v) {
       void loadPrefs();
       void startPairing();
-    } else closeStream();
+    } else {
+      pairingInfo.value = null;
+      closeStream();
+    }
   },
   { immediate: true }
 );
@@ -201,15 +213,20 @@ defineExpose({
     @update:open="
       (v) => {
         open = v;
-        if (!v) closeStream();
       }
     "
   >
     <DialogContent class="max-w-sm gap-4 p-5">
-      <DialogHeader class="space-y-1">
+      <DialogHeader class="space-y-2">
         <DialogTitle class="text-base">{{ t('connections.whatsapp.title') }}</DialogTitle>
         <p class="text-xs text-muted-foreground">
           {{ t('connections.whatsapp.blurb') }}
+        </p>
+        <p
+          class="rounded-md border border-border bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground"
+          role="status"
+        >
+          {{ t('connections.whatsapp.betaNotice') }}
         </p>
       </DialogHeader>
 
@@ -228,6 +245,12 @@ defineExpose({
           />
           <span>{{ t('connections.whatsapp.consent.checkbox') }}</span>
         </label>
+        <p
+          v-if="pairingInfo"
+          class="rounded-md border border-amber-200/80 bg-amber-50/90 px-2 py-1.5 text-[11px] text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          {{ pairingInfo }}
+        </p>
       </div>
 
       <div class="flex flex-col items-center gap-3">

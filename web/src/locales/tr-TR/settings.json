@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "Görünüm",
       "providers": "Sağlayıcılar",
-      "connections": "İletişim araçları"
+      "connections": "İletişim araçları",
+      "integrations": "Entegrasyonlar"
     },
     "theme": {
       "label": "Tema",
@@ -41,6 +42,22 @@
       "statusDisconnected": "Bağlı değil",
       "setUp": "Kur",
       "manage": "Yönet"
+    },
+    "integrations": {
+      "heading": "Entegrasyonlar",
+      "description": "LLM dışı özellikler için API anahtarları (ör. GIF araması). Model sağlayıcılarından ayrıdır.",
+      "loading": "Yükleniyor…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "Geliştirici paneli",
+        "noteAttribution": "GIPHY, GIF sonuçları gösterildiği her yerde görünür \"Powered by GIPHY\" ibaresini ister.",
+        "noteRateLimit": "Beta API anahtarları sınırlıdır (yaklaşık 100 istek/saat). Üretim anahtarı için GIPHY onayı gerekir.",
+        "noteEnv": "İsterseniz ortamda TTT_GIPHY_API_KEY tanımlayın; kayıtlı anahtarın üzerine yazar.",
+        "apiKeyLabel": "GIPHY API anahtarı",
+        "placeholder": "GIPHY API anahtarınızı yapıştırın…",
+        "save": "Anahtarı kaydet",
+        "removeKey": "Anahtarı kaldır"
+      }
     }
   }
 }

@@ -32,6 +32,7 @@ import {
   type SettingsTab,
 } from '@/lib/api';
 import SettingsConnectionsPanel from './SettingsConnectionsPanel.vue';
+import SettingsIntegrationsPanel from './SettingsIntegrationsPanel.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -163,6 +164,10 @@ async function removeKey(p: ProviderInfo): Promise<void> {
 function onConnectionsChanged(): void {
   emit('saved');
 }
+
+function onIntegrationsChanged(): void {
+  emit('saved');
+}
 </script>
 
 <template>
@@ -234,6 +239,22 @@ function onConnectionsChanged(): void {
             type="button"
             role="tab"
             class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            :aria-selected="settingsTab === 'integrations'"
+            :class="
+              cn(
+                settingsTab === 'integrations'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )
+            "
+            @click="settingsTab = 'integrations'"
+          >
+            {{ t('settings.tabs.integrations') }}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             :aria-selected="settingsTab === 'appearance'"
             :class="
               cn(
@@ -246,17 +267,6 @@ function onConnectionsChanged(): void {
           >
             {{ t('settings.tabs.appearance') }}
           </button>
-        </div>
-
-        <div v-show="settingsTab === 'appearance'" role="tabpanel">
-          <SettingsAppearancePanel />
-        </div>
-
-        <div v-show="settingsTab === 'connections'" role="tabpanel">
-          <SettingsConnectionsPanel
-            :auto-open-provider="focusConnection"
-            @changed="onConnectionsChanged"
-          />
         </div>
 
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
@@ -322,6 +332,21 @@ function onConnectionsChanged(): void {
             </div>
           </li>
         </ul>
+        </div>
+
+        <div v-show="settingsTab === 'connections'" role="tabpanel">
+          <SettingsConnectionsPanel
+            :auto-open-provider="focusConnection"
+            @changed="onConnectionsChanged"
+          />
+        </div>
+
+        <div v-show="settingsTab === 'integrations'" role="tabpanel">
+          <SettingsIntegrationsPanel @changed="onIntegrationsChanged" />
+        </div>
+
+        <div v-show="settingsTab === 'appearance'" role="tabpanel">
+          <SettingsAppearancePanel />
         </div>
       </div>
 

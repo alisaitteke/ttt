@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "Appearance",
       "providers": "Providers",
-      "connections": "Messaging"
+      "connections": "Messaging",
+      "integrations": "Integrations"
     },
     "theme": {
       "label": "Theme",
@@ -41,6 +42,22 @@
       "statusDisconnected": "Not connected",
       "setUp": "Set up",
       "manage": "Manage"
+    },
+    "integrations": {
+      "heading": "Integrations",
+      "description": "API keys for non-LLM capabilities (e.g. GIF search). Separate from model providers.",
+      "loading": "Loading…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "Developer dashboard",
+        "noteAttribution": "GIPHY requires visible “Powered by GIPHY” attribution wherever GIF results are shown.",
+        "noteRateLimit": "Beta API keys are limited (about 100 requests/hour). Production keys need GIPHY approval.",
+        "noteEnv": "You can also set TTT_GIPHY_API_KEY in the environment; it overrides the saved key.",
+        "apiKeyLabel": "GIPHY API key",
+        "placeholder": "Paste your GIPHY API key…",
+        "save": "Save key",
+        "removeKey": "Remove key"
+      }
     }
   }
 }

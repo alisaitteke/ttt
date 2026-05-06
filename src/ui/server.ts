@@ -38,8 +38,13 @@ import {
   setProviderConfig,
   type ProviderId,
 } from '@ttt/ui/config.js';
+import { getGiphyApiKey } from '@ttt/ui/integrations/giphy-key.js';
 import { getProvider, listProviders } from '@ttt/ui/providers/registry.js';
 import { sanitizeDesignToolIds, type DesignToolId } from '@ttt/ui/providers/design-tools.js';
+import {
+  deleteIntegrationCredentialSecret,
+  setIntegrationCredentialSecret,
+} from '@ttt/ui/store/credentials.js';
 import {
   listDesignToolsWithInstallStatus,
   resolveDefaultChatTools,
@@ -133,8 +138,39 @@ export interface UIServer {
   close(): Promise<void>;
 }
 
+/** Baileys may throw/reject after teardown; otherwise the UI server process exits. */
+let baileysConnectionClosedGuardsInstalled = false;
+
+function installBaileysConnectionClosedGuards(log: Logger): void {
+  if (baileysConnectionClosedGuardsInstalled) return;
+  baileysConnectionClosedGuardsInstalled = true;
+
+  const isConnectionClosedNoise = (err: unknown): boolean => {
+    if (!err || typeof err !== 'object') return false;
+    const e = err as { isBoom?: boolean; output?: { statusCode?: number }; message?: string };
+    return e.isBoom === true && e.output?.statusCode === 428;
+  };
+
+  process.on('uncaughtException', (err) => {
+    if (isConnectionClosedNoise(err)) {
+      log.warn('Baileys: ignored connection-closed error after socket teardown', err);
+      return;
+    }
+    throw err;
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    if (isConnectionClosedNoise(reason)) {
+      log.warn('Baileys: ignored connection-closed rejection after socket teardown', reason);
+      return;
+    }
+    log.error('unhandledRejection', reason);
+  });
+}
+
 export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   const logger = new Logger('UIServer');
+  installBaileysConnectionClosedGuards(logger);
   const app = new Hono();
 
   // Initialize the SQLite database eagerly so the first request is fast and
@@ -353,6 +389,36 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     return c.json(await listDesignToolsWithInstallStatus());
   });
 
+  // ---- Integrations (GIPHY, …) -------------------------------------------
+
+  app.get('/api/integrations/giphy', async (c) => {
+    const key = await getGiphyApiKey();
+    return c.json({
+      configured: Boolean(key),
+      apiKeyMasked: maskApiKey(key),
+    });
+  });
+
+  app.post('/api/integrations/giphy/key', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
+    if (!body.apiKey || typeof body.apiKey !== 'string') {
+      return c.json({ error: 'missing_key' }, 400);
+    }
+    const trimmed = body.apiKey.trim();
+    if (!trimmed || trimmed.length > 256) {
+      return c.json({ error: 'invalid_format' }, 400);
+    }
+    await setIntegrationCredentialSecret('giphy', trimmed);
+    invalidateDesignToolsListCache();
+    return c.json({ ok: true as const, apiKeyMasked: maskApiKey(trimmed) });
+  });
+
+  app.delete('/api/integrations/giphy/key', async (c) => {
+    await deleteIntegrationCredentialSecret('giphy');
+    invalidateDesignToolsListCache();
+    return c.json({ ok: true as const });
+  });
+
   app.post('/api/creative-cloud/launch', async (c) => {
     try {
       await launchCreativeCloudDesktop();
@@ -386,11 +452,21 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     const prev = await readWhatsAppPreferences();
     await writeWhatsAppPreferences({ extendedDataTools: extended });
     invalidateDesignToolsListCache();
+    let sessionReset = false;
     if (prev.extendedDataTools !== extended) {
       const wa = getConnectionAdapter('whatsapp');
       try {
         const info = await wa.getPublicInfo();
-        if (info.connected) {
+        const turningExtendedOn = !prev.extendedDataTools && extended;
+        /** Baileys only sends requireFullSync on first registration; reuse old creds never re-requests full history. */
+        if (turningExtendedOn) {
+          sessionReset = true;
+          await wa.logout();
+          await wa.ensureSocket();
+          // preferences.json lives under the WhatsApp auth directory; logout() deletes it.
+          await writeWhatsAppPreferences({ extendedDataTools: extended });
+          invalidateDesignToolsListCache();
+        } else if (info.connected) {
           await wa.disconnect();
           await wa.ensureSocket();
         }
@@ -398,7 +474,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
         logger.warn('whatsapp reconnect after preferences change', e);
       }
     }
-    return c.json({ ok: true as const, extendedDataTools: extended });
+    return c.json({ ok: true as const, extendedDataTools: extended, sessionReset });
   });
 
   app.post('/api/connections/whatsapp/pairing/start', async (c) => {

@@ -86,7 +86,10 @@
     "launchFailed": "Launch failed",
     "notLinkedStatus": "Not linked",
     "linkedStatus": "Linked",
-    "connectCta": "Connect"
+    "connectCta": "Connect",
+    "apiKeyNotSet": "No API key",
+    "apiKeySet": "API key set",
+    "addApiKeyCta": "Add API key"
   },
   "toolCall": {
     "input": "Input",

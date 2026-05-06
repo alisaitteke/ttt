@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import Onboarding from './components/Onboarding.vue';
@@ -55,6 +55,7 @@ watch(settingsOpen, (o) => {
   if (!o) settingsFocusConnection.value = null;
 });
 const sidebarMobileOpen = ref(false);
+const composerFocusToken = ref(0);
 const chatListSelectMode = ref(false);
 const chatListSelectedIds = ref<string[]>([]);
 
@@ -135,6 +136,8 @@ async function handleNewChat(): Promise<void> {
   sidebarMobileOpen.value = false;
   const created = await chat.newChat();
   await router.push({ name: 'chat', params: { id: created.id } });
+  await nextTick();
+  composerFocusToken.value += 1;
 }
 
 function exitChatListSelectMode(): void {
@@ -317,6 +320,7 @@ onUnmounted(() => {
           :store="chat"
           :settings-open="settingsOpen"
           :sidebar-mobile-open="sidebarMobileOpen"
+          :composer-focus-token="composerFocusToken"
           @new-chat="handleNewChat"
           @open-settings="handleOpenSettings($event)"
           @open-sidebar="openMobileSidebar"

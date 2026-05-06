@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ArrowUp, FolderOpen, Paperclip, Square } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import PathMessageModal from '@/components/PathMessageModal.vue';
 import { ApiError, apiPickLocalFile, apiStageDroppedFile } from '@/lib/api';
 
-const props = defineProps<{ busy: boolean; disabled?: boolean }>();
+const props = defineProps<{
+  busy: boolean;
+  disabled?: boolean;
+  /** Increments when the parent wants the draft textarea focused (e.g. new chat). */
+  focusToken?: number;
+}>();
 
 const { t } = useI18n();
 
@@ -31,6 +36,40 @@ const dropping = ref(false);
 
 const fileDragActive = computed(
   () => fileDragDepth.value > 0 && !props.busy && !props.disabled && !picking.value
+);
+
+function tryFocusTextarea(attemptsLeft: number): void {
+  const el = textareaEl.value;
+  if (el && !props.busy && !props.disabled) {
+    el.focus({ preventScroll: true });
+    return;
+  }
+  if (attemptsLeft <= 0) return;
+  requestAnimationFrame(() => tryFocusTextarea(attemptsLeft - 1));
+}
+
+function scheduleComposerFocus(): void {
+  const run = (): void => {
+    void nextTick(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => tryFocusTextarea(12));
+      });
+    });
+  };
+  if (document.readyState === 'complete') {
+    run();
+  } else {
+    window.addEventListener('load', run, { once: true });
+  }
+}
+
+watch(
+  () => props.focusToken ?? 0,
+  (token, prev) => {
+    if (token <= 0 || token === prev) return;
+    scheduleComposerFocus();
+  },
+  { flush: 'post' }
 );
 
 function dismissPathModal(): void {
@@ -266,7 +305,7 @@ function submit(): void {
 <template>
   <div class="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-5">
     <div
-      class="group relative mx-auto max-w-3xl rounded-[1.35rem] border border-black/[0.06] bg-white/48 shadow-[0_12px_42px_-14px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 transition-[box-shadow,background-color,backdrop-filter] focus-within:border-black/[0.09] focus-within:bg-white/58 focus-within:shadow-[0_18px_52px_-14px_rgba(0,0,0,0.14),0_0_56px_-10px_rgb(var(--marketing-glow-primary)_/_0.32),0_18px_76px_-22px_rgb(var(--marketing-glow-secondary)_/_0.22)] focus-within:ring-2 focus-within:ring-[rgb(var(--marketing-glow-primary)_/_0.52)] dark:border-white/[0.09] dark:bg-black/48 dark:shadow-[0_14px_48px_-16px_rgba(0,0,0,0.55)] dark:focus-within:border-white/[0.12] dark:focus-within:bg-black/58 dark:focus-within:shadow-[0_20px_56px_-14px_rgba(0,0,0,0.55),0_0_72px_-6px_rgb(var(--marketing-glow-primary)_/_0.38),0_24px_96px_-20px_rgb(var(--marketing-glow-secondary)_/_0.26)]"
+      class="group relative mx-auto max-w-3xl rounded-[1.35rem] border border-black/[0.06] bg-white/48 p-3 shadow-[0_12px_42px_-14px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150 transition-[box-shadow,background-color,backdrop-filter] focus-within:border-black/[0.09] focus-within:bg-white/58 focus-within:shadow-[0_18px_52px_-14px_rgba(0,0,0,0.14),0_0_56px_-10px_rgb(var(--marketing-glow-primary)_/_0.32),0_18px_76px_-22px_rgb(var(--marketing-glow-secondary)_/_0.22)] focus-within:ring-2 focus-within:ring-[rgb(var(--marketing-glow-primary)_/_0.52)] dark:border-white/[0.09] dark:bg-black/48 dark:shadow-[0_14px_48px_-16px_rgba(0,0,0,0.55)] dark:focus-within:border-white/[0.12] dark:focus-within:bg-black/58 dark:focus-within:shadow-[0_20px_56px_-14px_rgba(0,0,0,0.55),0_0_72px_-6px_rgb(var(--marketing-glow-primary)_/_0.38),0_24px_96px_-20px_rgb(var(--marketing-glow-secondary)_/_0.26)]"
       @dragenter="onDragEnter"
       @dragleave="onDragLeave"
       @dragover="onDragOver"
@@ -293,10 +332,10 @@ function submit(): void {
         :disabled="busy || disabled"
         :rows="2"
         :placeholder="t('composer.placeholder')"
-        class="block w-full resize-none border-0 bg-transparent pb-1 ps-4 pe-14 pt-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
+        class="block w-full resize-none border-0 bg-transparent pb-2 ps-3 pe-14 pt-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
         @keydown="handleKey"
       />
-      <div class="absolute end-2 top-2 z-10 flex items-center">
+      <div class="absolute end-3 top-3 z-10 flex items-center">
         <Button
           v-if="!busy"
           size="icon"
@@ -316,7 +355,7 @@ function submit(): void {
           <Square class="size-3.5" />
         </Button>
       </div>
-      <div class="flex w-full flex-wrap items-center gap-2 px-2 pb-2">
+      <div class="flex w-full flex-wrap items-center gap-2 px-0.5 pb-2">
         <div class="flex min-w-0 flex-shrink-0 flex-wrap items-center gap-2">
           <slot name="actions" />
         </div>

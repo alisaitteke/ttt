@@ -32,9 +32,10 @@ export type DesignToolId =
   | 'premiere-pro'
   | 'davinci-resolve'
   | 'docker'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'giphy';
 
-export type DesignToolKind = 'install_probe' | 'connection';
+export type DesignToolKind = 'install_probe' | 'connection' | 'api_key';
 
 export type ConnectionProviderId = 'whatsapp';
 
@@ -43,13 +44,14 @@ export interface DesignToolInfo {
   label: string;
   toolPrefix: string;
   toolPrefixes?: readonly string[];
-  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp';
+  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp' | 'giphy';
   available: boolean;
   installUrl?: string;
   /** Set when the UI server probes local installs (Adobe CC apps, Figma desktop, DaVinci Resolve, Docker, etc.). */
   installed?: boolean;
   kind?: DesignToolKind;
   connection?: { providerId: ConnectionProviderId; connected: boolean };
+  apiKeyConfigured?: boolean;
 }
 
 export interface DesignToolsResponse {
@@ -144,7 +146,7 @@ export interface ChatDetail {
   messages: PersistedMessage[];
 }
 
-export type SettingsTab = 'appearance' | 'providers' | 'connections';
+export type SettingsTab = 'appearance' | 'providers' | 'connections' | 'integrations';
 
 export interface SettingsOpenOptions {
   tab?: SettingsTab;
@@ -228,10 +230,13 @@ export const apiGetWhatsAppPreferences = () =>
   api<WhatsAppPreferences>('/api/connections/whatsapp/preferences');
 
 export const apiPatchWhatsAppPreferences = (body: WhatsAppPreferences) =>
-  api<{ ok: true; extendedDataTools: boolean }>('/api/connections/whatsapp/preferences', {
-    method: 'PATCH',
-    body: JSON.stringify(body),
-  });
+  api<{ ok: true; extendedDataTools: boolean; sessionReset?: boolean }>(
+    '/api/connections/whatsapp/preferences',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }
+  );
 
 export const apiStartWhatsAppPairing = () =>
   api<{ ok: true }>('/api/connections/whatsapp/pairing/start', { method: 'POST' });
@@ -256,6 +261,25 @@ export const apiSaveKey = (id: ProviderId, apiKey: string) =>
 
 export const apiDeleteKey = (id: ProviderId) =>
   api<{ ok: true }>(`/api/providers/${id}/key`, { method: 'DELETE' });
+
+// ---- Integrations (non-LLM) -------------------------------------------
+
+export interface GiphyIntegrationStatus {
+  configured: boolean;
+  apiKeyMasked: string | null;
+}
+
+export const apiGetGiphyIntegration = () =>
+  api<GiphyIntegrationStatus>('/api/integrations/giphy');
+
+export const apiSaveGiphyKey = (apiKey: string) =>
+  api<{ ok: true; apiKeyMasked: string | null }>('/api/integrations/giphy/key', {
+    method: 'POST',
+    body: JSON.stringify({ apiKey }),
+  });
+
+export const apiDeleteGiphyKey = () =>
+  api<{ ok: true }>('/api/integrations/giphy/key', { method: 'DELETE' });
 
 // ---- Chats ------------------------------------------------------------
 

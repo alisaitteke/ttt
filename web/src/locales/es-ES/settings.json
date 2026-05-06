@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "Apariencia",
       "providers": "Proveedores",
-      "connections": "Mensajería"
+      "connections": "Mensajería",
+      "integrations": "Integraciones"
     },
     "theme": {
       "label": "Tema",
@@ -41,6 +42,22 @@
       "statusDisconnected": "No conectado",
       "setUp": "Configurar",
       "manage": "Gestionar"
+    },
+    "integrations": {
+      "heading": "Integraciones",
+      "description": "Claves API para funciones que no son del LLM (p. ej. búsqueda de GIF). Separadas de los proveedores de modelos.",
+      "loading": "Cargando…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "Panel de desarrolladores",
+        "noteAttribution": "GIPHY exige la atribución visible \"Powered by GIPHY\" donde se muestren resultados.",
+        "noteRateLimit": "Las claves beta tienen límite (unas 100 solicitudes/hora). Las claves de producción requieren aprobación de GIPHY.",
+        "noteEnv": "También puedes definir TTT_GIPHY_API_KEY en el entorno; sustituye a la clave guardada.",
+        "apiKeyLabel": "Clave API de GIPHY",
+        "placeholder": "Pega tu clave API de GIPHY…",
+        "save": "Guardar clave",
+        "removeKey": "Eliminar clave"
+      }
     }
   }
 }

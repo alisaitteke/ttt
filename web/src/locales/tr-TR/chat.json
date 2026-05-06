@@ -86,7 +86,10 @@
     "launchFailed": "Başlatılamadı",
     "notLinkedStatus": "Bağlı değil",
     "linkedStatus": "Bağlı",
-    "connectCta": "Bağlan"
+    "connectCta": "Bağlan",
+    "apiKeyNotSet": "API anahtarı yok",
+    "apiKeySet": "API anahtarı tanımlı",
+    "addApiKeyCta": "API anahtarı ekle"
   },
   "toolCall": {
     "input": "Girdi",

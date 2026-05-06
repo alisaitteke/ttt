@@ -86,7 +86,10 @@
     "launchFailed": "فشل التشغيل",
     "notLinkedStatus": "غير مرتبط",
     "linkedStatus": "مرتبط",
-    "connectCta": "اتصال"
+    "connectCta": "اتصال",
+    "apiKeyNotSet": "لا يوجد مفتاح API",
+    "apiKeySet": "تم تعيين مفتاح API",
+    "addApiKeyCta": "إضافة مفتاح API"
   },
   "toolCall": {
     "input": "إدخال",

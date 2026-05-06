@@ -14,6 +14,7 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import { Mutex } from 'async-mutex';
 import { rm } from 'node:fs/promises';
+import { platform as hostPlatform } from 'node:os';
 import pino from 'pino';
 import {
   getTttWhatsAppAuthDir,
@@ -183,7 +184,19 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
   async logout(): Promise<void> {
     await this.mutex.runExclusive(async () => {
       this.clearReconnectTimer();
-      this.teardownSocket();
+      if (this.sock) {
+        try {
+          await this.sock.logout('TTT user removed linked device');
+        } catch (e) {
+          this.logger.warn('whatsapp sock.logout failed, forcing local teardown', e);
+          this.teardownSocket();
+        }
+      } else {
+        this.teardownSocket();
+      }
+      if (this.sock) {
+        this.teardownSocket();
+      }
       this.opened = false;
       this.latestQr = null;
       try {
@@ -285,7 +298,7 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
             count: out.length,
             note:
               out.length === 0
-                ? 'No chats cached yet. Ensure extended data consent is on, then disconnect & link again once so the session uses OS-matched browser + full history. Keep WhatsApp on your phone online 1–3 minutes after connect.'
+                ? 'No chats in local cache. Full history is only negotiated on the first QR pairing after “extended” tools are enabled — use Log out / Forget session in settings, keep the option on, then link again. Keep the phone online 1–3 minutes. On Linux hosts we use a macOS Chrome client hint so WA sends history sync. Incoming messages still fill the list over time.'
                 : 'Chats come from the local Baileys cache (history sync may still be in progress).',
             chats: out,
           },
@@ -346,6 +359,19 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
     this.messagesByJid.clear();
   }
 
+  private upsertChatFromMessage(m: WAMessage): void {
+    const jid = m.key.remoteJid;
+    if (!jid) return;
+    const ts = m.messageTimestamp != null ? tsNum(m.messageTimestamp) : 0;
+    const prev = this.chats.get(jid);
+    const prevTs = prev
+      ? Math.max(tsNum(prev.conversationTimestamp), tsNum(prev.lastMessageRecvTimestamp))
+      : 0;
+    const nextTs = Math.max(ts, prevTs);
+    const base = (prev ?? { id: jid }) as Chat;
+    this.chats.set(jid, { ...base, conversationTimestamp: nextTs } as Chat);
+  }
+
   private upsertMessage(m: WAMessage): void {
     const jid = m.key.remoteJid;
     if (!jid) return;
@@ -378,7 +404,10 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
         }
       }
       for (const co of hist.contacts) this.mergeContact(co);
-      for (const msg of hist.messages) this.upsertMessage(msg);
+      for (const msg of hist.messages) {
+        this.upsertChatFromMessage(msg);
+        this.upsertMessage(msg);
+      }
     });
 
     sock.ev.on('chats.upsert', (list: Chat[]) => {
@@ -416,7 +445,10 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
     });
 
     sock.ev.on('messages.upsert', ({ messages }: { messages: WAMessage[] }) => {
-      for (const m of messages) this.upsertMessage(m);
+      for (const m of messages) {
+        this.upsertChatFromMessage(m);
+        this.upsertMessage(m);
+      }
     });
   }
 
@@ -466,6 +498,16 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
 
     const waPrefs = await readWhatsAppPreferences();
     const syncHistory = waPrefs.extendedDataTools;
+    /**
+     * Baileys maps WebSubPlatform to DARWIN/WIN32 only when browser[0] is "Mac OS" or "Windows".
+     * Linux uses "Ubuntu", which keeps WEB_BROWSER and often never receives history-heavy sync.
+     */
+    const historyBrowser =
+      syncHistory && hostPlatform() === 'linux'
+        ? Browsers.macOS('Chrome')
+        : syncHistory
+          ? Browsers.appropriate('Chrome')
+          : Browsers.ubuntu('Chrome');
 
     const sock = makeWASocket({
       auth: state,
@@ -473,11 +515,7 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
       printQRInTerminal: false,
       logger: silentLogger,
       syncFullHistory: syncHistory,
-      /**
-       * Baileys only sets native WebSubPlatform (Darwin/Win32) when browser[0] is "Mac OS" or "Windows".
-       * Default Ubuntu tuple keeps WEB_BROWSER and full history sync often never fills chats.* — use OS-appropriate browser when syncing.
-       */
-      browser: syncHistory ? Browsers.appropriate('Chrome') : Browsers.ubuntu('Chrome'),
+      browser: historyBrowser,
     });
     this.sock = sock;
 

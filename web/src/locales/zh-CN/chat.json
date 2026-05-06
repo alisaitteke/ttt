@@ -86,7 +86,10 @@
     "launchFailed": "启动失败",
     "notLinkedStatus": "未关联",
     "linkedStatus": "已关联",
-    "connectCta": "连接"
+    "connectCta": "连接",
+    "apiKeyNotSet": "未设置 API 密钥",
+    "apiKeySet": "已设置 API 密钥",
+    "addApiKeyCta": "添加 API 密钥"
   },
   "toolCall": {
     "input": "输入",

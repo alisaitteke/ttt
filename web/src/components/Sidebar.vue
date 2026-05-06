@@ -133,7 +133,7 @@ function openSettings(): void {
   />
 
   <aside
-    class="fixed inset-y-0 start-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-e border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
+    class="fixed inset-y-0 start-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-e border-border bg-background/20 backdrop-blur-2xl backdrop-saturate-150 transition-transform duration-200 ease-out dark:bg-background/[0.14] md:relative md:inset-auto md:z-auto md:translate-x-0"
     :class="
       mobileOpen
         ? 'translate-x-0'

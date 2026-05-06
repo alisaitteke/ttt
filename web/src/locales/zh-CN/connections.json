@@ -2,6 +2,8 @@
   "connections": {
     "whatsapp": {
       "title": "关联 WhatsApp",
+      "betaBadge": "测试版",
+      "betaNotice": "WhatsApp 集成为测试版：功能可能有变化，也可能出现问题。",
       "blurb": "使用手机 WhatsApp 扫描二维码（已关联的设备）。非官方 API — 请合规使用。",
       "linked": "已关联。可关闭此窗口。",
       "waitingQr": "正在生成二维码…",
@@ -13,6 +15,7 @@
         "body": "可选：允许 MCP 工具读取本机 Baileys 缓存中同步的聊天与联系人。非官方 WhatsApp 访问 — 合法使用及遵守 WhatsApp 条款由您负责。可随时关闭。",
         "checkbox": "允许 AI 读取同步的聊天与联系人（扩展工具）"
       },
+      "sessionResetHint": "已清除本地会话，以便下次扫码时可请求完整聊天记录。若手机上仍有旧关联设备请先移除，再扫描新码。",
       "errors": {
         "clientVersion": "WhatsApp 拒绝了关联（网页客户端版本过旧）。请更新本应用后重试。",
         "sessionRejected": "WhatsApp 拒绝了会话。请先断开并清除会话，然后再试。"

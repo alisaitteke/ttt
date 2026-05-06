@@ -47,9 +47,14 @@ function connectionLinked(tool: DesignToolInfo): boolean {
   return tool.kind === 'connection' && tool.connection?.connected === true;
 }
 
+function apiKeyReady(tool: DesignToolInfo): boolean {
+  return tool.kind === 'api_key' && tool.apiKeyConfigured === true;
+}
+
 function isSelectable(tool: DesignToolInfo): boolean {
   if (!tool.available) return false;
   if (tool.kind === 'connection') return connectionLinked(tool);
+  if (tool.kind === 'api_key') return apiKeyReady(tool);
   if (tool.installed === false) return false;
   return true;
 }
@@ -58,6 +63,10 @@ function rowLocked(tool: DesignToolInfo): boolean {
   if (!tool.available) return true;
   if (tool.kind === 'connection') {
     if (!connectionLinked(tool) && !selectedTools.value.includes(tool.id)) return true;
+    return false;
+  }
+  if (tool.kind === 'api_key') {
+    if (!apiKeyReady(tool) && !selectedTools.value.includes(tool.id)) return true;
     return false;
   }
   if (tool.installed === false && !selectedTools.value.includes(tool.id)) return true;
@@ -73,6 +82,15 @@ function openConnectSettings(_tool: DesignToolInfo): void {
   open.value = false;
 }
 
+function showApiKeyBlock(tool: DesignToolInfo): boolean {
+  return tool.kind === 'api_key' && tool.available && !apiKeyReady(tool);
+}
+
+function openIntegrationsSettings(): void {
+  emit('open-settings', { tab: 'integrations' });
+  open.value = false;
+}
+
 function showInstallBlock(tool: DesignToolInfo): boolean {
   return tool.installed === false && Boolean(tool.installUrl);
 }
@@ -81,6 +99,9 @@ function showInstallBlock(tool: DesignToolInfo): boolean {
 function installedTierRank(tool: DesignToolInfo): number {
   if (tool.kind === 'connection') {
     return connectionLinked(tool) ? 0 : 2;
+  }
+  if (tool.kind === 'api_key') {
+    return apiKeyReady(tool) ? 0 : 2;
   }
   if (tool.installed === true) return 0;
   if (tool.installed === undefined) return 1;
@@ -240,7 +261,9 @@ function clearAll(): void {
             class="grid w-full min-w-0 grid-cols-[2rem_minmax(0,2fr)_minmax(0,1fr)_9.5rem] items-center gap-x-3 border-b border-border/30 px-3 py-1.5 text-start text-sm outline-none last:border-b-0 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             :class="[
               rowLocked(tool) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent/80',
-              selectedTools.includes(tool.id) && tool.available && (tool.kind !== 'connection' || connectionLinked(tool))
+              selectedTools.includes(tool.id) && tool.available &&
+              (tool.kind !== 'connection' || connectionLinked(tool)) &&
+              (tool.kind !== 'api_key' || apiKeyReady(tool))
                 ? 'bg-accent/50'
                 : '',
             ]"
@@ -275,6 +298,18 @@ function clearAll(): void {
                   {{ t('designTools.linkedStatus') }}
                 </span>
               </template>
+              <template v-else-if="tool.kind === 'api_key' && !apiKeyReady(tool)">
+                <span class="text-[10px] leading-tight whitespace-nowrap text-muted-foreground">
+                  {{ t('designTools.apiKeyNotSet') }}
+                </span>
+              </template>
+              <template v-else-if="tool.kind === 'api_key' && apiKeyReady(tool)">
+                <span
+                  class="text-[10px] leading-tight whitespace-nowrap rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-muted-foreground"
+                >
+                  {{ t('designTools.apiKeySet') }}
+                </span>
+              </template>
               <template v-else-if="tool.installed === false">
                 <span class="text-[10px] leading-tight whitespace-nowrap text-muted-foreground">
                   {{ t('designTools.notInstalledStatus') }}
@@ -303,6 +338,16 @@ function clearAll(): void {
                   @click.stop="openConnectSettings(tool)"
                 >
                   {{ t('designTools.connectCta') }}
+                </button>
+              </template>
+              <template v-else-if="showApiKeyBlock(tool)">
+                <button
+                  type="button"
+                  :disabled="disabled"
+                  class="inline-flex h-7 w-full max-w-[9.5rem] shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                  @click.stop="openIntegrationsSettings()"
+                >
+                  {{ t('designTools.addApiKeyCta') }}
                 </button>
               </template>
               <template v-else-if="showInstallBlock(tool)">

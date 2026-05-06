@@ -2,6 +2,8 @@
   "connections": {
     "whatsapp": {
       "title": "WhatsApp verknüpfen",
+      "betaBadge": "Beta",
+      "betaNotice": "Die WhatsApp-Integration befindet sich in der Beta; das Verhalten kann sich ändern und es kann zu Problemen kommen.",
       "blurb": "QR-Code mit WhatsApp auf dem Telefon scannen (Verknüpfte Geräte). Inoffizielle API — verantwortungsvoll nutzen.",
       "linked": "Verknüpft. Sie können schließen.",
       "waitingQr": "QR-Code wird vorbereitet…",
@@ -13,6 +15,7 @@
         "body": "Optional: MCP-Tools erlauben, die synchronisierte Chats und Kontakte aus dem Baileys-Cache dieses Geräts lesen. Inoffizieller WhatsApp-Zugang — Sie sind für rechtmäßige Nutzung und die WhatsApp-Nutzungsbedingungen verantwortlich. Jederzeit deaktivierbar.",
         "checkbox": "KI das Lesen synchronisierter Chats und Kontakte erlauben (erweiterte Tools)"
       },
+      "sessionResetHint": "Die lokale Sitzung wurde gelöscht, damit der nächste QR-Link den vollständigen Verlauf anfordern kann. Entfernen Sie ggf. das alte verknüpfte Gerät am Telefon und scannen Sie dann den neuen Code.",
       "errors": {
         "clientVersion": "WhatsApp hat die Verknüpfung abgelehnt (veralteter Web-Client). Aktualisieren Sie die App und versuchen Sie es erneut.",
         "sessionRejected": "WhatsApp hat die Sitzung abgelehnt. Zuerst trennen und Sitzung löschen, dann erneut versuchen."

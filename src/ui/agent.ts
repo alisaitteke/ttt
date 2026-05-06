@@ -9,6 +9,7 @@ import {
   TTT_EXPORT_CHAT_ID_ENV,
   TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV,
 } from '@ttt/lib/ttt-paths.js';
+import { getGiphyApiKey, TTT_GIPHY_API_KEY_ENV } from '@ttt/ui/integrations/giphy-key.js';
 import type { ModelPricing, ProviderAdapter, ProviderId, UsageCost } from '@ttt/ui/providers/registry.js';
 import {
   DESIGN_TOOLS,
@@ -196,12 +197,22 @@ WhatsApp (Baileys via TTT UI):
 - Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` for an image at an \`https\`/\`http\` URL (with user consent and per WhatsApp ToS).${extendedWa}`
       : '';
 
+  const giphyBlock =
+    designTools.includes('giphy')
+      ? `
+
+GIPHY (GIF search via MCP):
+- Use \`giphy_search\` with the user's keywords to find GIFs from GIPHY's catalog.
+- Pass through **media URLs exactly as returned**; do not strip or rewrite query parameters on GIPHY URLs.
+- When you present GIF results to the user (in chat or summaries), include visible **Powered by GIPHY** attribution (GIPHY API terms).`
+      : '';
+
   const groqExtras = providerId === 'groq' ? `\n\n${GROQ_MCP_TOOL_ENFORCEMENT}` : '';
 
   return `${TTT_SYSTEM_PROMPT}
 
 Currently enabled design tools for this chat:
-${toolsDesc}${whatsappBlock}
+${toolsDesc}${whatsappBlock}${giphyBlock}
 
 Guidelines:
 - Follow the Markdown response format described in your role instructions above.
@@ -226,6 +237,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
 
   try {
     const waPrefs = await readWhatsAppPreferences();
+    const giphyKey = await getGiphyApiKey();
     const spawnArgs = IS_DEV_SOURCE ? ['--import', 'tsx', MCP_SERVER_ENTRY] : [MCP_SERVER_ENTRY];
     const mcpEnv: Record<string, string> = {
       ...sanitizedEnv(),
@@ -239,6 +251,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
       ...(waPrefs.extendedDataTools
         ? { [TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV]: '1' }
         : { [TTT_WHATSAPP_EXTENDED_DATA_CONSENT_ENV]: '0' }),
+      ...(giphyKey ? { [TTT_GIPHY_API_KEY_ENV]: giphyKey } : {}),
     };
     const exportSeg = sanitizeExportChatSegment(opts.exportChatId);
     if (exportSeg) {

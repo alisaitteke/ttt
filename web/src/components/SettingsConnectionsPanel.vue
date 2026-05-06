@@ -71,6 +71,12 @@ defineExpose({ refresh });
           <AdobeAppIcon v-if="c.id === 'whatsapp'" app="whatsapp" :size="20" class="shrink-0" />
           <span class="truncate text-sm font-semibold">{{ c.displayName }}</span>
           <span
+            v-if="c.id === 'whatsapp'"
+            class="inline-flex shrink-0 rounded border border-border bg-muted/50 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            {{ t('connections.whatsapp.betaBadge') }}
+          </span>
+          <span
             v-if="c.connected"
             class="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] text-muted-foreground"
           >

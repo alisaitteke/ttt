@@ -8,9 +8,10 @@ export type DesignToolId =
   | 'premiere-pro'
   | 'davinci-resolve'
   | 'docker'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'giphy';
 
-export type DesignToolKind = 'install_probe' | 'connection';
+export type DesignToolKind = 'install_probe' | 'connection' | 'api_key';
 
 export interface DesignToolInfo {
   id: DesignToolId;
@@ -18,7 +19,7 @@ export interface DesignToolInfo {
   toolPrefix: string;
   /** When set, MCP tools may use several name prefixes (e.g. Docker Hub / GHCR). */
   toolPrefixes?: readonly string[];
-  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp';
+  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp' | 'giphy';
   available: boolean;
   /** Official product / download page (Adobe apps). */
   installUrl?: string;
@@ -28,6 +29,8 @@ export interface DesignToolInfo {
   kind?: DesignToolKind;
   /** Present when `kind === 'connection'` after server enriches status. */
   connection?: { providerId: ConnectionAdapterId; connected: boolean };
+  /** Present when `kind === 'api_key'` after server enriches status. */
+  apiKeyConfigured?: boolean;
 }
 
 export const DESIGN_TOOLS: Record<DesignToolId, DesignToolInfo> = {
@@ -93,6 +96,14 @@ export const DESIGN_TOOLS: Record<DesignToolId, DesignToolInfo> = {
     iconKey: 'whatsapp',
     available: true,
     kind: 'connection',
+  },
+  giphy: {
+    id: 'giphy',
+    label: 'GIPHY',
+    toolPrefix: 'giphy_',
+    iconKey: 'giphy',
+    available: true,
+    kind: 'api_key',
   },
 };
 

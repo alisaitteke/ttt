@@ -6,7 +6,8 @@
     "tabs": {
       "appearance": "外观",
       "providers": "提供商",
-      "connections": "消息"
+      "connections": "消息",
+      "integrations": "集成"
     },
     "theme": {
       "label": "主题",
@@ -41,6 +42,22 @@
       "statusDisconnected": "未连接",
       "setUp": "设置",
       "manage": "管理"
+    },
+    "integrations": {
+      "heading": "集成",
+      "description": "非 LLM 功能的 API 密钥（例如 GIF 搜索）。与模型提供商分开管理。",
+      "loading": "加载中…",
+      "giphy": {
+        "title": "GIPHY",
+        "getKey": "开发者控制台",
+        "noteAttribution": "GIPHY 要求在任何展示 GIF 结果的地方显示 “Powered by GIPHY” 归属信息。",
+        "noteRateLimit": "Beta API 密钥有速率限制（约每小时 100 次请求）。生产密钥需 GIPHY 审核。",
+        "noteEnv": "也可在环境中设置 TTT_GIPHY_API_KEY；会覆盖已保存的密钥。",
+        "apiKeyLabel": "GIPHY API 密钥",
+        "placeholder": "粘贴你的 GIPHY API 密钥…",
+        "save": "保存密钥",
+        "removeKey": "移除密钥"
+      }
     }
   }
 }

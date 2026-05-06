@@ -7,6 +7,7 @@ import openclawProvider from '@ttt/providers/openclaw/index.js';
 import hermesProvider from '@ttt/providers/hermes/index.js';
 import dockerProvider from '@ttt/providers/docker/index.js';
 import whatsappToolsProvider from '@ttt/providers/whatsapp/index.js';
+import giphyProvider from '@ttt/providers/giphy/index.js';
 
 /**
  * The full list of providers known to TTT.
@@ -24,4 +25,5 @@ export const providers: Provider[] = [
   hermesProvider,
   dockerProvider,
   whatsappToolsProvider,
+  giphyProvider,
 ];

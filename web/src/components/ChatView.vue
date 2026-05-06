@@ -27,6 +27,8 @@ const props = defineProps<{
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
   sidebarMobileOpen: boolean;
+  /** Bumped by the shell when a new chat is created so the composer can take focus. */
+  composerFocusToken?: number;
 }>();
 
 const emit = defineEmits<{
@@ -111,6 +113,7 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
           <Composer
             class="pointer-events-auto w-full shrink-0"
             :busy="props.store.sending.value"
+            :focus-token="props.composerFocusToken"
             @send="(p) => props.store.send(p)"
             @abort="props.store.abort"
           >
