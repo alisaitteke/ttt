@@ -2,7 +2,11 @@
 export type IntegrationAdapterId = 'giphy';
 
 /** Includes catalog-only entries shown in settings (e.g. coming soon). */
-export type IntegrationId = IntegrationAdapterId | 'homeassistant';
+export type IntegrationId =
+  | IntegrationAdapterId
+  | 'homeassistant'
+  | 'pexels'
+  | 'shutterstock';
 
 export interface IntegrationAdapter {
   id: IntegrationAdapterId;

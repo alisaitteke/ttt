@@ -268,7 +268,11 @@ export const apiDeleteKey = (id: ProviderId) =>
 export type IntegrationAdapterId = 'giphy';
 
 /** Catalog ids including placeholders (e.g. coming soon). */
-export type IntegrationId = IntegrationAdapterId | 'homeassistant';
+export type IntegrationId =
+  | IntegrationAdapterId
+  | 'homeassistant'
+  | 'pexels'
+  | 'shutterstock';
 
 export type IntegrationAvailability = 'active' | 'coming_soon';
 

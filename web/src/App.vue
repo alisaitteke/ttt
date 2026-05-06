@@ -256,8 +256,21 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-    {{ t('app.loading') }}
+  <div
+    v-if="loading"
+    class="flex min-h-screen flex-col items-center justify-center gap-4"
+    role="status"
+    aria-live="polite"
+  >
+    <img
+      src="/logo.svg?v=7"
+      alt=""
+      width="180"
+      height="64"
+      class="h-12 w-auto max-w-[min(240px,70vw)] object-contain opacity-90 dark:invert"
+      aria-hidden="true"
+    />
+    <p class="text-sm text-muted-foreground">{{ t('app.loading') }}</p>
   </div>
   <div v-else-if="fatalError" class="flex min-h-screen items-center justify-center p-6">
     <div class="max-w-md rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
