@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
 const repoUrl = 'https://github.com/alisaitteke/ttt';
 const authorUrl = 'https://github.com/alisaitteke';
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -13,18 +17,18 @@ const authorUrl = 'https://github.com/alisaitteke';
       rel="noopener noreferrer"
       class="transition-colors hover:text-foreground"
     >
-      GitHub
+      {{ t('footer.github') }}
     </a>
     <span aria-hidden="true" class="text-muted-foreground/60">·</span>
     <span>
-      by
+      {{ t('footer.by') }}
       <a
         :href="authorUrl"
         target="_blank"
         rel="noopener noreferrer"
         class="transition-colors hover:text-foreground"
       >
-        @alisaitteke
+        @{{ t('footer.authorHandle') }}
       </a>
     </span>
   </footer>

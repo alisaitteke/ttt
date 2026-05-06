@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ChevronDown, Check, Info, Lock } from 'lucide-vue-next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ const emit = defineEmits<{
   'update:tools': [value: DesignToolId[]];
 }>();
 
+const { t } = useI18n();
+
 const open = ref(false);
 const launchPending = ref(false);
 const launchError = ref<string | null>(null);
@@ -27,7 +30,8 @@ async function openCreativeCloud(): Promise<void> {
   try {
     await apiLaunchCreativeCloud();
   } catch (e) {
-    launchError.value = e instanceof Error ? e.message : 'Launch failed';
+    launchError.value =
+      e instanceof Error ? e.message : t('designTools.launchFailed');
   } finally {
     launchPending.value = false;
   }
@@ -80,12 +84,14 @@ const selectedTools = computed(() => {
 const label = computed(() => {
   const count = selectedTools.value.length;
   const selectable = props.designTools.filter(isSelectable);
-  if (count === 0) return 'No tools';
-  if (count === selectable.length && selectable.length > 0) return 'All design tools';
+  if (count === 0) return t('designTools.countNone');
+  if (count === selectable.length && selectable.length > 0) {
+    return t('designTools.countAll');
+  }
   const labels = selectedTools.value
-    .map((id) => props.designTools.find((t) => t.id === id)?.label)
+    .map((id) => props.designTools.find((tool) => tool.id === id)?.label)
     .filter(Boolean);
-  return `Tools: ${labels.join(' + ')}`;
+  return `${t('designTools.countSomePrefix')}${labels.join(' + ')}`;
 });
 
 function onToolClick(tool: DesignToolInfo): void {
@@ -157,14 +163,16 @@ function clearAll(): void {
     >
       <div class="border-b border-border/50 px-3 py-2.5">
         <div class="flex min-w-0 items-center justify-between gap-3">
-          <span class="text-xs font-medium text-muted-foreground">Design Tools</span>
+          <span class="text-xs font-medium text-muted-foreground">{{
+            t('designTools.panelHeading')
+          }}</span>
           <div class="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               class="text-[10px] text-primary hover:underline"
               @click="selectAll"
             >
-              Select all
+              {{ t('designTools.selectAll') }}
             </button>
             <span class="text-[10px] text-muted-foreground/60">·</span>
             <button
@@ -172,7 +180,7 @@ function clearAll(): void {
               class="text-[10px] text-primary hover:underline"
               @click="clearAll"
             >
-              Clear all
+              {{ t('designTools.clearAll') }}
             </button>
           </div>
         </div>
@@ -183,8 +191,7 @@ function clearAll(): void {
       >
         <Info class="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <p class="min-w-0 text-[10px] leading-snug text-muted-foreground">
-          Each selected tool adds its MCP capabilities to what the model can use. Only enable tools you
-          actually need for this chat.
+          {{ t('designTools.explainNote') }}
         </p>
       </div>
       <div class="w-full min-w-0">
@@ -194,8 +201,8 @@ function clearAll(): void {
             aria-hidden="true"
           >
             <span class="text-center"> </span>
-            <span class="min-w-0">Tool</span>
-            <span class="min-w-0">Status</span>
+            <span class="min-w-0">{{ t('designTools.columnTool') }}</span>
+            <span class="min-w-0">{{ t('designTools.columnStatus') }}</span>
             <span aria-hidden="true" class="min-w-0" />
           </div>
           <div
@@ -229,7 +236,7 @@ function clearAll(): void {
             <span class="flex min-h-[1.5rem] min-w-0 flex-col items-start justify-center gap-1" @click.stop>
               <template v-if="tool.installed === false">
                 <span class="text-[10px] leading-tight whitespace-nowrap text-muted-foreground">
-                  Not installed
+                  {{ t('designTools.notInstalledStatus') }}
                 </span>
               </template>
               <template v-else-if="tool.installed === true">
@@ -241,7 +248,7 @@ function clearAll(): void {
                       : 'border-primary/30 bg-primary/10 text-primary'
                   "
                 >
-                  Installed
+                  {{ t('designTools.installedStatus') }}
                 </span>
               </template>
               <span v-else class="text-[10px] text-muted-foreground/50">—</span>
@@ -255,7 +262,11 @@ function clearAll(): void {
                   class="inline-flex h-7 w-full max-w-[9.5rem] shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
                   @click.stop="openCreativeCloud"
                 >
-                  {{ launchPending ? 'Opening…' : 'Open Creative Cloud' }}
+                  {{
+                    launchPending
+                      ? t('designTools.openingCreativeCloud')
+                      : t('designTools.openCreativeCloud')
+                  }}
                 </button>
                 <a
                   v-else
@@ -265,7 +276,7 @@ function clearAll(): void {
                   class="inline-flex h-7 w-full max-w-[9.5rem] min-w-[4.5rem] shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                   @click.stop
                 >
-                  Install
+                  {{ t('designTools.installLink') }}
                 </a>
               </template>
               <span v-else class="text-[10px] text-muted-foreground/50">—</span>

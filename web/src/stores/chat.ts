@@ -14,6 +14,7 @@ import {
   type UsageCost,
   type UsageDetails,
 } from '@/lib/api';
+import { translateStatic } from '@/i18n';
 
 export interface ToolCall extends PersistedToolCall {}
 
@@ -210,7 +211,8 @@ export function useChatStore() {
       if (data.usage) m.usage = data.usage;
       if (data.cost) m.cost = data.cost;
     } else if (event === 'error') {
-      error.value = data.message ?? 'Unknown error';
+      error.value =
+        data.message ?? translateStatic('chatErrors.unknownStream');
     }
   }
 

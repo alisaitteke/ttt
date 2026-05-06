@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { X } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +13,8 @@ const emit = defineEmits<{
   close: [];
   primary: [];
 }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -36,7 +39,9 @@ const emit = defineEmits<{
       </div>
       <p class="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{{ body }}</p>
       <div class="mt-6 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
-        <Button variant="secondary" @click="emit('close')">Close</Button>
+        <Button variant="secondary" @click="emit('close')">{{
+          t('pathModal.close')
+        }}</Button>
         <Button v-if="primaryLabel" @click="emit('primary')">{{ primaryLabel }}</Button>
       </div>
     </div>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, inject, ref, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle, FolderOpen } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import type { ToolCall } from '@/stores/chat';
 import { apiRevealFile, ApiError } from '@/lib/api';
 
 const props = defineProps<{ toolCall: ToolCall }>();
+
+const { t } = useI18n();
 
 const open = ref(false);
 
@@ -43,10 +46,17 @@ const resultParsed = computed(() => {
 
 const revealLabel = computed(() => {
   const p = hostPlatform.value;
-  if (p === 'darwin') return 'Show in Finder';
-  if (p === 'win32') return 'Show in File Explorer';
-  return 'Reveal in file manager';
+  if (p === 'darwin') return t('toolCall.revealDarwin');
+  if (p === 'win32') return t('toolCall.revealWin32');
+  return t('toolCall.revealFallback');
 });
+
+function toolCallStatusLabel(status: string): string {
+  if (status === 'pending') return t('toolCall.statusPending');
+  if (status === 'success') return t('toolCall.statusSuccess');
+  if (status === 'error') return t('toolCall.statusError');
+  return status;
+}
 
 const revealError = ref<string | null>(null);
 const revealingPath = ref<string | null>(null);
@@ -89,21 +99,25 @@ async function revealPath(path: string) {
         <Loader2 v-if="toolCall.status === 'pending'" class="size-3 animate-spin text-muted-foreground" />
         <CheckCircle2 v-else-if="toolCall.status === 'success'" class="size-3.5 text-emerald-500" />
         <XCircle v-else class="size-3.5 text-destructive" />
-        <Badge v-if="toolCall.status !== 'pending'" :variant="toolCall.status === 'success' ? 'success' : 'destructive'" class="text-[10px]">
-          {{ toolCall.status }}
+        <Badge
+          v-if="toolCall.status !== 'pending'"
+          :variant="toolCall.status === 'success' ? 'success' : 'destructive'"
+          class="text-[10px]"
+        >
+          {{ toolCallStatusLabel(toolCall.status) }}
         </Badge>
       </span>
     </button>
     <div v-if="open" class="space-y-2 border-t border-border p-3 text-xs">
       <div>
         <div class="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Input
+          {{ t('toolCall.input') }}
         </div>
         <pre class="overflow-x-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug">{{ formattedInput }}</pre>
       </div>
       <div v-if="toolCall.result">
         <div class="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Result
+          {{ t('toolCall.result') }}
         </div>
         <div
           v-if="resultParsed.paths.length > 0"

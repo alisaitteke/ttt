@@ -12,6 +12,26 @@
       "system": "System",
       "light": "Light",
       "dark": "Dark"
+    },
+    "providers": {
+      "formSubtitleAdd": "Add provider",
+      "formSubtitleUpdate": "Update API key",
+      "connectedHeading": "Connected providers",
+      "emptyState": "No providers connected yet. Add an API key to get started.",
+      "getKey": "Get key",
+      "updateKey": "Update key",
+      "removeKeyAria": "Remove API key",
+      "manageKeyHint": "Open settings to manage API key",
+      "providerLabel": "Provider",
+      "apiKeyLabel": "API key",
+      "pasteKeyPlaceholder": "Paste your API key…",
+      "getApiKeyLink": "Get an API key",
+      "validateSave": "Validate & save",
+      "validating": "Validating…",
+      "invalidKey": "Invalid key",
+      "back": "Back",
+      "addProvider": "Add provider",
+      "allConnected": "All providers connected"
     }
   }
 }

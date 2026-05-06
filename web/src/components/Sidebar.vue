@@ -127,7 +127,7 @@ function openSettings(): void {
       <RouterLink
         :to="{ name: 'home' }"
         class="flex min-w-0 items-center gap-2 rounded-md p-1 -ml-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        aria-label="Home"
+        :aria-label="t('sidebar.homeAria')"
         @click="closeMobileNav"
       >
         <img
@@ -163,7 +163,7 @@ function openSettings(): void {
           type="button"
           variant="ghost"
           class="h-10 w-full"
-          aria-label="New chat"
+          :aria-label="t('sidebar.newChatAria')"
           @click="emit('new-chat')"
         >
           <Plus class="size-4" />
@@ -176,10 +176,10 @@ function openSettings(): void {
             v-if="activeChats.length === 0 && archivedChats.length === 0"
             class="px-2 py-6 text-center text-xs text-muted-foreground"
           >
-            No chats yet.
+            {{ t('sidebar.emptyNone') }}
           </div>
           <div v-else-if="activeChats.length === 0" class="px-2 py-6 text-center text-xs text-muted-foreground">
-            No active chats.
+            {{ t('sidebar.emptyActive') }}
           </div>
           <div v-else class="space-y-0.5">
             <SidebarChatRow
@@ -212,7 +212,7 @@ function openSettings(): void {
           >
             <ChevronRight v-if="!archivedOpen" class="size-3.5 shrink-0" />
             <ChevronDown v-else class="size-3.5 shrink-0" />
-            <span>Archived</span>
+            <span>{{ t('sidebar.archived') }}</span>
             <span class="tabular-nums text-[10px] opacity-80">({{ archivedChats.length }})</span>
           </button>
           <div v-if="archivedOpen" class="max-h-[40vh] space-y-0.5 overflow-y-auto pb-1">

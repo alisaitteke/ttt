@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { MessageSquarePlus, Settings2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import StatusBar from './StatusBar.vue';
@@ -32,6 +33,8 @@ const emit = defineEmits<{
   'open-settings': [tab?: 'appearance' | 'providers'];
   'open-sidebar': [];
 }>();
+
+const { t } = useI18n();
 
 const activeChat = computed(() => {
   const id = props.store.activeChatId.value;
@@ -72,15 +75,15 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
     />
 
     <div v-if="!activeChat" class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-      <p class="text-sm text-muted-foreground">Select a chat from the sidebar or start a new one.</p>
+      <p class="text-sm text-muted-foreground">{{ t('chatView.selectPrompt') }}</p>
       <div class="flex flex-wrap items-center justify-center gap-2">
         <Button @click="emit('new-chat')">
           <MessageSquarePlus class="size-4" />
-          New chat
+          {{ t('chatView.newChat') }}
         </Button>
         <Button variant="outline" class="gap-2" @click="emit('open-settings', 'appearance')">
           <Settings2 class="size-4" />
-          Settings
+          {{ t('chatView.settings') }}
         </Button>
       </div>
     </div>

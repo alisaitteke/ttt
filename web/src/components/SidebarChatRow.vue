@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2 } from 'lucide-vue-next';
 import {
   DropdownMenu,
@@ -39,6 +41,12 @@ function commitRename(id: string) {
 function cancelRename() {
   emit('cancel-rename');
 }
+
+const { t } = useI18n();
+
+const actionsAriaLabel = computed(() =>
+  t('sidebar.chatActionsAria', { title: props.chat.title })
+);
 </script>
 
 <template>
@@ -70,7 +78,7 @@ function cancelRename() {
         <button
           type="button"
           class="invisible flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-background/50 group-hover:visible data-[state=open]:visible"
-          :aria-label="`Chat actions: ${chat.title}`"
+          :aria-label="actionsAriaLabel"
           @click.stop
         >
           <MoreHorizontal class="size-3.5" />
@@ -79,7 +87,7 @@ function cancelRename() {
       <DropdownMenuContent align="end" side="bottom" class="w-36 min-w-0">
         <DropdownMenuItem class="gap-2" @select="emit('start-rename')">
           <Pencil class="size-3.5" />
-          Rename
+          {{ t('sidebar.menuRename') }}
         </DropdownMenuItem>
         <DropdownMenuItem
           v-if="!inArchivedList"
@@ -87,11 +95,11 @@ function cancelRename() {
           @select="emit('archive', chat.id)"
         >
           <Archive class="size-3.5" />
-          Archive
+          {{ t('sidebar.menuArchive') }}
         </DropdownMenuItem>
         <DropdownMenuItem v-else class="gap-2" @select="emit('unarchive', chat.id)">
           <ArchiveRestore class="size-3.5" />
-          Unarchive
+          {{ t('sidebar.menuUnarchive') }}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -99,7 +107,7 @@ function cancelRename() {
           @select="emit('delete', chat.id)"
         >
           <Trash2 class="size-3.5" />
-          Delete
+          {{ t('sidebar.menuDelete') }}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

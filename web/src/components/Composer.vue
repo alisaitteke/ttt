@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ArrowUp, FolderOpen, Paperclip, Square } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import PathMessageModal from '@/components/PathMessageModal.vue';
 import { ApiError, apiPickLocalFile, apiStageDroppedFile } from '@/lib/api';
 
 const props = defineProps<{ busy: boolean; disabled?: boolean }>();
+
+const { t } = useI18n();
+
 const emit = defineEmits<{
   send: [prompt: string];
   abort: [];
@@ -49,11 +53,11 @@ function isFileDrag(dt: DataTransfer | null): boolean {
 
 function pathFromFileUriList(raw: string): string | null {
   for (const line of raw.split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    if (!t.startsWith('file://')) continue;
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (!trimmed.startsWith('file://')) continue;
     try {
-      const url = new URL(t);
+      const url = new URL(trimmed);
       if (url.protocol !== 'file:') continue;
       let pathname = decodeURIComponent(url.pathname.replace(/\+/g, ' '));
       if (/^\/[a-zA-Z]:\//.test(pathname)) {
@@ -75,7 +79,8 @@ function handleKey(event: KeyboardEvent): void {
 }
 
 function insertLocalPath(path: string, kind: 'file' | 'folder'): void {
-  const prefix = kind === 'folder' ? 'Local folder path: ' : 'Local file path: ';
+  const prefix =
+    kind === 'folder' ? t('composer.pathPrefixFolder') : t('composer.pathPrefixFile');
   const chunk = `${prefix}${path}\n`;
   const el = textareaEl.value;
   if (!el) {
@@ -156,9 +161,9 @@ async function onDrop(e: DragEvent): Promise<void> {
           : null;
       if (entry && 'isDirectory' in entry && entry.isDirectory) {
         showPathModal({
-          title: 'Why folder drag does not work here',
-          body: 'Web browsers deliberately do not expose the real folder path on your disk when you drop a directory—they only give access to files inside it, without a full path (this is a security rule).\n\nWhen the OS includes a file:// link with the drop (some setups do), we use that automatically. Otherwise use the folder button to open your system\'s folder picker, or drop a single file—we can stage a copy under ~/.ttt/drops if the path is hidden.',
-          primaryLabel: 'Choose folder…',
+          title: t('composer.folderDropTitle'),
+          body: t('composer.folderDropBody'),
+          primaryLabel: t('composer.folderDropPrimary'),
           onPrimary: () => {
             void runPickLocal('folder');
           },
@@ -172,8 +177,8 @@ async function onDrop(e: DragEvent): Promise<void> {
   if (!files?.length) return;
   if (files.length > 1) {
     showPathModal({
-      title: 'One file at a time',
-      body: 'Drop a single file so we can read or stage its path. For an entire folder path, use the folder button instead.',
+      title: t('composer.multiFileDropTitle'),
+      body: t('composer.multiFileDropBody'),
     });
     return;
   }
@@ -186,18 +191,18 @@ async function onDrop(e: DragEvent): Promise<void> {
   } catch (err) {
     if (err instanceof ApiError && err.status === 413) {
       showPathModal({
-        title: 'File too large',
-        body: 'This file is over the 2 GB staging limit. Pick a smaller file or use a file:// path when the browser provides one.',
+        title: t('composer.fileTooLargeTitle'),
+        body: t('composer.fileTooLargeBody'),
       });
     } else if (err instanceof ApiError) {
       showPathModal({
-        title: 'Could not stage file',
+        title: t('composer.stageFailTitle'),
         body: err.message,
       });
     } else {
       showPathModal({
-        title: 'Could not stage file',
-        body: 'An unexpected error occurred while saving to ~/.ttt/drops.',
+        title: t('composer.stageFailTitle'),
+        body: t('composer.stageFailUnexpectedBody'),
       });
     }
   } finally {
@@ -217,18 +222,24 @@ async function runPickLocal(kind: 'file' | 'folder'): Promise<void> {
   } catch (e) {
     if (e instanceof ApiError && e.status === 501) {
       showPathModal({
-        title: 'Picker not available',
-        body: 'Local file and folder pickers are not supported on this platform.',
+        title: t('composer.pickerUnavailableTitle'),
+        body: t('composer.pickerUnavailableBody'),
       });
     } else if (e instanceof ApiError) {
       showPathModal({
-        title: kind === 'folder' ? 'Could not pick folder' : 'Could not pick file',
+        title:
+          kind === 'folder'
+            ? t('composer.pickFolderFailTitle')
+            : t('composer.pickFileFailTitle'),
         body: e.message,
       });
     } else {
       showPathModal({
-        title: kind === 'folder' ? 'Could not pick folder' : 'Could not pick file',
-        body: 'An unexpected error occurred.',
+        title:
+          kind === 'folder'
+            ? t('composer.pickFolderFailTitle')
+            : t('composer.pickFileFailTitle'),
+        body: t('composer.pickUnexpectedBody'),
       });
     }
   } finally {
@@ -266,11 +277,14 @@ function submit(): void {
         class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-primary/70 bg-background/90 px-4 text-center backdrop-blur-[1px]"
       >
         <p class="text-sm font-medium text-foreground">
-          {{ dropping ? 'Copying to ~/.ttt/drops on this computer…' : 'Drop a file to add its path' }}
+          {{
+            dropping
+              ? t('composer.dropCopyingOverlay')
+              : t('composer.dropFileOverlay')
+          }}
         </p>
         <p v-if="!dropping" class="max-w-sm text-xs text-muted-foreground">
-          Folder paths are hidden by the browser when you drop a directory—use the folder button. If a file path
-          is hidden, we copy once to ~/.ttt/drops (local only).
+          {{ t('composer.dropOverlayHint') }}
         </p>
       </div>
       <textarea
@@ -278,7 +292,7 @@ function submit(): void {
         v-model="draft"
         :disabled="busy || disabled"
         :rows="2"
-        placeholder="Describe what you want the agent to do in your design tools…"
+        :placeholder="t('composer.placeholder')"
         class="block w-full resize-none border-0 bg-transparent px-4 pt-3 pb-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 max-h-48 min-h-[52px]"
         @keydown="handleKey"
       />
@@ -291,7 +305,7 @@ function submit(): void {
             size="icon"
             variant="ghost"
             :disabled="busy || disabled || picking"
-            title="Insert local file path (opens a file picker; the file is not uploaded)"
+            :title="t('composer.attachFileTitle')"
             class="size-8 shrink-0 text-muted-foreground"
             @click="onPickLocalPath"
           >
@@ -302,7 +316,7 @@ function submit(): void {
             size="icon"
             variant="ghost"
             :disabled="busy || disabled || picking"
-            title="Insert local folder path (opens a folder picker; nothing is uploaded)"
+            :title="t('composer.attachFolderTitle')"
             class="size-8 shrink-0 text-muted-foreground"
             @click="onPickLocalFolder"
           >
@@ -312,7 +326,7 @@ function submit(): void {
         <span
           class="hidden min-w-0 flex-1 text-right text-[11px] leading-snug text-muted-foreground opacity-60 select-none md:inline-block md:text-xs"
         >
-          Press Enter to send · Shift+Enter for newline
+          {{ t('composer.shortcutHint') }}
         </span>
         <Button
           v-if="!busy"

@@ -20,6 +20,7 @@ import i18n, {
   localeFlag,
   localeLabel,
   setI18nLanguage,
+  translateStatic,
   type SupportedLocale,
 } from '@/i18n';
 import { setStoredLocale } from '@/lib/locale';
@@ -52,6 +53,7 @@ async function onModelUpdate(code: unknown): Promise<void> {
     await loadLocaleMessages(i18n, next);
     setI18nLanguage(i18n, next);
     setStoredLocale(next);
+    document.title = translateStatic('app.documentTitle');
   } finally {
     switching.value = false;
   }

@@ -130,7 +130,7 @@ async function submitForm(): Promise<void> {
   try {
     const validation = await apiValidateKey(id, key);
     if (!validation.ok) {
-      formError.value = validation.error || 'Invalid key';
+      formError.value = validation.error || t('settings.providers.invalidKey');
       return;
     }
     await apiSaveKey(id, key);
@@ -166,7 +166,11 @@ async function removeKey(p: ProviderInfo): Promise<void> {
             t('settings.title')
           }}</DialogTitle>
           <p v-if="panel === 'form'" class="mt-1 text-xs text-muted-foreground">
-            {{ formMode === 'add' ? 'Add provider' : 'Update API key' }}
+            {{
+              formMode === 'add'
+                ? t('settings.providers.formSubtitleAdd')
+                : t('settings.providers.formSubtitleUpdate')
+            }}
           </p>
         </div>
         <DialogClose as-child>
@@ -222,13 +226,13 @@ async function removeKey(p: ProviderInfo): Promise<void> {
         </div>
 
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
-        <h3 class="text-sm font-medium">Connected providers</h3>
+        <h3 class="text-sm font-medium">{{ t('settings.providers.connectedHeading') }}</h3>
 
         <div
           v-if="configuredProviders.length === 0"
           class="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
         >
-          No providers connected yet. Add an API key to get started.
+          {{ t('settings.providers.emptyState') }}
         </div>
 
         <ul v-else class="max-h-[min(50vh,20rem)] space-y-2 overflow-y-auto pr-0.5">
@@ -255,7 +259,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
                 rel="noreferrer"
                 class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
               >
-                Get key
+                {{ t('settings.providers.getKey') }}
                 <ExternalLink class="size-3" />
               </a>
               <Button
@@ -265,12 +269,13 @@ async function removeKey(p: ProviderInfo): Promise<void> {
                 :disabled="removeBusyId === p.id"
                 @click="openReplaceForm(p)"
               >
-                Update key
+                {{ t('settings.providers.updateKey') }}
               </Button>
               <Button
                 size="icon"
                 variant="ghost"
                 class="size-8"
+                :aria-label="t('settings.providers.removeKeyAria')"
                 :disabled="removeBusyId === p.id"
                 @click="removeKey(p)"
               >
@@ -290,7 +295,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
       <div v-else class="space-y-4">
         <Button variant="ghost" size="sm" class="-ml-2 gap-1 px-2 text-muted-foreground" @click="cancelForm">
           <ArrowLeft class="size-4" />
-          Back
+          {{ t('settings.providers.back') }}
         </Button>
 
         <template v-if="formMode === 'replace' && formProvider">
@@ -302,7 +307,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
 
         <template v-else>
           <div class="space-y-2">
-            <Label>Provider</Label>
+            <Label>{{ t('settings.providers.providerLabel') }}</Label>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 v-for="p in availableToAdd"
@@ -324,12 +329,12 @@ async function removeKey(p: ProviderInfo): Promise<void> {
         </template>
 
         <div class="space-y-2">
-          <Label for="settings-api-key">API key</Label>
+          <Label for="settings-api-key">{{ t('settings.providers.apiKeyLabel') }}</Label>
           <Input
             id="settings-api-key"
             v-model="keyDraft"
             type="password"
-            :placeholder="formProvider?.apiKeyHint ?? 'Paste your API key…'"
+            :placeholder="formProvider?.apiKeyHint ?? t('settings.providers.pasteKeyPlaceholder')"
             :disabled="formBusy"
             @keydown.enter="onFormKeydown"
           />
@@ -342,7 +347,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           rel="noreferrer"
           class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          Get an API key
+          {{ t('settings.providers.getApiKeyLink') }}
           <ExternalLink class="size-3" />
         </a>
         <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
@@ -353,7 +358,9 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           @click="submitForm"
         >
           <Loader2 v-if="formBusy" class="size-4 animate-spin" />
-          {{ formBusy ? 'Validating…' : 'Validate & save' }}
+          {{
+            formBusy ? t('settings.providers.validating') : t('settings.providers.validateSave')
+          }}
         </Button>
       </div>
 
@@ -365,10 +372,10 @@ async function removeKey(p: ProviderInfo): Promise<void> {
               :disabled="availableToAdd.length === 0"
               @click="openAddForm"
             >
-              Add provider
+              {{ t('settings.providers.addProvider') }}
             </Button>
             <span v-if="availableToAdd.length === 0" class="text-xs text-muted-foreground">
-              All providers connected
+              {{ t('settings.providers.allConnected') }}
             </span>
           </template>
         </div>

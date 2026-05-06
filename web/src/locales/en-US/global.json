@@ -3,5 +3,14 @@
     "switchLabel": "Language",
     "searchPlaceholder": "Search language…",
     "noResults": "No language found."
+  },
+  "app": {
+    "loading": "Loading…",
+    "documentTitle": "TTT - The Tortoise Trainer"
+  },
+  "footer": {
+    "github": "GitHub",
+    "by": "by",
+    "authorHandle": "alisaitteke"
   }
 }

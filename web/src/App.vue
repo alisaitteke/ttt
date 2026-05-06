@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import Onboarding from './components/Onboarding.vue';
 import ChatView from './components/ChatView.vue';
@@ -31,6 +32,7 @@ function handleOpenSettings(tab?: 'appearance' | 'providers'): void {
 }
 const sidebarMobileOpen = ref(false);
 
+const { t } = useI18n();
 const chat = useChatStore();
 const route = useRoute();
 const router = useRouter();
@@ -131,7 +133,7 @@ onMounted(refresh);
 
 <template>
   <div v-if="loading" class="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-    Loading…
+    {{ t('app.loading') }}
   </div>
   <div v-else-if="fatalError" class="flex min-h-screen items-center justify-center p-6">
     <div class="max-w-md rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">

@@ -36,6 +36,11 @@ export function setI18nLanguage(instance: I18n, locale: SupportedLocale): void {
   document.documentElement.setAttribute('lang', locale);
 }
 
+/** Use in non-Vue modules; `i18n.global.t` is typed as an incompatible union call signature. */
+export function translateStatic(key: string): string {
+  return (i18n.global.t as (k: string, ...args: unknown[]) => string)(key);
+}
+
 export async function loadLocaleMessages(
   instance: I18n,
   locale: SupportedLocale

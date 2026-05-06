@@ -1,0 +1,14 @@
+{
+  "sidebar": {
+    "homeAria": "Home",
+    "newChatAria": "New chat",
+    "emptyNone": "No chats yet.",
+    "emptyActive": "No active chats.",
+    "archived": "Archived",
+    "chatActionsAria": "Chat actions: {title}",
+    "menuRename": "Rename",
+    "menuArchive": "Archive",
+    "menuUnarchive": "Unarchive",
+    "menuDelete": "Delete"
+  }
+}

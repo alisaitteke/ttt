@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ChevronDown, Check, Lock } from 'lucide-vue-next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ const emit = defineEmits<{
   'open-settings': [tab: 'appearance' | 'providers'];
 }>();
 
+const { t } = useI18n();
+
 const open = ref(false);
 
 const provider = computed<ProviderInfo | undefined>(() =>
@@ -30,7 +33,10 @@ const model = computed(() =>
 );
 
 const triggerAriaLabel = computed(
-  () => `Model: ${model.value?.label ?? 'Select model'}`
+  () =>
+    `${t('model.triggerAriaPrefix')}${
+      model.value?.label ?? t('model.selectModelFallback')
+    }`
 );
 
 function openSettings(): void {
@@ -65,9 +71,9 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
       >
         <ProviderIcon :provider="currentProvider" :size="14" />
         <span class="hidden font-normal md:inline">
-          Model:
+          {{ t('model.labelPrefix') }}
           <span class="font-medium text-foreground">
-            {{ model?.label ?? 'Select model' }}
+            {{ model?.label ?? t('model.selectModelFallback') }}
           </span>
         </span>
         <ChevronDown class="size-3.5 opacity-50" />
@@ -76,13 +82,13 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
     <PopoverContent class="w-80 p-0" align="start" side="top">
       <div class="border-b border-border/50 px-3 py-2.5">
         <div class="flex min-w-0 items-center justify-between gap-3">
-          <span class="text-xs font-medium text-muted-foreground">Models</span>
+          <span class="text-xs font-medium text-muted-foreground">{{ t('model.panelHeading') }}</span>
           <button
             type="button"
             class="text-[10px] text-primary hover:underline"
             @click="openSettings"
           >
-            Settings
+            {{ t('model.settingsLink') }}
           </button>
         </div>
       </div>
@@ -103,7 +109,7 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
               v-if="prov.hasApiKey && prov.apiKeyMasked"
               type="button"
               class="max-w-[10rem] shrink-0 truncate text-left text-[10px] font-medium tabular-nums tracking-tight text-muted-foreground hover:text-foreground hover:underline"
-              title="Open settings to manage API key"
+              :title="t('model.manageKeyTitle')"
               @click.stop="openSettings"
             >
               {{ prov.apiKeyMasked }}
@@ -115,7 +121,7 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
               @click.stop="openSettings"
             >
               <Lock class="size-3" />
-              Add API key
+              {{ t('model.addApiKey') }}
             </button>
           </div>
           <div class="ml-3 mr-2 border-l border-border/50 py-1 pl-3">

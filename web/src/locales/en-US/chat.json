@@ -1,0 +1,99 @@
+{
+  "chatView": {
+    "selectPrompt": "Select a chat from the sidebar or start a new one.",
+    "newChat": "New chat",
+    "settings": "Settings"
+  },
+  "chatErrors": {
+    "unknownStream": "Unknown error"
+  },
+  "status": {
+    "openNavAria": "Open navigation",
+    "newChatAria": "New chat",
+    "newChatLabel": "New chat",
+    "fallbackChatTitle": "New chat",
+    "usageHeading": "Conversation usage",
+    "costDash": "—",
+    "input": "Input",
+    "cachedRead": "Cached read",
+    "cachedWrite": "Cached write",
+    "output": "Output",
+    "reasoning": "Reasoning",
+    "total": "Total",
+    "tokensUnit": "tok",
+    "unpricedHint": "Some turns lack pricing data, so this total may underestimate cost.",
+    "priceLessThanMicro": "< $0.0001"
+  },
+  "messages": {
+    "emptyHeading": "Tell the assistant what to work on in your design tools",
+    "emptyHint": "Try: \"Create a new 1920×1080 document, fill the background with light blue, add the text 'Hello' in the center, and save it as hello.psd on my Desktop.\"",
+    "you": "You",
+    "assistantFallback": "Assistant",
+    "assistantModelSep": " · ",
+    "busy": "Working…"
+  },
+  "composer": {
+    "placeholder": "Describe what you want the agent to do in your design tools…",
+    "dropCopyingOverlay": "Copying to ~/.ttt/drops on this computer…",
+    "dropFileOverlay": "Drop a file to add its path",
+    "dropOverlayHint": "Folder paths are hidden by the browser when you drop a directory—use the folder button. If a file path is hidden, we copy once to ~/.ttt/drops (local only).",
+    "attachFileTitle": "Insert local file path (opens a file picker; the file is not uploaded)",
+    "attachFolderTitle": "Insert local folder path (opens a folder picker; nothing is uploaded)",
+    "shortcutHint": "Press Enter to send · Shift+Enter for newline",
+    "pathPrefixFile": "Local file path: ",
+    "pathPrefixFolder": "Local folder path: ",
+    "folderDropTitle": "Why folder drag does not work here",
+    "folderDropBody": "Web browsers deliberately do not expose the real folder path on your disk when you drop a directory—they only give access to files inside it, without a full path (this is a security rule).\n\nWhen the OS includes a file:// link with the drop (some setups do), we use that automatically. Otherwise use the folder button to open your system's folder picker, or drop a single file—we can stage a copy under ~/.ttt/drops if the path is hidden.",
+    "folderDropPrimary": "Choose folder…",
+    "multiFileDropTitle": "One file at a time",
+    "multiFileDropBody": "Drop a single file so we can read or stage its path. For an entire folder path, use the folder button instead.",
+    "fileTooLargeTitle": "File too large",
+    "fileTooLargeBody": "This file is over the 2 GB staging limit. Pick a smaller file or use a file:// path when the browser provides one.",
+    "stageFailTitle": "Could not stage file",
+    "stageFailUnexpectedBody": "An unexpected error occurred while saving to ~/.ttt/drops.",
+    "pickerUnavailableTitle": "Picker not available",
+    "pickerUnavailableBody": "Local file and folder pickers are not supported on this platform.",
+    "pickFolderFailTitle": "Could not pick folder",
+    "pickFileFailTitle": "Could not pick file",
+    "pickUnexpectedBody": "An unexpected error occurred."
+  },
+  "pathModal": {
+    "close": "Close"
+  },
+  "model": {
+    "triggerAriaPrefix": "Model: ",
+    "selectModelFallback": "Select model",
+    "labelPrefix": "Model: ",
+    "panelHeading": "Models",
+    "settingsLink": "Settings",
+    "addApiKey": "Add API key",
+    "manageKeyTitle": "Open settings to manage API key"
+  },
+  "designTools": {
+    "panelHeading": "Design tools",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
+    "explainNote": "Each selected tool adds its MCP capabilities to what the model can use. Only enable tools you actually need for this chat.",
+    "columnTool": "Tool",
+    "columnStatus": "Status",
+    "countNone": "No tools",
+    "countAll": "All design tools",
+    "countSomePrefix": "Tools: ",
+    "notInstalledStatus": "Not installed",
+    "installedStatus": "Installed",
+    "openCreativeCloud": "Open Creative Cloud",
+    "openingCreativeCloud": "Opening…",
+    "installLink": "Install",
+    "launchFailed": "Launch failed"
+  },
+  "toolCall": {
+    "input": "Input",
+    "result": "Result",
+    "statusPending": "pending",
+    "statusSuccess": "success",
+    "statusError": "error",
+    "revealDarwin": "Show in Finder",
+    "revealWin32": "Show in File Explorer",
+    "revealFallback": "Reveal in file manager"
+  }
+}

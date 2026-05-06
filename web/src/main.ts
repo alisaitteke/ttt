@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import latinWoff2 from '@fontsource-variable/source-sans-3/files/source-sans-3-latin-wght-normal.woff2?url';
 import App from './App.vue';
-import i18n, { loadLocaleMessages, setI18nLanguage } from './i18n';
+import i18n, { loadLocaleMessages, setI18nLanguage, translateStatic } from './i18n';
 import { resolveInitialLocale } from './lib/locale';
 import { attachThemeSchemeListener } from './lib/theme';
 import { router } from './router';
@@ -22,6 +22,7 @@ async function bootstrap(): Promise<void> {
   const initialLocale = resolveInitialLocale();
   await loadLocaleMessages(i18n, initialLocale);
   setI18nLanguage(i18n, initialLocale);
+  document.title = translateStatic('app.documentTitle');
 
   createApp(App).use(i18n).use(router).mount('#app');
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ExternalLink, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ import {
 
 const emit = defineEmits<{ saved: [] }>();
 
+const { t } = useI18n();
 const providers = ref<ProviderInfo[]>([]);
 const selectedId = ref<ProviderId>('anthropic');
 const apiKey = ref('');
@@ -47,7 +49,8 @@ async function submit(): Promise<void> {
   try {
     const validation = await apiValidateKey(provider.id, apiKey.value);
     if (!validation.ok) {
-      error.value = validation.error || 'Could not validate this key.';
+      error.value =
+        validation.error || t('onboarding.validationFailedFallback');
       return;
     }
     await apiSaveKey(provider.id, apiKey.value);
@@ -66,17 +69,16 @@ async function submit(): Promise<void> {
     <Card class="w-full max-w-md">
       <CardHeader>
         <AdobeAppIcon app="ps" :size="40" class="mb-2" />
-        <CardTitle>Connect an AI provider</CardTitle>
+        <CardTitle>{{ t('onboarding.title') }}</CardTitle>
         <CardDescription>
-          TTT UI uses your own API key to talk to a model. The key is stored in
-          your OS credential store (Keychain, Credential Manager, or Secret Service).
-          Chat history and settings use <code class="text-xs">~/.ttt/data.db</code>.
-          Keys never leave your machine.
+          {{ t('onboarding.intro') }}<code class="text-xs">{{
+            t('onboarding.dataPathCode')
+          }}</code>{{ t('onboarding.outro') }}
         </CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
         <div class="space-y-2">
-          <Label>Provider</Label>
+          <Label>{{ t('onboarding.provider') }}</Label>
           <div class="grid grid-cols-3 gap-2">
             <button
               v-for="p in providers"
@@ -97,7 +99,7 @@ async function submit(): Promise<void> {
         </div>
 
         <div class="space-y-2">
-          <Label for="api-key">API key</Label>
+          <Label for="api-key">{{ t('onboarding.apiKey') }}</Label>
           <Input
             id="api-key"
             v-model="apiKey"
@@ -115,7 +117,7 @@ async function submit(): Promise<void> {
           rel="noreferrer"
           class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          Get an API key
+          {{ t('onboarding.getApiKeyLink') }}
           <ExternalLink class="size-3" />
         </a>
         <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
@@ -123,7 +125,11 @@ async function submit(): Promise<void> {
       <CardFooter>
         <Button class="w-full" :disabled="validating || !apiKey || !selected" @click="submit">
           <Loader2 v-if="validating" class="size-4 animate-spin" />
-          {{ validating ? 'Validating…' : 'Validate & save' }}
+          {{
+            validating
+              ? t('onboarding.validating')
+              : t('onboarding.validateSave')
+          }}
         </Button>
       </CardFooter>
     </Card>

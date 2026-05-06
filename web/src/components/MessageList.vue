@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { User, Sparkles } from 'lucide-vue-next';
 import MarkdownRender from 'vue-renderer-markdown';
 import ToolCallCard from './ToolCallCard.vue';
@@ -12,6 +13,8 @@ const props = defineProps<{
   busy: boolean;
   providers: ProviderInfo[];
 }>();
+
+const { t } = useI18n();
 
 const scroller = ref<HTMLElement | null>(null);
 
@@ -33,11 +36,13 @@ watch(
 onMounted(scrollToBottom);
 
 function assistantLabel(m: ChatMessage): string {
-  if (!m.provider) return 'Assistant';
+  if (!m.provider) return t('messages.assistantFallback');
   const provider = props.providers.find((p) => p.id === m.provider);
   const providerLabel = provider?.label ?? m.provider;
   const modelLabel = provider?.models.find((mm) => mm.id === m.model)?.label ?? m.model;
-  return modelLabel ? `${providerLabel} · ${modelLabel}` : providerLabel;
+  return modelLabel
+    ? `${providerLabel}${t('messages.assistantModelSep')}${modelLabel}`
+    : providerLabel;
 }
 </script>
 
@@ -49,10 +54,9 @@ function assistantLabel(m: ChatMessage): string {
         class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center"
       >
         <Sparkles class="mx-auto mb-3 size-6 text-muted-foreground" />
-        <h2 class="text-base font-semibold">Tell the assistant what to work on in your design tools</h2>
+        <h2 class="text-base font-semibold">{{ t('messages.emptyHeading') }}</h2>
         <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Try: "Create a new 1920×1080 document, fill the background with light blue,
-          add the text 'Hello' in the center, and save it as hello.psd on my Desktop."
+          {{ t('messages.emptyHint') }}
         </p>
       </div>
 
@@ -83,7 +87,7 @@ function assistantLabel(m: ChatMessage): string {
             class="text-xs font-medium"
             :class="m.role === 'user' ? 'font-semibold text-primary' : 'text-muted-foreground'"
           >
-            {{ m.role === 'user' ? 'You' : assistantLabel(m) }}
+            {{ m.role === 'user' ? t('messages.you') : assistantLabel(m) }}
           </div>
           <MarkdownRender
             v-if="m.text && m.role === 'assistant'"
@@ -100,7 +104,7 @@ function assistantLabel(m: ChatMessage): string {
 
       <div v-if="busy" class="flex items-center gap-2 text-xs text-muted-foreground">
         <span class="inline-block size-1.5 animate-pulse rounded-full bg-muted-foreground" />
-        Working…
+        {{ t('messages.busy') }}
       </div>
     </div>
   </div>
