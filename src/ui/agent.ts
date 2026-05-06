@@ -165,6 +165,27 @@ function designToolAllowedPrefixes(id: DesignToolId): string[] {
   return [tool.toolPrefix];
 }
 
+/**
+ * Demo Roy prompt injection: only when `TTT_DEMO_ROY_WHATSAPP` is set in the environment
+ * (e.g. `export TTT_DEMO_ROY_WHATSAPP='+44…'`). If the variable is unset or empty, no demo line is added.
+ * E.164-style input allowed; WhatsApp `to` must be digits only.
+ */
+function demoRoyWhatsAppDigitsFromEnv(): string | undefined {
+  const raw = process.env.TTT_DEMO_ROY_WHATSAPP;
+  if (raw === undefined) return undefined;
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  const digits = raw.replace(/\D/g, '');
+  return digits.length > 0 ? digits : undefined;
+}
+
+/** Non-empty fragment only when {@link demoRoyWhatsAppDigitsFromEnv} returns digits. */
+function demoRoyWhatsAppPromptFragment(): string {
+  const digits = demoRoyWhatsAppDigitsFromEnv();
+  if (!digits) return '';
+  return `
+- **Demo contact (Roy):** When the user asks to message **Roy** on WhatsApp, use the \`to\` value \`${digits}\` (WhatsApp tools require international digits only) for \`whatsapp_send_message\`, \`whatsapp_check_recipient\`, or \`whatsapp_fetch_messages\` as needed. In every user-visible message — narrative text, confirmations, headings, lists — refer to the recipient only as **Roy**. Never print, quote, spell out, or describe the phone number.`;
+}
+
 function buildSystemPrompt(
   designTools: DesignToolId[],
   providerId?: ProviderId,
@@ -187,6 +208,7 @@ function buildSystemPrompt(
       ? `
 - **Extended data (user opted in):** \`whatsapp_list_chats\`, \`whatsapp_fetch_messages\` (needs \`chatJid\` or phone \`to\`), \`whatsapp_search_contacts\`. These read from a local Baileys cache; respect privacy and WhatsApp ToS.`
       : '';
+  const demoRoyFragment = demoRoyWhatsAppPromptFragment();
   const whatsappBlock =
     designTools.includes('whatsapp')
       ? `
@@ -194,7 +216,7 @@ function buildSystemPrompt(
 WhatsApp (Baileys via TTT UI):
 - For session **reachability**, call \`whatsapp_status\` first (same role as \`*_ping\` for other apps).
 - To **send plain text**, use \`whatsapp_send_message\`: \`to\` must be international digits only (no \`+\`, no spaces).
-- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` — either \`imageUrl\` (\`http\`/\`https\`) or \`localFilePath\` (absolute path under \`~/.ttt/drops\` or \`~/.ttt/exports\` only: staged uploads or MCP exports — never arbitrary host paths); exactly one source. For **animated GIFs** from URLs (e.g. from \`giphy_search\`), pass \`gif_url\` or \`mp4_url\` — not \`preview_url\` (often .webp), which WhatsApp would receive as a **static** image. Use \`whatsapp_send_document\` for generic attachments (PDF, ZIP, Office, etc.) from those same directories. Same consent as other sends.${extendedWa}`
+- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` — either \`imageUrl\` (\`http\`/\`https\`) or \`localFilePath\` (absolute path under \`~/.ttt/drops\` or \`~/.ttt/exports\` only: staged uploads or MCP exports — never arbitrary host paths); exactly one source. For **animated GIFs** from URLs (e.g. from \`giphy_search\`), pass \`gif_url\` or \`mp4_url\` — not \`preview_url\` (often .webp), which WhatsApp would receive as a **static** image. Use \`whatsapp_send_document\` for generic attachments (PDF, ZIP, Office, etc.) from those same directories. Same consent as other sends.${extendedWa}${demoRoyFragment}`
       : '';
 
   const giphyBlock =
