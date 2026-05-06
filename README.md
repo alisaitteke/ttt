@@ -7,13 +7,27 @@
 
 ![Standalone UI Screenshot](./images/frame_generic_light.png)
 
+### Quick start
+
+Run the UI **in the background** (you can close the terminal afterward). After it starts, open the URL from `ui-background.json` in your TTT data directory (`TTT_HOME`, default `~/.ttt`). Details: [Running the UI in the background](#running-the-ui-in-the-background-detached).
+
+```bash
+npx -p @alisaitteke/ttt ui -D
+```
+
+Same as **`npx -p @alisaitteke/ttt ui --detach`**.
+
+Or run in the **foreground** (random free port; opens your browser):
+
+```bash
+npx -p @alisaitteke/ttt ui
+```
+
 ## Demo
 
-Short demo of the bundled web UI:
+Short demo of the bundled web UI (click to watch):
 
-<video controls playsinline width="100%" src="https://raw.githubusercontent.com/alisaitteke/ttt/master/images/demo-ps-gp-wp.mp4">
-  <a href="https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4">Open the demo video on GitHub</a>
-</video>
+[![Watch the demo](./images/frame_generic_light.png)](https://github.com/alisaitteke/ttt/blob/master/images/demo-ps-gp-wp.mp4)
 
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
 
@@ -35,28 +49,6 @@ The architecture is **provider-driven**: each backend contributes MCP tools from
 ## 🖥️ Standalone UI (no IDE required)
 
 Don't want to wire this into Claude Desktop or Cursor? The same package ships a fully local web UI that lets you chat with an AI model and invoke TTT MCP tools—including Adobe automation and Docker—through the server underneath.
-
-### Quick start
-
-Run the UI **in the background** (you can close the terminal afterward). After it starts, open the URL from `ui-background.json` in your TTT data directory (`TTT_HOME`, default `~/.ttt`). Details: [Running the UI in the background](#running-the-ui-in-the-background-detached).
-
-```bash
-npx -p @alisaitteke/ttt ui -D
-```
-
-Same as **`npx -p @alisaitteke/ttt ui --detach`**.
-
-Optional: add `--no-open` if you don’t want the detached process to try opening the browser automatically.
-
-Or run in the **foreground** (random free port; opens your browser):
-
-```bash
-npx -p @alisaitteke/ttt ui
-# or
-npx -p @alisaitteke/ttt ttt-ui
-```
-
-That's it. In foreground mode, a local server starts on `127.0.0.1` (random free port unless you pass `--port`) and your default browser opens the chat UI automatically.
 
 ### Supported providers
 
