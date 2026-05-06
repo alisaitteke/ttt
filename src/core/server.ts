@@ -1,4 +1,4 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { NullSafeToolArgumentsServer } from './null-safe-tool-arguments-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '../utils/logger.js';
@@ -20,7 +20,7 @@ export interface TTTServerOptions {
  * and `tools/call` requests through it.
  */
 export class TTTServer {
-  private server: Server;
+  private server: NullSafeToolArgumentsServer;
   private logger: Logger;
   private toolRegistry: ToolRegistry;
   private providers: Provider[];
@@ -30,7 +30,7 @@ export class TTTServer {
     this.toolRegistry = new ToolRegistry();
     this.providers = opts.providers ?? defaultProviders;
 
-    this.server = new Server(
+    this.server = new NullSafeToolArgumentsServer(
       {
         name: opts.name ?? 'ttt',
         version: opts.version ?? '0.1.0',
