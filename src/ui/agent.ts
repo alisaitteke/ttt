@@ -27,6 +27,42 @@ const MCP_SERVER_ENTRY = IS_DEV_SOURCE
   ? resolve(__dirname, '..', 'index.ts')
   : resolve(__dirname, '..', 'index.js');
 
+/** Max model↔tool steps per `streamText` segment (AI SDK `stepCountIs`). */
+const STREAM_TEXT_STEP_BUDGET = 20;
+/**
+ * Max `streamText` invocations for one user message (first + continuations).
+ * When an inner segment hits the step budget without a terminal `stop`, we
+ * append assistant/tool messages and start a new segment.
+ */
+const MAX_STREAM_TEXT_SEGMENTS = 9;
+
+const CONTINUE_AFTER_STEP_CAP_USER_TEXT = `Continue the same task in this turn. Use further tool calls if the job still needs them; otherwise reply with a concise user-facing summary of outcomes so far. If the request is already fully satisfied, answer briefly and do not call tools.`;
+
+function mergeLanguageModelUsage(
+  prev: LanguageModelUsage | undefined,
+  next: LanguageModelUsage
+): LanguageModelUsage {
+  const n = (x: number | undefined): number => x ?? 0;
+  if (!prev) return next;
+  return {
+    inputTokens: n(prev.inputTokens) + n(next.inputTokens),
+    outputTokens: n(prev.outputTokens) + n(next.outputTokens),
+    totalTokens: n(prev.totalTokens) + n(next.totalTokens),
+    reasoningTokens: n(prev.reasoningTokens) + n(next.reasoningTokens),
+    cachedInputTokens: n(prev.cachedInputTokens) + n(next.cachedInputTokens),
+    inputTokenDetails: {
+      noCacheTokens: n(prev.inputTokenDetails?.noCacheTokens) + n(next.inputTokenDetails?.noCacheTokens),
+      cacheReadTokens: n(prev.inputTokenDetails?.cacheReadTokens) + n(next.inputTokenDetails?.cacheReadTokens),
+      cacheWriteTokens: n(prev.inputTokenDetails?.cacheWriteTokens) + n(next.inputTokenDetails?.cacheWriteTokens),
+    },
+    outputTokenDetails: {
+      textTokens: n(prev.outputTokenDetails?.textTokens) + n(next.outputTokenDetails?.textTokens),
+      reasoningTokens: n(prev.outputTokenDetails?.reasoningTokens) + n(next.outputTokenDetails?.reasoningTokens),
+    },
+    raw: next.raw ?? prev.raw,
+  };
+}
+
 export interface ToolCallPersist {
   id: string;
   name: string;
@@ -148,6 +184,10 @@ call the relevant *_ping tool first (for **WhatsApp**, use \`whatsapp_status\`
 instead — there is no \`whatsapp_ping\`), then continue with the substantive tool. Use
 text-only answers only when the user clearly wants pure explanation with no
 actionable tool, or when no listed tool applies.
+After **every** tool result in the same turn, you must **keep going**: either call
+the next tool the task still needs, or write a clear user-facing answer that
+interprets the tool output. Do not stop silently right after one tool call when
+the user still expects a summary or the job is unfinished.
 `.trim();
 
 function designToolPromptLine(id: DesignToolId): string {
@@ -216,7 +256,8 @@ function buildSystemPrompt(
 WhatsApp (Baileys via TTT UI):
 - For session **reachability**, call \`whatsapp_status\` first (same role as \`*_ping\` for other apps).
 - To **send plain text**, use \`whatsapp_send_message\`: \`to\` must be international digits only (no \`+\`, no spaces).
-- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` — either \`imageUrl\` (\`http\`/\`https\`) or \`localFilePath\` (absolute path under \`~/.ttt/drops\` or \`~/.ttt/exports\` only: staged uploads or MCP exports — never arbitrary host paths); exactly one source. For **animated GIFs** from URLs (e.g. from \`giphy_search\`), pass \`gif_url\` or \`mp4_url\` — not \`preview_url\` (often .webp), which WhatsApp would receive as a **static** image. Use \`whatsapp_send_document\` for generic attachments (PDF, ZIP, Office, etc.) from those same directories. Same consent as other sends.${extendedWa}${demoRoyFragment}`
+- Optional: \`whatsapp_check_recipient\` before sending to a new number.
+- **Media routing:** If the user wants to send a **photo, picture, screenshot, or any image file** (or a looping GIF), use \`whatsapp_send_image\` — either \`imageUrl\` (\`http\`/\`https\`) or \`localFilePath\` (absolute under \`~/.ttt/drops\` or \`~/.ttt/exports\` only); exactly one source. Do **not** use \`whatsapp_send_document\` for those. For **animated GIFs** from URLs (e.g. \`giphy_search\`), pass \`gif_url\` or \`mp4_url\`, not \`preview_url\` (.webp is static). Use \`whatsapp_send_document\` only for **non-image** files (PDF, ZIP, Office, etc.) from the same directories. Same consent as other sends.${extendedWa}${demoRoyFragment}`
       : '';
 
   const giphyBlock =
@@ -226,6 +267,7 @@ WhatsApp (Baileys via TTT UI):
 GIPHY (GIF search via MCP):
 - Use \`giphy_search\` with the user's keywords to find GIFs from GIPHY's catalog.
 - Pass through **media URLs exactly as returned**; do not strip or rewrite query parameters on GIPHY URLs.
+- Returned URLs are **remote only**. If any next step needs a **local file path** (\`filePath\`, open/place/save workflows), call \`giphy_download_media\` with that URL first, then use its \`local_path\`; never pass a GIPHY https URL where a disk path is required.
 - When you present GIF results to the user (in chat or summaries), include visible **Powered by GIPHY** attribution (GIPHY API terms).`
       : '';
 
@@ -239,6 +281,11 @@ ${toolsDesc}${whatsappBlock}${giphyBlock}
 Guidelines:
 - Follow the Markdown response format described in your role instructions above.
 - Only use tools that match the enabled design-tool prefixes above.
+- **Tool loop:** When you use a tool and receive its result in the same turn, treat
+  that as one step in a longer flow — continue with more tool calls if needed, or
+  reply with text that explains what happened and what it means for the user. Avoid
+  ending the turn with only a tool invocation when the user asked for an outcome or
+  explanation.
 - If unsure whether the target app is reachable, start with its *_ping tool
   (e.g. photoshop_ping, docker_ping). For WhatsApp, use \`whatsapp_status\` (not \`whatsapp_ping\`).
 - Prefer single, well-scoped tool calls instead of long combined operations.
@@ -310,90 +357,134 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
       waPrefs.extendedDataTools
     );
 
-    const result = streamText({
-      model: opts.provider.getLanguageModel({
-        apiKey: opts.apiKey,
-        modelId: opts.modelId,
-      }),
-      tools,
-      system: systemPrompt,
-      messages: [...opts.history, { role: 'user', content: opts.prompt }],
-      stopWhen: stepCountIs(20),
-      abortSignal: opts.abortSignal,
-    });
+    let messages: ModelMessage[] = [...opts.history, { role: 'user', content: opts.prompt }];
+    const toolMode = Object.keys(tools).length > 0;
+    const segmentBudget = toolMode ? MAX_STREAM_TEXT_SEGMENTS : 1;
 
-    for await (const part of result.fullStream) {
-      switch (part.type) {
-        case 'text-delta': {
-          buffer.text += part.text;
-          yield { type: 'text-delta', payload: { text: part.text } };
-          opts.onAssistantBuffer?.(buffer);
-          break;
-        }
-        case 'tool-call': {
-          const tc: ToolCallPersist = {
-            id: part.toolCallId,
-            name: part.toolName,
-            input: part.input,
-            status: 'pending',
-          };
-          buffer.toolCalls.push(tc);
-          yield {
-            type: 'tool-call',
-            payload: { id: tc.id, name: tc.name, input: tc.input },
-          };
-          opts.onAssistantBuffer?.(buffer);
-          break;
-        }
-        case 'tool-result': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
-          const text = stringifyToolOutput(part.output);
-          if (tc) {
-            tc.result = { ok: true, content: text };
-            tc.status = 'success';
+    let aggregatedUsage: LanguageModelUsage | undefined;
+    let lastFinishReason: string | undefined;
+
+    for (let segmentIndex = 0; segmentIndex < segmentBudget; segmentIndex++) {
+      const result = streamText({
+        model: opts.provider.getLanguageModel({
+          apiKey: opts.apiKey,
+          modelId: opts.modelId,
+        }),
+        tools,
+        system: systemPrompt,
+        messages,
+        stopWhen: stepCountIs(20),
+        ...(opts.provider.id === 'groq'
+          ? {
+              maxOutputTokens: 8192,
+            }
+          : {}),
+        abortSignal: opts.abortSignal,
+      });
+
+      for await (const part of result.fullStream) {
+        switch (part.type) {
+          case 'text-delta': {
+            buffer.text += part.text;
+            yield { type: 'text-delta', payload: { text: part.text } };
+            opts.onAssistantBuffer?.(buffer);
+            break;
           }
-          yield {
-            type: 'tool-result',
-            payload: { id: part.toolCallId, ok: true, content: text },
-          };
-          opts.onAssistantBuffer?.(buffer);
-          break;
-        }
-        case 'tool-error': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
-          const text = (part.error as Error)?.message ?? String(part.error);
-          if (tc) {
-            tc.result = { ok: false, content: text };
-            tc.status = 'error';
+          case 'tool-call': {
+            const tc: ToolCallPersist = {
+              id: part.toolCallId,
+              name: part.toolName,
+              input: part.input,
+              status: 'pending',
+            };
+            buffer.toolCalls.push(tc);
+            yield {
+              type: 'tool-call',
+              payload: { id: tc.id, name: tc.name, input: tc.input },
+            };
+            opts.onAssistantBuffer?.(buffer);
+            break;
           }
-          yield {
-            type: 'tool-result',
-            payload: { id: part.toolCallId, ok: false, content: text },
-          };
-          opts.onAssistantBuffer?.(buffer);
-          break;
+          case 'tool-result': {
+            const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
+            const text = stringifyToolOutput(part.output);
+            if (tc) {
+              tc.result = { ok: true, content: text };
+              tc.status = 'success';
+            }
+            yield {
+              type: 'tool-result',
+              payload: { id: part.toolCallId, ok: true, content: text },
+            };
+            opts.onAssistantBuffer?.(buffer);
+            break;
+          }
+          case 'tool-error': {
+            const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
+            const text = (part.error as Error)?.message ?? String(part.error);
+            if (tc) {
+              tc.result = { ok: false, content: text };
+              tc.status = 'error';
+            }
+            yield {
+              type: 'tool-result',
+              payload: { id: part.toolCallId, ok: false, content: text },
+            };
+            opts.onAssistantBuffer?.(buffer);
+            break;
+          }
+          case 'finish': {
+            if (part.totalUsage) {
+              aggregatedUsage = mergeLanguageModelUsage(aggregatedUsage, part.totalUsage);
+            }
+            lastFinishReason = part.finishReason;
+            break;
+          }
+          case 'error': {
+            yield {
+              type: 'error',
+              payload: { message: (part.error as Error)?.message ?? String(part.error) },
+            };
+            break;
+          }
+          default:
+            break;
         }
-        case 'finish': {
-          const usage = part.totalUsage;
-          const pricing = opts.provider.getModelPricing(opts.modelId);
-          const cost = pricing ? computeCost(usage, pricing) : undefined;
-          opts.onFinish?.({ usage, cost });
-          yield {
-            type: 'finish',
-            payload: { finishReason: part.finishReason, usage, cost },
-          };
-          break;
-        }
-        case 'error': {
-          yield {
-            type: 'error',
-            payload: { message: (part.error as Error)?.message ?? String(part.error) },
-          };
-          break;
-        }
-        default:
-          break;
       }
+
+      const response = await result.response;
+      const steps = await result.steps;
+      const finishReason = await result.finishReason;
+
+      messages = [...messages, ...response.messages];
+
+      const hitStepCap = toolMode && steps.length >= STREAM_TEXT_STEP_BUDGET;
+      const shouldContinue =
+        hitStepCap &&
+        finishReason !== 'stop' &&
+        finishReason !== 'error' &&
+        segmentIndex + 1 < segmentBudget &&
+        !opts.abortSignal.aborted;
+
+      if (!shouldContinue) {
+        break;
+      }
+
+      messages.push({ role: 'user', content: CONTINUE_AFTER_STEP_CAP_USER_TEXT });
+    }
+
+    if (aggregatedUsage !== undefined) {
+      const pricing = opts.provider.getModelPricing(opts.modelId);
+      const cost = pricing ? computeCost(aggregatedUsage, pricing) : undefined;
+      opts.onFinish?.({ usage: aggregatedUsage, cost });
+      yield {
+        type: 'finish',
+        payload: {
+          finishReason: lastFinishReason ?? 'stop',
+          usage: aggregatedUsage,
+          cost,
+        },
+      };
     }
   } finally {
     if (mcp) await mcp.close().catch(() => undefined);

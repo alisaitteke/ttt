@@ -127,6 +127,30 @@ function guessDocumentMime(filename: string, override?: string): string {
   return map[ext] ?? 'application/octet-stream';
 }
 
+/** Raster / image-like paths that must use `whatsapp_send_image`, not `whatsapp_send_document`. */
+function localPathLooksLikePhotoOrImageFile(resolvedPath: string, mimetypeOverride?: string): boolean {
+  const mt = mimetypeOverride?.trim().toLowerCase();
+  if (mt?.startsWith('image/')) return true;
+  const ext = extname(resolvedPath).toLowerCase().replace(/^\./, '');
+  const imageExt = new Set([
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'bmp',
+    'heic',
+    'heif',
+    'tiff',
+    'tif',
+    'avif',
+    'jxl',
+    'ico',
+    'svg',
+  ]);
+  return imageExt.has(ext);
+}
+
 function jidFromPhoneDigits(to: string): string {
   const digits = to.replace(/\D/g, '');
   if (!digits) {
@@ -426,6 +450,11 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
         requireLinkedSock(this.sock, this.opened);
         const jid = jidFromPhoneDigits(to);
         const resolvedPath = await resolveTrustedLocalFilePath(localFp);
+        if (localPathLooksLikePhotoOrImageFile(resolvedPath, mimetypeArg)) {
+          throw new Error(
+            'This file is a photo or image; use `whatsapp_send_image` with the same `localFilePath` (or `imageUrl`) instead of `whatsapp_send_document`.'
+          );
+        }
         const buf = await readFile(resolvedPath);
         const docName = fileNameArg ?? basename(resolvedPath);
         const mime = guessDocumentMime(docName, mimetypeArg);

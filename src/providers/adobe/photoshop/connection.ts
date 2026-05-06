@@ -66,7 +66,27 @@ export class PhotoshopConnection {
       await this.executor.launchApp(this.info.path);
     }
 
-    return await this.executor.execute(script, timeout);
+    try {
+      return await this.executor.execute(script, timeout);
+    } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7545/ingest/7dec45e0-6a2d-4c4e-aa28-014cad516a1d', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'f7afd5' },
+        body: JSON.stringify({
+          sessionId: 'f7afd5',
+          hypothesisId: 'H0',
+          location: 'connection.ts:executeScript',
+          message: 'executeScript_failed',
+          data: {
+            msg: error instanceof Error ? error.message : String(error),
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      throw error;
+    }
   }
 
   getInfo(): AdobeAppInfo | null {

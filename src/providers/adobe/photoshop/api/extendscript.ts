@@ -50,42 +50,109 @@ function sTID(s) { return app.stringIDToTypeID(s); }
  * Helper function to get current context information
  */
 const getContextInfo = `
+// #region agent log
+function __agentDbg(hypothesisId, step, extra) {
+  try {
+    var f = new File("/Users/jo/Development/photoshop-mcp/.cursor/debug-f7afd5.log");
+    f.encoding = "UTF8";
+    if (f.open("a")) {
+      var ts = new Date().getTime();
+      var ex = extra ? String(extra).replace(/\\\\/g, "/").replace(/"/g, "'").replace(/\\r|\\n/g, " ") : "";
+      f.writeln('{"sessionId":"f7afd5","hypothesisId":"' + hypothesisId + '","location":"extendscript:getContextInfo","message":"' + step + '","data":{"extra":"' + ex + '"},"timestamp":' + ts + '}');
+      f.close();
+    }
+  } catch (e0) {}
+}
+// #endregion
 function getContextInfo() {
+  __agentDbg("H2", "enter_getContextInfo", "");
   var context = {
     hasDocument: app.documents.length > 0
   };
   
   if (context.hasDocument) {
     var doc = app.activeDocument;
+    __agentDbg("H2", "after_activeDocument", "");
+    __agentDbg("H2", "marker_after_activeDoc_ok", "");
+
+    var dName = '';
+    try {
+      dName = doc.name;
+    } catch (eND) {
+      __agentDbg("H-doc", "fail_name", eND.message);
+    }
+    var dW = 0;
+    try {
+      dW = doc.width.as("px");
+    } catch (eWD) {
+      __agentDbg("H-doc", "fail_width", eWD.message);
+    }
+    var dH = 0;
+    try {
+      dH = doc.height.as("px");
+    } catch (eHD) {
+      __agentDbg("H-doc", "fail_height", eHD.message);
+    }
+    var dRes = 0;
+    try {
+      dRes = doc.resolution;
+    } catch (eRD) {
+      __agentDbg("H-doc", "fail_resolution", eRD.message);
+    }
+    var dMode = "unknown";
+    try {
+      dMode = String(doc.mode);
+    } catch (eMD) {
+      __agentDbg("H-doc", "fail_mode", eMD.message);
+    }
+    var dLayerCount = 0;
+    try {
+      dLayerCount = doc.layers.length;
+    } catch (eLD) {
+      __agentDbg("H-doc", "fail_layerCount", eLD.message);
+    }
+
+    __agentDbg("H2", "marker_before_hasSelection", "");
+    var hasSel = false;
+    try {
+      var __selBounds = doc.selection.bounds;
+      hasSel = __selBounds != null;
+    } catch (ignoreSelBounds) {
+      hasSel = false;
+    }
+
+    __agentDbg("H2", "marker_before_context_document_assign", "");
     context.document = {
-      name: doc.name,
-      width: doc.width.as('px'),
-      height: doc.height.as('px'),
-      resolution: doc.resolution,
-      colorMode: String(doc.mode),
-      layerCount: doc.layers.length,
-      hasSelection: (function () {
-        try {
-          return !!(doc.selection && doc.selection.bounds);
-        } catch (e) {
-          // ExtendScript throws "No such element" when there is no active selection
-          return false;
-        }
-      })()
+      name: dName,
+      width: dW,
+      height: dH,
+      resolution: dRes,
+      colorMode: dMode,
+      layerCount: dLayerCount,
+      hasSelection: hasSel
     };
-    
-    if (doc.activeLayer) {
-      var layer = doc.activeLayer;
-      context.activeLayer = {
-        name: layer.name,
-        kind: String(layer.kind),
-        opacity: layer.opacity,
-        blendMode: String(layer.blendMode),
-        visible: layer.visible,
-        locked: layer.allLocked,
-        isBackground: layer.isBackgroundLayer
-      };
-      
+
+    __agentDbg("H2", "before_activeLayer_read", "");
+    var activeLayerRef = null;
+    try {
+      activeLayerRef = doc.activeLayer;
+    } catch (eAL) {
+      __agentDbg('H1', 'activeLayer_ref_fail', eAL.message);
+    }
+    if (activeLayerRef) {
+      __agentDbg("H1", "activeLayer_branch", "");
+      var layer = activeLayerRef;
+      var al = {};
+      try { al.name = layer.name; __agentDbg("H1", "ok_name", ""); } catch (e) { __agentDbg("H1", "fail_name", e.message); throw e; }
+      try { al.kind = String(layer.kind); __agentDbg("H1", "ok_kind", ""); } catch (e) { __agentDbg("H1", "fail_kind", e.message); throw e; }
+      try { al.opacity = layer.opacity; __agentDbg("H1", "ok_opacity", ""); } catch (e) { __agentDbg("H1", "fail_opacity", e.message); throw e; }
+      try { al.blendMode = String(layer.blendMode); __agentDbg("H1", "ok_blendMode", ""); } catch (e) { __agentDbg("H1", "fail_blendMode", e.message); throw e; }
+      try { al.visible = layer.visible; __agentDbg("H1", "ok_visible", ""); } catch (e) { __agentDbg("H1", "fail_visible", e.message); throw e; }
+      try { al.locked = layer.allLocked; __agentDbg("H1", "ok_allLocked", ""); } catch (e) { __agentDbg("H1", "fail_allLocked", e.message); throw e; }
+      try { al.isBackground = layer.isBackgroundLayer; __agentDbg("H1", "ok_isBackgroundLayer", ""); } catch (e) { __agentDbg("H1", "fail_isBackgroundLayer", e.message); throw e; }
+      context.activeLayer = al;
+
+      __agentDbg("H1", "before_bounds_optional", "");
       // Add bounds if available
       try {
         var bounds = layer.bounds;
@@ -95,12 +162,14 @@ function getContextInfo() {
           right: bounds[2].as('px'),
           bottom: bounds[3].as('px')
         };
+        __agentDbg("H1", "ok_bounds", "");
       } catch (e) {
-        // Bounds not available for some layer types
+        __agentDbg("H1", "bounds_skipped", e.message);
       }
     }
   }
   
+  __agentDbg("H2", "exit_getContextInfo_ok", "");
   return context;
 }
 `;
@@ -222,15 +291,29 @@ export const ExtendScriptSnippets = {
     
     executeAction(cTID('Plc '), desc, DialogModes.NO);
     
+    __agentDbg("H4", "after_executeAction_Plc", "");
     var layer = app.activeDocument.activeLayer;
+    try { __agentDbg("H4", "placed_layer_typename", layer.typename); } catch (eL) { __agentDbg("H4", "typename_fail_after_place", eL.message); }
+    var lw = null;
+    var lh = null;
+    try {
+      var b = layer.bounds;
+      lw = b[2].as('px') - b[0].as('px');
+      lh = b[3].as('px') - b[1].as('px');
+      __agentDbg("H4", "bounds_ok_placeImage", "");
+    } catch (eB) {
+      __agentDbg("H4", "bounds_fail_placeImage", eB.message);
+      throw eB;
+    }
+
     var result = { 
       placed: true,
       layerName: layer.name,
       filePath: "${filePath}",
       position: { x: ${x}, y: ${y} },
       layerBounds: {
-        width: layer.bounds[2].as('px') - layer.bounds[0].as('px'),
-        height: layer.bounds[3].as('px') - layer.bounds[1].as('px')
+        width: lw,
+        height: lh
       },
       context: getContextInfo()
     };
@@ -325,6 +408,7 @@ export const ExtendScriptSnippets = {
     var doc = app.activeDocument;
     var layer = doc.artLayers.add();
     ${name ? `layer.name = "${name.replace(/"/g, '\\"')}";` : ''}
+    __agentDbg("H5", "after_artLayers_add", layer.typename);
     
     var result = { 
       created: true,
@@ -429,15 +513,27 @@ export const ExtendScriptSnippets = {
     }
     var doc = app.activeDocument;
     var layers = [];
-    for (var i = 0; i < doc.layers.length; i++) {
-      var layer = doc.layers[i];
-      layers.push({
-        name: layer.name,
-        kind: String(layer.kind),
-        visible: layer.visible,
-        opacity: layer.opacity,
-        blendMode: String(layer.blendMode)
-      });
+    var topCount = 0;
+    try {
+      topCount = doc.layers.length;
+    } catch (eTop) {
+      __agentDbg('H3', 'fail_layers_length', eTop.message);
+    }
+    for (var i = 0; i < topCount; i++) {
+      try {
+        var layer = doc.layers[i];
+        __agentDbg("H3", "layer_loop_i", String(i));
+        try { __agentDbg("H3", "layer_typename", layer.typename); } catch (eT) { __agentDbg("H3", "typename_fail", eT.message); }
+        var row = {};
+        try { row.name = layer.name; __agentDbg("H3", "ok_row_name", ""); } catch (e) { __agentDbg("H3", "fail_row_name", e.message); throw e; }
+        try { row.kind = String(layer.kind); __agentDbg("H3", "ok_row_kind", ""); } catch (e) { __agentDbg("H3", "fail_row_kind", e.message); throw e; }
+        try { row.visible = layer.visible; __agentDbg("H3", "ok_row_visible", ""); } catch (e) { __agentDbg("H3", "fail_row_visible", e.message); throw e; }
+        try { row.opacity = layer.opacity; __agentDbg("H3", "ok_row_opacity", ""); } catch (e) { __agentDbg("H3", "fail_row_opacity", e.message); throw e; }
+        try { row.blendMode = String(layer.blendMode); __agentDbg("H3", "ok_row_blendMode", ""); } catch (e) { __agentDbg("H3", "fail_row_blendMode", e.message); throw e; }
+        layers.push(row);
+      } catch (eIter) {
+        __agentDbg("H3", "layer_iter_fail", eIter.message);
+      }
     }
     
     var result = {

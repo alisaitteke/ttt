@@ -89,7 +89,7 @@ function registerCoreWhatsAppTools(registry: ToolRegistry): void {
     tool: {
       name: 'whatsapp_send_image',
       description:
-        'Send one photo or looping GIF via WhatsApp from either (A) a public http(s) URL — Baileys downloads on the TTT host, or (B) `localFilePath`: an absolute path under ~/.ttt/drops or ~/.ttt/exports (staged uploads / exports only). You MUST set exactly one of `imageUrl` or `localFilePath` — never neither, never both (validated server-side). Optional caption. `to` = digits only. For GIF-style loops from URLs use .mp4 or .gif (`mp4_url`/`gif_url` from Giphy), not .webp previews. Same consent and ToS as text.',
+        '**Use this for every visual the user wants to send as a normal WhatsApp picture** (photo, screenshot, meme, sticker bitmap, PNG/JPEG/WebP, etc.) or a **looping GIF** — whether from a **public http(s) URL** (Baileys downloads on the TTT host) or from **`localFilePath`** (absolute path under ~/.ttt/drops or ~/.ttt/exports only). Do **not** use `whatsapp_send_document` for those; document is for non-image files (PDF, Office, ZIP, etc.). You MUST set exactly one of `imageUrl` or `localFilePath` — never neither, never both (validated server-side). Optional caption. `to` = digits only. For GIF-style loops from URLs use .mp4 or .gif (`mp4_url`/`gif_url` from Giphy), not .webp previews. Same consent and ToS as text.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -117,18 +117,19 @@ function registerCoreWhatsAppTools(registry: ToolRegistry): void {
     tool: {
       name: 'whatsapp_send_document',
       description:
-        'Send a generic file over WhatsApp (PDF, ZIP, Office, etc.). `localFilePath` must be an absolute path under ~/.ttt/drops or ~/.ttt/exports only. Optional `mimetype` (guessed from filename if omitted). Optional `caption` and `fileName` (defaults to basename). `to` = digits only. Same consent and ToS as messaging.',
+        'Send a **non-image attachment** over WhatsApp: PDF archive, Office doc, ZIP, text/data files, etc. **Never** use this when the user wants to send a **photo, picture, screenshot, or image file** (PNG, JPEG, WebP, GIF, HEIC, …) or when `mimetype` is `image/*` — use **`whatsapp_send_image`** instead (same `localFilePath` rules or a public image URL). `localFilePath` must be an absolute path under ~/.ttt/drops or ~/.ttt/exports only. Optional `mimetype` (guessed from filename if omitted). Optional `caption` and `fileName` (defaults to basename). `to` = digits only. Same consent and ToS as messaging.',
       inputSchema: {
         type: 'object',
         properties: {
           to: { type: 'string', description: 'Recipient phone digits (country code, no +).' },
           localFilePath: {
             type: 'string',
-            description: 'Absolute path under ~/.ttt/drops or ~/.ttt/exports.',
+            description:
+              'Absolute path under ~/.ttt/drops or ~/.ttt/exports; not for image/photo files—use whatsapp_send_image.',
           },
           caption: { type: 'string', description: 'Optional caption.' },
           fileName: { type: 'string', description: 'Optional display/file name sent to WhatsApp.' },
-          mimetype: { type: 'string', description: 'Optional MIME type (e.g. application/pdf).' },
+          mimetype: { type: 'string', description: 'Optional MIME type (e.g. application/pdf); use whatsapp_send_image if image/*.' },
         },
         required: ['to', 'localFilePath'],
       },
