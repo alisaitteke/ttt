@@ -4,6 +4,41 @@
  */
 
 /**
+ * Escape a string for embedding in ExtendScript double-quoted literals.
+ * Non-ASCII is emitted as \\uXXXX (and surrogate pairs as two escapes) so the
+ * generated .jsx is ASCII-only. Raw UTF-8 in source files can be mis-decoded by
+ * the Photoshop / AppleScript bridge and show mojibake in textItem.contents.
+ */
+export function escapeExtendScriptStringLiteral(value: string): string {
+  let out = '';
+  for (const ch of value) {
+    const code = ch.codePointAt(0)!;
+    if (ch === '\\') {
+      out += '\\\\';
+    } else if (ch === '"') {
+      out += '\\"';
+    } else if (ch === '\n') {
+      out += '\\n';
+    } else if (ch === '\r') {
+      out += '\\r';
+    } else if (ch === '\t') {
+      out += '\\t';
+    } else if (code >= 32 && code <= 126) {
+      out += ch;
+    } else if (code < 32) {
+      out += '\\u' + code.toString(16).padStart(4, '0');
+    } else if (code > 0xffff) {
+      const h = Math.floor((code - 0x10000) / 0x400) + 0xd800;
+      const l = ((code - 0x10000) % 0x400) + 0xdc00;
+      out += '\\u' + h.toString(16).padStart(4, '0') + '\\u' + l.toString(16).padStart(4, '0');
+    } else {
+      out += '\\u' + code.toString(16).padStart(4, '0');
+    }
+  }
+  return out;
+}
+
+/**
  * Helper functions for character/string ID conversion
  */
 const helperFunctions = `
@@ -135,29 +170,29 @@ export const ExtendScriptSnippets = {
   /**
    * Create a text layer
    */
-  createTextLayer: (text: string, x = 100, y = 100, fontSize = 24) => `
-    ${getContextInfo}
-    
+  createTextLayer: (text: string, x = 100, y = 100, fontSize = 24, fontName?: string) => {
+    const esc = escapeExtendScriptStringLiteral(text);
+    const fontBlock = fontName
+      ? `
+    try {
+      textLayer.textItem.font = "${escapeExtendScriptStringLiteral(fontName)}";
+    } catch (e) {}`
+      : '';
+
+    return `
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
     var doc = app.activeDocument;
     var textLayer = doc.artLayers.add();
     textLayer.kind = LayerKind.TEXT;
-    textLayer.textItem.contents = "${text.replace(/"/g, '\\"')}";
+    textLayer.textItem.contents = "${esc}";
     textLayer.textItem.position = [${x}, ${y}];
-    textLayer.textItem.size = ${fontSize};
-    
-    var result = {
-      created: true,
-      layerName: textLayer.name,
-      text: "${text.replace(/"/g, '\\"')}",
-      position: { x: ${x}, y: ${y} },
-      fontSize: ${fontSize},
-      context: getContextInfo()
-    };
-    return result;
-  `,
+    textLayer.textItem.size = ${fontSize};${fontBlock}
+
+    return { created: true };
+  `;
+  },
 
   /**
    * Place an image file as a layer
@@ -1007,7 +1042,9 @@ export const ExtendScriptSnippets = {
   /**
    * Set text layer font
    */
-  setTextFont: (fontName: string, fontSize?: number) => `
+  setTextFont: (fontName: string, fontSize?: number) => {
+    const escName = escapeExtendScriptStringLiteral(fontName);
+    return `
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
@@ -1017,14 +1054,15 @@ export const ExtendScriptSnippets = {
       throw new Error('Active layer is not a text layer');
     }
     
-    layer.textItem.font = "${fontName.replace(/"/g, '\\"')}";
+    layer.textItem.font = "${escName}";
     ${fontSize ? `layer.textItem.size = ${fontSize};` : ''}
     
     return { 
       font: layer.textItem.font,
       size: layer.textItem.size
     };
-  `,
+  `;
+  },
 
   /**
    * Set text color
@@ -1073,7 +1111,9 @@ export const ExtendScriptSnippets = {
   /**
    * Update text content
    */
-  updateTextContent: (newText: string) => `
+  updateTextContent: (newText: string) => {
+    const esc = escapeExtendScriptStringLiteral(newText);
+    return `
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
@@ -1083,12 +1123,11 @@ export const ExtendScriptSnippets = {
       throw new Error('Active layer is not a text layer');
     }
     
-    layer.textItem.contents = "${newText.replace(/"/g, '\\"')}";
+    layer.textItem.contents = "${esc}";
     
-    return { 
-      text: layer.textItem.contents
-    };
-  `,
+    return { updated: true };
+  `;
+  },
 
   /**
    * Create rectangular selection

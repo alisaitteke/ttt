@@ -71,7 +71,12 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
       ${script}
     })();
     if (typeof result === 'object' && result !== null) {
-      return result.toSource ? result.toSource() : String(result);
+      try {
+        if (result.toSource) {
+          return result.toSource();
+        }
+      } catch (e) {}
+      return String(result);
     }
     return String(result);
   } catch (error) {

@@ -58,6 +58,11 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
               description: 'Font size in points (default: 24)',
               default: 24,
             },
+            fontName: {
+              type: 'string',
+              description:
+                'Optional PostScript font name as Photoshop expects (e.g. "ArialMT", "Helvetica"). Must be installed.',
+            },
           },
           required: ['text'],
         },
@@ -180,12 +185,13 @@ async function createTextLayer(
   const x = (args.x as number) || 100;
   const y = (args.y as number) || 100;
   const fontSize = (args.fontSize as number) || 24;
+  const fontName = args.fontName as string | undefined;
 
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
 
-    const script = ExtendScriptSnippets.createTextLayer(text, x, y, fontSize);
+    const script = ExtendScriptSnippets.createTextLayer(text, x, y, fontSize, fontName);
     await api.executeScript(script);
 
     return {

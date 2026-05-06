@@ -1,4 +1,5 @@
 import type { Boom } from '@hapi/boom';
+import type { Stats } from 'node:fs';
 import makeWASocket, {
   Browsers,
   DisconnectReason,
@@ -13,10 +14,13 @@ import makeWASocket, {
   type WASocket,
 } from '@whiskeysockets/baileys';
 import { Mutex } from 'async-mutex';
-import { rm } from 'node:fs/promises';
+import { basename, extname, isAbsolute, relative } from 'node:path';
+import { realpath, readFile, rm, stat } from 'node:fs/promises';
 import { platform as hostPlatform } from 'node:os';
 import pino from 'pino';
 import {
+  getTttDropsDir,
+  getTttExportsWorkingDir,
   getTttWhatsAppAuthDir,
   readWhatsAppPreferences,
 } from '@ttt/lib/ttt-paths.js';
@@ -33,6 +37,95 @@ const EXTENDED_WHATSAPP_TOOLS = new Set([
 
 const MAX_CHATS_CACHED = 500;
 const MAX_MSGS_PER_CHAT = 80;
+/** Caps in-memory reads for local WhatsApp media (Baileys still has WA-side limits). */
+const LOCAL_WHATSAPP_MEDIA_MAX_BYTES = 100 * 1024 * 1024;
+
+async function trustedRootDirs(): Promise<string[]> {
+  return [await realpath(getTttDropsDir()), await realpath(getTttExportsWorkingDir())];
+}
+
+/**
+ * Ensures {@link rawAbsolute} resolves to an existing regular file whose real path stays under one
+ * of the TTT drops or exports working directories (defense-in-depth vs arbitrary filesystem read).
+ */
+async function resolveTrustedLocalFilePath(rawAbsolute: string): Promise<string> {
+  const trimmed = rawAbsolute.trim();
+  if (!trimmed) {
+    throw new Error('Missing `localFilePath`.');
+  }
+  if (!isAbsolute(trimmed)) {
+    throw new Error('`localFilePath` must be an absolute path.');
+  }
+  let resolved: string;
+  try {
+    resolved = await realpath(trimmed);
+  } catch {
+    throw new Error('Local file path does not exist or is not readable.');
+  }
+  let st: Stats;
+  try {
+    st = await stat(resolved);
+  } catch {
+    throw new Error('Local file path does not exist or is not readable.');
+  }
+  if (!st.isFile()) {
+    throw new Error('`localFilePath` must point to a regular file.');
+  }
+  if (st.size > LOCAL_WHATSAPP_MEDIA_MAX_BYTES) {
+    throw new Error(`File exceeds maximum size (${LOCAL_WHATSAPP_MEDIA_MAX_BYTES} bytes).`);
+  }
+  for (const root of await trustedRootDirs()) {
+    const rel = relative(root, resolved);
+    if (!rel.startsWith('..') && !isAbsolute(rel)) {
+      return resolved;
+    }
+  }
+  throw new Error(
+    'Local file path must be under ~/.ttt/drops or ~/.ttt/exports (TTT staged drops or exports only).'
+  );
+}
+
+/** Same rules as GIF/MP4 URL handling: Baileys `video` + `gifPlayback` for looping previews. */
+function shouldSendBasenameAsWhatsAppGifPlayback(name: string): boolean {
+  const n = basename(name).toLowerCase();
+  return n.endsWith('.mp4') || n.endsWith('.gif');
+}
+
+function guessDocumentMime(filename: string, override?: string): string {
+  const t = override?.trim();
+  if (t) return t;
+  const ext = extname(basename(filename)).toLowerCase().replace(/^\./, '');
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    zip: 'application/zip',
+    '7z': 'application/x-7z-compressed',
+    rar: 'application/vnd.rar',
+    tar: 'application/x-tar',
+    gz: 'application/gzip',
+    txt: 'text/plain',
+    csv: 'text/csv',
+    json: 'application/json',
+    xml: 'application/xml',
+    html: 'text/html',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    svg: 'image/svg+xml',
+    mp4: 'video/mp4',
+    mp3: 'audio/mpeg',
+    ogg: 'audio/ogg',
+    wav: 'audio/wav',
+  };
+  return map[ext] ?? 'application/octet-stream';
+}
 
 function jidFromPhoneDigits(to: string): string {
   const digits = to.replace(/\D/g, '');
@@ -269,28 +362,79 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
       }
       case 'whatsapp_send_image': {
         const to = typeof args.to === 'string' ? args.to : '';
-        const imageUrl = typeof args.imageUrl === 'string' ? args.imageUrl : '';
+        const imageUrl = typeof args.imageUrl === 'string' ? args.imageUrl.trim() : '';
+        const localFilePath =
+          typeof args.localFilePath === 'string' ? args.localFilePath.trim() : '';
         const caption =
           typeof args.caption === 'string' && args.caption.trim() ? args.caption.trim() : undefined;
-        if (!imageUrl.trim()) {
-          throw new Error('Missing `imageUrl`.');
+        const hasUrl = Boolean(imageUrl);
+        const hasLocal = Boolean(localFilePath);
+        if (hasUrl && hasLocal) {
+          throw new Error('Provide exactly one of `imageUrl` or `localFilePath`, not both.');
         }
-        const url = assertPublicHttpUrl(imageUrl);
+        if (!hasUrl && !hasLocal) {
+          throw new Error('Provide either `imageUrl` (public http(s)) or `localFilePath` (TTT staging/exports only).');
+        }
         requireLinkedSock(this.sock, this.opened);
         const jid = jidFromPhoneDigits(to);
         const cap = caption ? { caption } : {};
-        if (shouldSendUrlAsWhatsAppGifPlayback(url)) {
-          await this.sock.sendMessage(jid, {
-            video: { url },
-            gifPlayback: true,
-            ...cap,
-          });
+        if (hasUrl) {
+          const url = assertPublicHttpUrl(imageUrl);
+          if (shouldSendUrlAsWhatsAppGifPlayback(url)) {
+            await this.sock.sendMessage(jid, {
+              video: { url },
+              gifPlayback: true,
+              ...cap,
+            });
+          } else {
+            await this.sock.sendMessage(jid, {
+              image: { url },
+              ...cap,
+            });
+          }
         } else {
-          await this.sock.sendMessage(jid, {
-            image: { url },
-            ...cap,
-          });
+          const resolvedPath = await resolveTrustedLocalFilePath(localFilePath);
+          const buf = await readFile(resolvedPath);
+          const useGifPlayback = shouldSendBasenameAsWhatsAppGifPlayback(resolvedPath);
+          if (useGifPlayback) {
+            await this.sock.sendMessage(jid, {
+              video: buf,
+              gifPlayback: true,
+              ...cap,
+            });
+          } else {
+            await this.sock.sendMessage(jid, {
+              image: buf,
+              ...cap,
+            });
+          }
         }
+        return JSON.stringify({ ok: true, to: jid }, null, 2);
+      }
+      case 'whatsapp_send_document': {
+        const to = typeof args.to === 'string' ? args.to : '';
+        const localFp = typeof args.localFilePath === 'string' ? args.localFilePath.trim() : '';
+        if (!localFp) {
+          throw new Error('Missing `localFilePath`.');
+        }
+        const caption =
+          typeof args.caption === 'string' && args.caption.trim() ? args.caption.trim() : undefined;
+        const fileNameArg =
+          typeof args.fileName === 'string' && args.fileName.trim() ? args.fileName.trim() : undefined;
+        const mimetypeArg =
+          typeof args.mimetype === 'string' && args.mimetype.trim() ? args.mimetype.trim() : undefined;
+        requireLinkedSock(this.sock, this.opened);
+        const jid = jidFromPhoneDigits(to);
+        const resolvedPath = await resolveTrustedLocalFilePath(localFp);
+        const buf = await readFile(resolvedPath);
+        const docName = fileNameArg ?? basename(resolvedPath);
+        const mime = guessDocumentMime(docName, mimetypeArg);
+        await this.sock.sendMessage(jid, {
+          document: buf,
+          mimetype: mime,
+          fileName: docName,
+          ...(caption ? { caption } : {}),
+        });
         return JSON.stringify({ ok: true, to: jid }, null, 2);
       }
       case 'whatsapp_list_chats': {

@@ -446,7 +446,8 @@ Requires **`ttt-ui`** running with WhatsApp linked under **Settings → Messagin
 
 ### Messaging
 - `whatsapp_send_message` — Plain text to `to`.
-- `whatsapp_send_image` — One image or looping GIF from a **public** `http(s)` URL (host downloads media). Optional `caption`. For animated GIFs (e.g. Giphy), prefer `.mp4` or `.gif` URLs — not `.webp` previews, which send as a static image.
+- `whatsapp_send_image` — One image or looping GIF from a **public** `http(s)` URL (host downloads) **or** from `localFilePath`: an absolute path under `~/.ttt/drops` or `~/.ttt/exports` (staged uploads / MCP exports — not arbitrary paths). Exactly one source. Optional `caption`. For GIF-style animation from URLs, prefer `.mp4` or `.gif` — not `.webp` previews, which send as a static image.
+- `whatsapp_send_document` — Generic file (PDF, ZIP, archives, Office, etc.): same `localFilePath` restriction as above; optional `mimetype` (guess from extension if omitted), `fileName`, `caption`.
 
 ### Extended read (optional UI consent)
 Only registered when **Allow AI to read chats & contacts** is enabled in the WhatsApp settings dialog (sets `TTT_WHATSAPP_EXTENDED_DATA_CONSENT=1` for the UI-spawned MCP child):
