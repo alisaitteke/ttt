@@ -148,10 +148,14 @@ export const apiRevealFile = (path: string) =>
 
 export type PickLocalFileResult = { path: string } | { cancelled: true };
 
-export async function apiPickLocalFile(): Promise<PickLocalFileResult> {
+export type PickLocalKind = 'file' | 'folder';
+
+export async function apiPickLocalFile(
+  kind: PickLocalKind = 'file'
+): Promise<PickLocalFileResult> {
   return api<PickLocalFileResult>('/api/files/pick-local', {
     method: 'POST',
-    body: JSON.stringify({}),
+    body: JSON.stringify({ kind }),
   });
 }
 

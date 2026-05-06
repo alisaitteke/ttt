@@ -63,7 +63,7 @@ function printHelp(): void {
       '  -h, --help            Show this help',
       '  -v, --version         Show version',
       '',
-      'Configuration is stored at ~/.ttt/data.db (chmod 600).',
+      'API keys: OS credential store. Chat/settings: ~/.ttt/data.db.',
       '',
     ].join('\n')
   );

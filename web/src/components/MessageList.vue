@@ -56,16 +56,33 @@ function assistantLabel(m: ChatMessage): string {
         </p>
       </div>
 
-      <div v-for="m in messages" :key="m.id" class="flex gap-3">
+      <div
+        v-for="m in messages"
+        :key="m.id"
+        class="flex gap-3"
+        :class="
+          m.role === 'user'
+            ? 'rounded-xl border border-primary/25 bg-primary/[0.07] p-3 shadow-sm dark:border-primary/35 dark:bg-primary/[0.11]'
+            : ''
+        "
+      >
         <div
-          class="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground"
+          class="flex size-7 shrink-0 items-center justify-center rounded-md border"
+          :class="
+            m.role === 'user'
+              ? 'border-primary/35 bg-primary/15 text-primary'
+              : 'border-border bg-card text-muted-foreground'
+          "
         >
           <User v-if="m.role === 'user'" class="size-4" />
           <ProviderIcon v-else-if="m.provider" :provider="m.provider" :size="16" />
           <Sparkles v-else class="size-4" />
         </div>
         <div class="flex min-w-0 flex-1 flex-col gap-2">
-          <div class="text-xs font-medium text-muted-foreground">
+          <div
+            class="text-xs font-medium"
+            :class="m.role === 'user' ? 'font-semibold text-primary' : 'text-muted-foreground'"
+          >
             {{ m.role === 'user' ? 'You' : assistantLabel(m) }}
           </div>
           <MarkdownRender
@@ -75,7 +92,7 @@ function assistantLabel(m: ChatMessage): string {
           />
           <div
             v-else-if="m.text"
-            class="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+            class="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground"
           >{{ m.text }}</div>
           <ToolCallCard v-for="tc in m.toolCalls" :key="tc.id" :tool-call="tc" />
         </div>

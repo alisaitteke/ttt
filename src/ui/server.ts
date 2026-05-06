@@ -11,6 +11,8 @@ import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/de
 import { Logger } from '../utils/logger.js';
 import { buildHistory, runChat, type AssistantBuffer, type RunChatFinishInfo } from './agent.js';
 import {
+  ensureProviderKeysMigrated,
+  getProviderApiKey,
   loadConfig,
   maskApiKey,
   saveConfig,
@@ -80,6 +82,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   // Initialize the SQLite database eagerly so the first request is fast and
   // any migration error surfaces during startup instead of mid-request.
   getDB();
+  await ensureProviderKeysMigrated();
 
   const abortControllers = new Map<string, AbortController>();
 
@@ -93,14 +96,15 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   // ---- Status -------------------------------------------------------------
 
-  app.get('/api/status', (c) => {
+  app.get('/api/status', async (c) => {
     const config = loadConfig();
-    const active = config.providers[config.activeProvider];
+    const activeId = config.activeProvider;
+    const apiKey = await getProviderApiKey(activeId);
     return c.json({
-      activeProvider: config.activeProvider,
+      activeProvider: activeId,
       activeModel: config.activeModel,
-      hasApiKey: Boolean(active?.apiKey),
-      apiKeyMasked: maskApiKey(active?.apiKey),
+      hasApiKey: Boolean(apiKey),
+      apiKeyMasked: maskApiKey(apiKey),
       hostPlatform: osPlatform(),
     });
   });
@@ -132,7 +136,9 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   app.post('/api/files/pick-local', async (c) => {
     try {
-      const result = await pickLocalFileViaNativeDialog(logger);
+      const body = (await c.req.json().catch(() => ({}))) as { kind?: string };
+      const kind: 'file' | 'folder' = body.kind === 'folder' ? 'folder' : 'file';
+      const result = await pickLocalFileViaNativeDialog(logger, kind);
       if ('cancelled' in result) {
         return c.json({ cancelled: true as const });
       }
@@ -188,21 +194,22 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   // ---- Providers ----------------------------------------------------------
 
-  app.get('/api/providers', (c) => {
-    const config = loadConfig();
-    const out = listProviders().map((p) => {
-      const cfg = config.providers[p.id];
-      return {
-        id: p.id,
-        label: p.label,
-        apiKeyHint: p.apiKeyHint,
-        apiKeyHelpUrl: p.apiKeyHelpUrl,
-        hasApiKey: Boolean(cfg?.apiKey),
-        apiKeyMasked: maskApiKey(cfg?.apiKey),
-        models: p.listModels(),
-        defaultModel: p.defaultModel(),
-      };
-    });
+  app.get('/api/providers', async (c) => {
+    const out = await Promise.all(
+      listProviders().map(async (p) => {
+        const apiKey = await getProviderApiKey(p.id);
+        return {
+          id: p.id,
+          label: p.label,
+          apiKeyHint: p.apiKeyHint,
+          apiKeyHelpUrl: p.apiKeyHelpUrl,
+          hasApiKey: Boolean(apiKey),
+          apiKeyMasked: maskApiKey(apiKey),
+          models: p.listModels(),
+          defaultModel: p.defaultModel(),
+        };
+      })
+    );
     return c.json(out);
   });
 
@@ -242,19 +249,19 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     if (!provider.validateApiKeyFormat(body.apiKey)) {
       return c.json({ error: 'invalid_format' }, 400);
     }
-    setProviderConfig(provider.id, { apiKey: body.apiKey });
+    await setProviderConfig(provider.id, { apiKey: body.apiKey });
     // If no active provider was set yet, bootstrap with this one.
     const cfg = loadConfig();
-    if (!cfg.providers[cfg.activeProvider]?.apiKey) {
+    if (!(await getProviderApiKey(cfg.activeProvider))) {
       saveConfig({ activeProvider: provider.id, activeModel: provider.defaultModel() });
     }
     return c.json({ ok: true, apiKeyMasked: maskApiKey(body.apiKey) });
   });
 
-  app.delete('/api/providers/:id/key', (c) => {
+  app.delete('/api/providers/:id/key', async (c) => {
     const provider = getProvider(c.req.param('id'));
     if (!provider) return c.json({ error: 'unknown_provider' }, 404);
-    setProviderConfig(provider.id, { apiKey: undefined });
+    await setProviderConfig(provider.id, { apiKey: undefined });
     return c.json({ ok: true });
   });
 
@@ -340,8 +347,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     const provider = getProvider(chat.provider);
     if (!provider) return c.json({ error: 'unknown_provider' }, 400);
 
-    const config = loadConfig();
-    const apiKey = config.providers[chat.provider as ProviderId]?.apiKey;
+    const apiKey = await getProviderApiKey(chat.provider as ProviderId);
     if (!apiKey) return c.json({ error: 'no_api_key' }, 400);
 
     // Persist the user message first; auto-title the chat if it's still default.
@@ -520,22 +526,38 @@ async function assertRevealableTarget(inputPath: string): Promise<string> {
 
 const PICK_LOCAL_FILE_TIMEOUT_MS = 120_000;
 
+type PickLocalKind = 'file' | 'folder';
+
+function normalizePickedPath(raw: string, kind: PickLocalKind): string {
+  let p = raw.trim().replace(/\r?\n+$/, '');
+  if (kind === 'folder' && p.length > 1) {
+    p = p.replace(/[/\\]+$/, '');
+  }
+  return p;
+}
+
 async function pickLocalFileViaNativeDialog(
-  logger: Logger
+  logger: Logger,
+  kind: PickLocalKind
 ): Promise<{ path: string } | { cancelled: true }> {
   const plat = osPlatform();
   if (plat === 'darwin') {
-    return pickLocalFileDarwin(logger);
+    return pickLocalFileDarwin(logger, kind);
   }
   if (plat === 'win32') {
-    return pickLocalFileWin32(logger);
+    return pickLocalFileWin32(logger, kind);
   }
   throw new Error('unsupported_platform');
 }
 
-function pickLocalFileDarwin(logger: Logger): Promise<{ path: string } | { cancelled: true }> {
+function pickLocalFileDarwin(
+  logger: Logger,
+  kind: PickLocalKind
+): Promise<{ path: string } | { cancelled: true }> {
   const script =
-    'POSIX path of (choose file with prompt "Select a file (path only - file is not uploaded)")';
+    kind === 'folder'
+      ? 'POSIX path of (choose folder with prompt "Select a folder (path only - nothing is uploaded)")'
+      : 'POSIX path of (choose file with prompt "Select a file (path only - file is not uploaded)")';
   return new Promise((resolve, reject) => {
     const child = spawn('osascript', ['-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
@@ -566,7 +588,7 @@ function pickLocalFileDarwin(logger: Logger): Promise<{ path: string } | { cance
         reject(new Error(err.trim() || `osascript exited with code ${code}`));
         return;
       }
-      const path = out.trim().replace(/\r?\n+$/, '');
+      const path = normalizePickedPath(out, kind);
       if (!path) {
         resolve({ cancelled: true });
         return;
@@ -576,9 +598,14 @@ function pickLocalFileDarwin(logger: Logger): Promise<{ path: string } | { cance
   });
 }
 
-function pickLocalFileWin32(logger: Logger): Promise<{ path: string } | { cancelled: true }> {
+function pickLocalFileWin32(
+  logger: Logger,
+  kind: PickLocalKind
+): Promise<{ path: string } | { cancelled: true }> {
   const ps =
-    "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Select a file (path only - file is not uploaded)'; if ($d.ShowDialog() -eq 'OK') { [Console]::Out.WriteLine($d.FileName) }";
+    kind === 'folder'
+      ? "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select a folder (path only - nothing is uploaded)'; if ($f.ShowDialog() -eq 'OK') { [Console]::Out.WriteLine($f.SelectedPath) }"
+      : "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Select a file (path only - file is not uploaded)'; if ($d.ShowDialog() -eq 'OK') { [Console]::Out.WriteLine($d.FileName) }";
   return new Promise((resolve, reject) => {
     const child = spawn('powershell.exe', ['-NoProfile', '-STA', '-Command', ps], {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -602,14 +629,14 @@ function pickLocalFileWin32(logger: Logger): Promise<{ path: string } | { cancel
     });
     child.on('close', (code) => {
       clearTimeout(timer);
-      const path = out.trim().replace(/\r?\n+$/, '');
-      if (!path) {
-        resolve({ cancelled: true });
-        return;
-      }
       if (code !== 0) {
         logger.warn('powershell pick failed', { code, err });
         reject(new Error(err.trim() || `powershell exited with code ${code}`));
+        return;
+      }
+      const path = normalizePickedPath(out, kind);
+      if (!path) {
+        resolve({ cancelled: true });
         return;
       }
       resolve({ path });

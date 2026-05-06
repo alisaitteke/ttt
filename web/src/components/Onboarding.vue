@@ -68,9 +68,10 @@ async function submit(): Promise<void> {
         <AdobeAppIcon app="ps" :size="40" class="mb-2" />
         <CardTitle>Connect an AI provider</CardTitle>
         <CardDescription>
-          TTT UI uses your own API key to talk to a model. The key is stored
-          locally at <code class="text-xs">~/.ttt/data.db</code> and never
-          leaves your machine.
+          TTT UI uses your own API key to talk to a model. The key is stored in
+          your OS credential store (Keychain, Credential Manager, or Secret Service).
+          Chat history and settings use <code class="text-xs">~/.ttt/data.db</code>.
+          Keys never leave your machine.
         </CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
-import { ArrowUp, Paperclip, Square } from 'lucide-vue-next';
+import { ArrowUp, FolderOpen, Paperclip, Square } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import PathMessageModal from '@/components/PathMessageModal.vue';
 import { ApiError, apiPickLocalFile, apiStageDroppedFile } from '@/lib/api';
 
 const props = defineProps<{ busy: boolean; disabled?: boolean }>();
@@ -10,16 +11,37 @@ const emit = defineEmits<{
   abort: [];
 }>();
 
+interface PathModalPayload {
+  title: string;
+  body: string;
+  primaryLabel?: string;
+  onPrimary?: () => void;
+}
+
 const draft = ref('');
 const textareaEl = ref<HTMLTextAreaElement | null>(null);
 const picking = ref(false);
-const pickError = ref<string | null>(null);
+const pathModal = ref<PathModalPayload | null>(null);
 const fileDragDepth = ref(0);
 const dropping = ref(false);
 
 const fileDragActive = computed(
   () => fileDragDepth.value > 0 && !props.busy && !props.disabled && !picking.value
 );
+
+function dismissPathModal(): void {
+  pathModal.value = null;
+}
+
+function showPathModal(payload: PathModalPayload): void {
+  pathModal.value = payload;
+}
+
+function onPathModalPrimary(): void {
+  const cb = pathModal.value?.onPrimary;
+  dismissPathModal();
+  cb?.();
+}
 
 function isFileDrag(dt: DataTransfer | null): boolean {
   return Boolean(dt?.types?.includes('Files'));
@@ -52,8 +74,8 @@ function handleKey(event: KeyboardEvent): void {
   }
 }
 
-function insertLocalFilePath(path: string): void {
-  const prefix = 'Local file path: ';
+function insertLocalPath(path: string, kind: 'file' | 'folder'): void {
+  const prefix = kind === 'folder' ? 'Local folder path: ' : 'Local file path: ';
   const chunk = `${prefix}${path}\n`;
   const el = textareaEl.value;
   if (!el) {
@@ -106,7 +128,7 @@ async function onDrop(e: DragEvent): Promise<void> {
   const dt = e.dataTransfer;
   if (!dt) return;
 
-  pickError.value = null;
+  dismissPathModal();
 
   const uri =
     dt.getData('text/uri-list') ||
@@ -114,14 +136,45 @@ async function onDrop(e: DragEvent): Promise<void> {
     dt.getData('application/x-moz-file-promise-url');
   const fromUri = pathFromFileUriList(uri);
   if (fromUri) {
-    insertLocalFilePath(fromUri);
+    const kind =
+      fromUri.endsWith('/') || /[/\\]$/.test(fromUri) ? 'folder' : 'file';
+    const path =
+      kind === 'folder' && fromUri.length > 1
+        ? fromUri.replace(/[/\\]+$/, '')
+        : fromUri;
+    insertLocalPath(path, kind);
     return;
+  }
+
+  const items = dt.items;
+  if (items?.length === 1) {
+    const item = items[0];
+    if (item.kind === 'file') {
+      const entry =
+        'webkitGetAsEntry' in item && typeof item.webkitGetAsEntry === 'function'
+          ? item.webkitGetAsEntry()
+          : null;
+      if (entry && 'isDirectory' in entry && entry.isDirectory) {
+        showPathModal({
+          title: 'Why folder drag does not work here',
+          body: 'Web browsers deliberately do not expose the real folder path on your disk when you drop a directory—they only give access to files inside it, without a full path (this is a security rule).\n\nWhen the OS includes a file:// link with the drop (some setups do), we use that automatically. Otherwise use the folder button to open your system\'s folder picker, or drop a single file—we can stage a copy under ~/.ttt/drops if the path is hidden.',
+          primaryLabel: 'Choose folder…',
+          onPrimary: () => {
+            void runPickLocal('folder');
+          },
+        });
+        return;
+      }
+    }
   }
 
   const files = dt.files;
   if (!files?.length) return;
   if (files.length > 1) {
-    pickError.value = 'Drop one file at a time.';
+    showPathModal({
+      title: 'One file at a time',
+      body: 'Drop a single file so we can read or stage its path. For an entire folder path, use the folder button instead.',
+    });
     return;
   }
 
@@ -129,40 +182,66 @@ async function onDrop(e: DragEvent): Promise<void> {
   dropping.value = true;
   try {
     const { path } = await apiStageDroppedFile(file);
-    insertLocalFilePath(path);
+    insertLocalPath(path, 'file');
   } catch (err) {
     if (err instanceof ApiError && err.status === 413) {
-      pickError.value = 'File is too large to stage (max 2 GB).';
+      showPathModal({
+        title: 'File too large',
+        body: 'This file is over the 2 GB staging limit. Pick a smaller file or use a file:// path when the browser provides one.',
+      });
     } else if (err instanceof ApiError) {
-      pickError.value = err.message;
+      showPathModal({
+        title: 'Could not stage file',
+        body: err.message,
+      });
     } else {
-      pickError.value = 'Could not stage the dropped file.';
+      showPathModal({
+        title: 'Could not stage file',
+        body: 'An unexpected error occurred while saving to ~/.ttt/drops.',
+      });
     }
   } finally {
     dropping.value = false;
   }
 }
 
-async function onPickLocalPath(): Promise<void> {
+async function runPickLocal(kind: 'file' | 'folder'): Promise<void> {
   if (props.busy || props.disabled || picking.value) return;
-  pickError.value = null;
+  dismissPathModal();
   picking.value = true;
   try {
-    const result = await apiPickLocalFile();
+    const result = await apiPickLocalFile(kind);
     if ('path' in result && result.path) {
-      insertLocalFilePath(result.path);
+      insertLocalPath(result.path, kind);
     }
   } catch (e) {
     if (e instanceof ApiError && e.status === 501) {
-      pickError.value = 'Local file picker is not supported on this platform.';
+      showPathModal({
+        title: 'Picker not available',
+        body: 'Local file and folder pickers are not supported on this platform.',
+      });
     } else if (e instanceof ApiError) {
-      pickError.value = e.message;
+      showPathModal({
+        title: kind === 'folder' ? 'Could not pick folder' : 'Could not pick file',
+        body: e.message,
+      });
     } else {
-      pickError.value = 'Could not pick a file.';
+      showPathModal({
+        title: kind === 'folder' ? 'Could not pick folder' : 'Could not pick file',
+        body: 'An unexpected error occurred.',
+      });
     }
   } finally {
     picking.value = false;
   }
+}
+
+async function onPickLocalPath(): Promise<void> {
+  await runPickLocal('file');
+}
+
+async function onPickLocalFolder(): Promise<void> {
+  await runPickLocal('folder');
 }
 
 function submit(): void {
@@ -187,11 +266,11 @@ function submit(): void {
         class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-primary/70 bg-background/90 px-4 text-center backdrop-blur-[1px]"
       >
         <p class="text-sm font-medium text-foreground">
-          {{ dropping ? 'Copying to ~/.ttt/drops on this computer…' : 'Drop file to add its path' }}
+          {{ dropping ? 'Copying to ~/.ttt/drops on this computer…' : 'Drop a file to add its path' }}
         </p>
         <p v-if="!dropping" class="max-w-sm text-xs text-muted-foreground">
-          If the browser hides the real path, the file is copied once to a local staging folder
-          (still on your machine, not sent over the internet).
+          Folder paths are hidden by the browser when you drop a directory—use the folder button. If a file path
+          is hidden, we copy once to ~/.ttt/drops (local only).
         </p>
       </div>
       <textarea
@@ -205,27 +284,31 @@ function submit(): void {
       />
       <div class="flex flex-wrap items-center gap-2 px-2 pb-2">
         <div class="flex min-w-0 flex-shrink-0 flex-wrap items-center gap-2">
+          <slot name="actions" />
+          <span class="h-4 w-px shrink-0 bg-border/60" aria-hidden="true" />
           <Button
             type="button"
             size="icon"
             variant="ghost"
             :disabled="busy || disabled || picking"
-            :title="
-              'Insert local file path (opens a picker on this computer; the file is not uploaded)'
-            "
+            title="Insert local file path (opens a file picker; the file is not uploaded)"
             class="size-8 shrink-0 text-muted-foreground"
             @click="onPickLocalPath"
           >
             <Paperclip class="size-4" />
           </Button>
-          <slot name="actions" />
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            :disabled="busy || disabled || picking"
+            title="Insert local folder path (opens a folder picker; nothing is uploaded)"
+            class="size-8 shrink-0 text-muted-foreground"
+            @click="onPickLocalFolder"
+          >
+            <FolderOpen class="size-4" />
+          </Button>
         </div>
-        <p
-          v-if="pickError"
-          class="w-full text-xs text-destructive sm:order-2 sm:w-auto sm:flex-1"
-        >
-          {{ pickError }}
-        </p>
         <span
           class="min-w-0 flex-1 text-right text-[11px] leading-snug text-muted-foreground opacity-60 select-none sm:text-xs"
         >
@@ -251,5 +334,13 @@ function submit(): void {
         </Button>
       </div>
     </div>
+    <PathMessageModal
+      v-if="pathModal"
+      :title="pathModal.title"
+      :body="pathModal.body"
+      :primary-label="pathModal.primaryLabel"
+      @close="dismissPathModal"
+      @primary="onPathModalPrimary"
+    />
   </div>
 </template>

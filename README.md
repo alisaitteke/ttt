@@ -53,9 +53,13 @@ Pick any of the following on first launch — bring your own API key:
 ### What happens on first launch
 
 1. Pick a provider and paste your API key.
-2. The key is validated against the provider, then stored locally at `~/.ttt/data.db` (SQLite, `chmod 600`). It never leaves your machine.
+2. The key is validated against the provider, then stored in your OS **credential store** (macOS Keychain, Windows Credential Manager, or Linux Secret Service via libsecret). Chat history and non-secret settings still live in `~/.ttt/data.db` (SQLite). Keys never leave your machine.
 3. Type natural-language prompts. The UI streams the model's reply, runs tool calls in real time, and renders each tool call as an inspectable card (input + result).
 4. Switch provider, model, or **enabled backends** (Photoshop, After Effects, Docker, …) anytime from the composer bar — chats, costs and tool history are persisted across sessions.
+
+**Optional:** you can supply API keys via environment variables instead of the UI (handy for automation). Each provider has a `TTT_<PROVIDER>_API_KEY` name, e.g. `TTT_ANTHROPIC_API_KEY`, `TTT_OPENAI_API_KEY`, `TTT_GOOGLE_API_KEY`, `TTT_OPENROUTER_API_KEY`, `TTT_GROQ_API_KEY`. When set, the variable takes precedence over the stored key for that provider.
+
+**Linux:** if `keytar` fails to load, install Secret Service build dependencies (for example on Debian/Ubuntu: `libsecret-1-dev`) and reinstall the package so native bindings can compile or download a matching prebuild.
 
 ### Per-chat backend selection
 
