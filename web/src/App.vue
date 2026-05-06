@@ -5,16 +5,21 @@ import Onboarding from './components/Onboarding.vue';
 import ChatView from './components/ChatView.vue';
 import Sidebar from './components/Sidebar.vue';
 import SettingsDialog from './components/SettingsDialog.vue';
+import ShellBackgroundGlow from './components/ShellBackgroundGlow.vue';
 import { useChatStore } from './stores/chat';
 import {
   apiListProviders,
+  apiListDesignTools,
   apiStatus,
   type ProviderInfo,
+  type DesignToolInfo,
   type Status,
 } from './lib/api';
 
 const status = ref<Status | null>(null);
 const providers = ref<ProviderInfo[]>([]);
+const designTools = ref<DesignToolInfo[]>([]);
+const creativeCloudDesktopInstalled = ref(false);
 const loading = ref(true);
 const fatalError = ref<string | null>(null);
 const settingsOpen = ref(false);
@@ -49,7 +54,15 @@ async function syncFromRoute(): Promise<void> {
 
 async function refresh(): Promise<void> {
   try {
-    [status.value, providers.value] = await Promise.all([apiStatus(), apiListProviders()]);
+    const [st, provs, designRes] = await Promise.all([
+      apiStatus(),
+      apiListProviders(),
+      apiListDesignTools(),
+    ]);
+    status.value = st;
+    providers.value = provs;
+    designTools.value = designRes.tools;
+    creativeCloudDesktopInstalled.value = designRes.creativeCloudDesktopInstalled;
     if (hasAnyKey.value) {
       await chat.loadChats();
       await syncFromRoute();
@@ -105,29 +118,36 @@ onMounted(refresh);
       {{ fatalError }}
     </div>
   </div>
-  <Onboarding v-else-if="!hasAnyKey" @saved="refresh" />
-  <div v-else class="flex h-screen">
-    <Sidebar
-      :chats="chat.chats.value"
-      :active-chat-id="chat.activeChatId.value"
-      @new-chat="handleNewChat"
-      @select="handleSelect"
-      @rename="(id, title) => chat.rename(id, title)"
-      @delete="handleDelete"
-      @open-settings="settingsOpen = true"
-    />
-    <ChatView
-      class="flex-1"
-      :providers="providers"
-      :store="chat"
-      :settings-open="settingsOpen"
-      @new-chat="handleNewChat"
-      @open-settings="settingsOpen = true"
-    />
-    <SettingsDialog
-      v-if="settingsOpen"
-      @close="settingsOpen = false"
-      @saved="handleSettingsSaved"
-    />
-  </div>
+  <template v-else>
+    <ShellBackgroundGlow />
+    <div class="relative z-10 min-h-screen">
+      <Onboarding v-if="!hasAnyKey" @saved="refresh" />
+      <div v-else class="flex h-screen">
+        <Sidebar
+          :chats="chat.chats.value"
+          :active-chat-id="chat.activeChatId.value"
+          @new-chat="handleNewChat"
+          @select="handleSelect"
+          @rename="(id, title) => chat.rename(id, title)"
+          @delete="handleDelete"
+          @open-settings="settingsOpen = true"
+        />
+        <ChatView
+          class="flex-1"
+          :providers="providers"
+          :design-tools="designTools"
+          :creative-cloud-desktop-installed="creativeCloudDesktopInstalled"
+          :store="chat"
+          :settings-open="settingsOpen"
+          @new-chat="handleNewChat"
+          @open-settings="settingsOpen = true"
+        />
+        <SettingsDialog
+          v-if="settingsOpen"
+          @close="settingsOpen = false"
+          @saved="handleSettingsSaved"
+        />
+      </div>
+    </div>
+  </template>
 </template>

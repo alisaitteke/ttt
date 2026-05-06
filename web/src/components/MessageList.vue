@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { User, Sparkles } from 'lucide-vue-next';
+import MarkdownRender from 'vue-renderer-markdown';
 import ToolCallCard from './ToolCallCard.vue';
 import ProviderIcon from './ProviderIcon.vue';
 import type { ChatMessage } from '@/stores/chat';
@@ -48,7 +49,7 @@ function assistantLabel(m: ChatMessage): string {
         class="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center"
       >
         <Sparkles class="mx-auto mb-3 size-6 text-muted-foreground" />
-        <h2 class="text-base font-semibold">Tell the assistant what to do (Photoshop is supported today)</h2>
+        <h2 class="text-base font-semibold">Tell the assistant what to work on in your design tools</h2>
         <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
           Try: "Create a new 1920×1080 document, fill the background with light blue,
           add the text 'Hello' in the center, and save it as hello.psd on my Desktop."
@@ -67,8 +68,13 @@ function assistantLabel(m: ChatMessage): string {
           <div class="text-xs font-medium text-muted-foreground">
             {{ m.role === 'user' ? 'You' : assistantLabel(m) }}
           </div>
+          <MarkdownRender
+            v-if="m.text && m.role === 'assistant'"
+            class="assistant-markdown min-w-0 text-sm leading-relaxed text-foreground"
+            :content="m.text"
+          />
           <div
-            v-if="m.text"
+            v-else-if="m.text"
             class="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
           >{{ m.text }}</div>
           <ToolCallCard v-for="tc in m.toolCalls" :key="tc.id" :tool-call="tc" />

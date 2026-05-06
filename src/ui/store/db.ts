@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-const DATA_DIR = join(homedir(), '.adobe-agent');
+const DATA_DIR = join(homedir(), '.ttt');
 const DB_PATH = join(DATA_DIR, 'data.db');
 
 let instance: DatabaseType | null = null;
@@ -53,6 +53,13 @@ function migrate(db: DatabaseType): void {
       value TEXT NOT NULL
     );
   `);
+
+  // Add tools column if it doesn't exist (idempotent migration)
+  const tableInfo = db.pragma('table_info(chats)');
+  const hasToolsColumn = (tableInfo as Array<{ name: string }>).some((col) => col.name === 'tools');
+  if (!hasToolsColumn) {
+    db.exec('ALTER TABLE chats ADD COLUMN tools TEXT');
+  }
 }
 
 export function getDataDir(): string {

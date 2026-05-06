@@ -51,7 +51,7 @@ const costLabel = computed(() => {
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur"
+    class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/50 bg-background/20 px-4 backdrop-blur-2xl backdrop-saturate-150 dark:bg-background/[0.14]"
   >
     <div class="min-w-0 flex-1 truncate text-sm font-medium">
       {{ chat?.title ?? 'New chat' }}

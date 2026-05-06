@@ -1,11 +1,40 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
+    <script>
+      (function () {
+        function apply() {
+          try {
+            var s = localStorage.getItem('ttt-theme');
+            if (s === 'light') {
+              document.documentElement.classList.remove('dark');
+              return;
+            }
+            if (s === 'dark') {
+              document.documentElement.classList.add('dark');
+              return;
+            }
+          } catch {
+            /* ignore */
+          }
+          try {
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          } catch {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+        apply();
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/ps-logo-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
-    <title>Adobe Agent MCP UI</title>
+    <title>TTT — Design Agent UI</title>
   </head>
   <body class="bg-background text-foreground antialiased">
     <div id="app"></div>

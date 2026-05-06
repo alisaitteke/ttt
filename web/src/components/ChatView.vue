@@ -6,12 +6,22 @@ import StatusBar from './StatusBar.vue';
 import MessageList from './MessageList.vue';
 import Composer from './Composer.vue';
 import ModelSelector from './ModelSelector.vue';
+import DesignToolSelector from './DesignToolSelector.vue';
 import Footer from './Footer.vue';
-import { apiUpdateChatModel, type ProviderId, type ProviderInfo } from '@/lib/api';
+import {
+  apiUpdateChatModel,
+  apiUpdateChatTools,
+  type ProviderId,
+  type ProviderInfo,
+  type DesignToolInfo,
+  type DesignToolId,
+} from '@/lib/api';
 import type { useChatStore } from '@/stores/chat';
 
 const props = defineProps<{
   providers: ProviderInfo[];
+  designTools: DesignToolInfo[];
+  creativeCloudDesktopInstalled: boolean;
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
 }>();
@@ -38,6 +48,13 @@ async function onModelChange(modelId: string): Promise<void> {
   const chat = activeChat.value;
   if (!chat) return;
   await apiUpdateChatModel(chat.id, { model: modelId });
+  await props.store.loadChats();
+}
+
+async function onToolsChange(tools: DesignToolId[]): Promise<void> {
+  const chat = activeChat.value;
+  if (!chat) return;
+  await apiUpdateChatTools(chat.id, tools);
   await props.store.loadChats();
 }
 </script>
@@ -74,15 +91,25 @@ async function onModelChange(modelId: string): Promise<void> {
         @abort="props.store.abort"
       >
         <template #actions>
-      <ModelSelector
-        :providers="props.providers"
-        :current-provider="activeChat.provider"
-        :current-model="activeChat.model"
-        :disabled="props.store.sending.value"
-        @update:provider="onProviderChange"
-        @update:model="onModelChange"
-        @open-settings="emit('open-settings')"
-      />
+          <div class="flex items-center gap-1.5">
+            <DesignToolSelector
+              :design-tools="props.designTools"
+              :creative-cloud-desktop-installed="props.creativeCloudDesktopInstalled"
+              :selected="activeChat.tools"
+              :disabled="props.store.sending.value"
+              @update:tools="onToolsChange"
+            />
+            <span class="h-4 w-px bg-border/60" />
+            <ModelSelector
+              :providers="props.providers"
+              :current-provider="activeChat.provider"
+              :current-model="activeChat.model"
+              :disabled="props.store.sending.value"
+              @update:provider="onProviderChange"
+              @update:model="onModelChange"
+              @open-settings="emit('open-settings')"
+            />
+          </div>
         </template>
       </Composer>
     </template>

@@ -22,7 +22,33 @@ export async function api<T = unknown>(
   return (await res.json()) as T;
 }
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'groq';
+
+export type DesignToolId =
+  | 'photoshop'
+  | 'after-effects'
+  | 'illustrator'
+  | 'figma'
+  | 'premiere-pro'
+  | 'davinci-resolve'
+  | 'docker';
+
+export interface DesignToolInfo {
+  id: DesignToolId;
+  label: string;
+  toolPrefix: string;
+  toolPrefixes?: readonly string[];
+  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker';
+  available: boolean;
+  installUrl?: string;
+  /** Set when the UI server probes local installs (Adobe CC apps, Figma desktop, DaVinci Resolve, Docker, etc.). */
+  installed?: boolean;
+}
+
+export interface DesignToolsResponse {
+  tools: DesignToolInfo[];
+  creativeCloudDesktopInstalled: boolean;
+}
 
 export interface Status {
   activeProvider: ProviderId;
@@ -52,6 +78,7 @@ export interface ChatSummary {
   title: string;
   provider: ProviderId;
   model: string;
+  tools: DesignToolId[] | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -121,6 +148,13 @@ export const apiSetActive = (body: Partial<{ activeProvider: ProviderId; activeM
 
 export const apiListProviders = () => api<ProviderInfo[]>('/api/providers');
 
+// ---- Design Tools -----------------------------------------------------
+
+export const apiListDesignTools = () => api<DesignToolsResponse>('/api/design-tools');
+
+export const apiLaunchCreativeCloud = () =>
+  api<{ ok: true }>('/api/creative-cloud/launch', { method: 'POST' });
+
 export const apiValidateKey = (id: ProviderId, apiKey: string) =>
   api<{ ok: boolean; error?: string }>(`/api/providers/${id}/validate-key`, {
     method: 'POST',
@@ -140,8 +174,12 @@ export const apiDeleteKey = (id: ProviderId) =>
 
 export const apiListChats = () => api<ChatSummary[]>('/api/chats');
 
-export const apiCreateChat = (body: { provider?: ProviderId; model?: string; title?: string }) =>
-  api<ChatSummary>('/api/chats', { method: 'POST', body: JSON.stringify(body) });
+export const apiCreateChat = (body: {
+  provider?: ProviderId;
+  model?: string;
+  title?: string;
+  tools?: DesignToolId[];
+}) => api<ChatSummary>('/api/chats', { method: 'POST', body: JSON.stringify(body) });
 
 export const apiGetChat = (id: string) => api<ChatDetail>(`/api/chats/${id}`);
 
@@ -158,6 +196,12 @@ export const apiUpdateChatModel = (
   api<{ ok: true }>(`/api/chats/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(body),
+  });
+
+export const apiUpdateChatTools = (id: string, tools: DesignToolId[]) =>
+  api<{ ok: true }>(`/api/chats/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ tools }),
   });
 
 export const apiDeleteChat = (id: string) =>

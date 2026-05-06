@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import { MessageSquarePlus, MoreHorizontal, Pencil, Settings2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import AdobeAppIcon, { type AdobeApp as AdobeAppId } from '@/components/AdobeAppIcon.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import type { ChatSummary } from '@/lib/api';
-
-interface AdobeApp {
-  id: AdobeAppId;
-  name: string;
-  active: boolean;
-}
 
 const props = defineProps<{
   chats: ChatSummary[];
@@ -30,15 +23,7 @@ const menuOpenFor = ref<string | null>(null);
 const renamingId = ref<string | null>(null);
 const renameDraft = ref('');
 
-const adobeApps: AdobeApp[] = [
-  { id: 'ps', name: 'Photoshop', active: true },
-  { id: 'ai', name: 'Illustrator', active: false },
-  { id: 'ae', name: 'After Effects', active: false },
-  { id: 'pr', name: 'Premiere Pro', active: false },
-  { id: 'id', name: 'InDesign', active: false },
-  { id: 'xd', name: 'XD', active: false },
-  { id: 'lr', name: 'Lightroom', active: false },
-];
+const npmVersion = import.meta.env.VITE_TTT_NPM_VERSION;
 
 function toggleMenu(id: string, event: Event): void {
   event.stopPropagation();
@@ -80,50 +65,33 @@ function formatDate(ts: number): string {
 
 <template>
   <aside
-    class="flex h-screen w-[260px] shrink-0 flex-col border-r border-border bg-card/40"
+    class="flex h-screen w-[260px] shrink-0 flex-col border-r border-border/50 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 dark:bg-background/[0.14]"
     @click="menuOpenFor = null"
   >
-    <div class="flex items-center gap-2 border-b border-border px-3 py-3">
-      <Popover>
-        <PopoverTrigger as-child>
-          <button
-            class="flex items-center gap-2 rounded-md transition-colors hover:bg-accent/50 p-1 -ml-1"
-            title="Adobe Creative Cloud Apps"
-          >
-            <AdobeAppIcon app="ps" :size="28" />
-            <span class="text-sm font-semibold">Adobe Agent</span>
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" class="w-80">
-          <div class="space-y-3">
-            <div>
-              <h4 class="text-sm font-semibold mb-1">Adobe Creative Cloud</h4>
-              <p class="text-xs text-muted-foreground">
-                MCP integrations for Adobe applications
-              </p>
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-              <button
-                v-for="app in adobeApps"
-                :key="app.id"
-                :disabled="!app.active"
-                class="group relative flex flex-col items-center gap-2 rounded-lg border border-border p-3 transition-all hover:border-primary/50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border"
-                :class="{ 'border-primary bg-primary/5': app.active }"
-              >
-                <AdobeAppIcon :app="app.id" :size="32" />
-                <span class="text-xs text-center">{{ app.name }}</span>
-                <Badge
-                  v-if="!app.active"
-                  variant="secondary"
-                  class="absolute -top-1 -right-1 text-[9px] px-1 py-0 h-4"
-                >
-                  Soon
-                </Badge>
-              </button>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+    <div
+      class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 px-4"
+    >
+      <RouterLink
+        :to="{ name: 'home' }"
+        class="flex min-w-0 items-center gap-2 rounded-md p-1 -ml-1 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label="Home"
+      >
+        <img
+          src="/ttt-logo.svg?v=0.8"
+          alt=""
+          width="32"
+          height="32"
+          class="size-8 shrink-0 object-contain"
+          aria-hidden="true"
+        />
+        <div class="flex min-w-0 flex-col items-start gap-px leading-none">
+          <span
+            class="inline-block [font-family:var(--font-mnemonic)] text-2xl font-black leading-none tracking-[-0.06em] [transform:translateY(0.04em)]"
+          >TTT</span>
+          <span class="text-[10px] tabular-nums text-muted-foreground">v{{ npmVersion }}</span>
+        </div>
+      </RouterLink>
+      <ThemeToggle />
     </div>
 
     <div class="px-3 pt-3">
@@ -141,8 +109,8 @@ function formatDate(ts: number): string {
         <div
           v-for="chat in props.chats"
           :key="chat.id"
-          class="group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-          :class="{ 'bg-accent': chat.id === props.activeChatId }"
+          class="group relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
+          :class="{ 'bg-accent/45': chat.id === props.activeChatId }"
           @click="emit('select', chat.id)"
         >
           <div class="min-w-0 flex-1">
@@ -163,7 +131,7 @@ function formatDate(ts: number): string {
           </div>
 
           <button
-            class="invisible flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-background group-hover:visible"
+            class="invisible flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-background/50 group-hover:visible"
             :class="{ visible: menuOpenFor === chat.id }"
             @click="toggleMenu(chat.id, $event)"
           >
@@ -194,9 +162,13 @@ function formatDate(ts: number): string {
       </div>
     </div>
 
-    <div class="border-t border-border p-2">
-      <Button variant="ghost" size="sm" class="w-full justify-start gap-2" @click="emit('open-settings')">
-        <Settings2 class="size-4" />
+    <div class="flex h-9 shrink-0 items-stretch border-t border-border/50 bg-background/10 backdrop-blur-xl dark:bg-background/[0.08]">
+      <Button
+        variant="ghost"
+        class="m-0 h-full w-full min-h-0 justify-start gap-2 rounded-none px-4 py-0 text-xs font-medium shadow-none"
+        @click="emit('open-settings')"
+      >
+        <Settings2 class="size-4 shrink-0" />
         Settings
       </Button>
     </div>

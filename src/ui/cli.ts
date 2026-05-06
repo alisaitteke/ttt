@@ -12,9 +12,9 @@ import { Logger } from '../utils/logger.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG_VERSION = (() => {
   try {
-    const pkg = JSON.parse(
-      readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8')
-    ) as { version?: string };
+    const pkg = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8')) as {
+      version?: string;
+    };
     return pkg.version ?? '0.0.0';
   } catch {
     return '0.0.0';
@@ -52,9 +52,9 @@ function parseFlags(argv: string[]): CliFlags {
 function printHelp(): void {
   process.stdout.write(
     [
-      'adobe-agent-ui — Browser UI for the Adobe Agent MCP server',
+      'ttt-ui — Browser UI for the TTT (The Tortoise Trainer) MCP server',
       '',
-      'Usage: adobe-agent-ui [options]',
+      'Usage: ttt-ui [options]',
       '',
       'Options:',
       '  -p, --port <number>   Port to listen on (default: random free port)',
@@ -63,14 +63,14 @@ function printHelp(): void {
       '  -h, --help            Show this help',
       '  -v, --version         Show version',
       '',
-      'Configuration is stored at ~/.adobe-agent/config.json (chmod 600).',
+      'Configuration is stored at ~/.ttt/data.db (chmod 600).',
       '',
     ].join('\n')
   );
 }
 
 function printVersion(): void {
-  process.stdout.write(`adobe-agent-ui ${PKG_VERSION}\n`);
+  process.stdout.write(`ttt-ui ${PKG_VERSION}\n`);
 }
 
 async function main(): Promise<void> {
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
   });
 
   const url = server.url;
-  process.stdout.write(`\nAdobe Agent MCP UI ready at:\n  ${url}\n\n`);
+  process.stdout.write(`\nTTT UI ready at:\n  ${url}\n\n`);
 
   if (!flags.noOpen) {
     try {
@@ -105,6 +105,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`Failed to start Adobe Agent MCP UI: ${(err as Error).message}\n`);
+  process.stderr.write(`Failed to start TTT UI: ${(err as Error).message}\n`);
   process.exit(1);
 });

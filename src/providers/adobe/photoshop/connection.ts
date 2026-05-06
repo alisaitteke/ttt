@@ -1,51 +1,47 @@
 import { platform } from 'os';
-import { Logger } from '../utils/logger.js';
+import { Logger } from '../../../utils/logger.js';
+import { ExtendScriptExecutor } from '../_shared/platform/script-executor.js';
+import { MacOSExtendScriptExecutor } from '../_shared/platform/macos-executor.js';
+import { WindowsExtendScriptExecutor } from '../_shared/platform/windows-executor.js';
 import { PhotoshopDetector } from './detector.js';
-import { ScriptExecutor } from './script-executor.js';
-import { WindowsExecutor } from './windows-executor.js';
-import { MacOSExecutor } from './macos-executor.js';
+import type { AdobeAppInfo } from '../_shared/detector/base-adobe-detector.js';
 
-export interface PhotoshopInfo {
-  version: string;
-  path: string;
-  isRunning: boolean;
-  appName?: string;
-}
-
+/**
+ * Manages discovery + script execution against a locally-installed Adobe
+ * Photoshop. Auto-launches Photoshop on first script execution if needed.
+ */
 export class PhotoshopConnection {
   private logger: Logger;
   private detector: PhotoshopDetector;
-  private executor: ScriptExecutor;
-  private photoshopInfo: PhotoshopInfo | null = null;
-  private macosExecutor?: MacOSExecutor;
+  private executor!: ExtendScriptExecutor;
+  private macosExecutor?: MacOSExtendScriptExecutor;
+  private info: AdobeAppInfo | null = null;
 
   constructor() {
     this.logger = new Logger('PhotoshopConnection');
     this.detector = new PhotoshopDetector();
 
-    // Initialize platform-specific executor
-    const platformType = platform();
-    if (platformType === 'win32') {
-      this.executor = new WindowsExecutor();
-    } else if (platformType === 'darwin') {
-      this.macosExecutor = new MacOSExecutor();
+    const sys = platform();
+    if (sys === 'win32') {
+      this.executor = new WindowsExtendScriptExecutor({
+        comProgId: 'Photoshop.Application',
+        exeName: 'Photoshop.exe',
+      });
+    } else if (sys === 'darwin') {
+      // The exact app name (e.g. "Adobe Photoshop 2025") is filled in once
+      // detection succeeds — until then we use a sensible default that the
+      // detector will overwrite.
+      this.macosExecutor = new MacOSExtendScriptExecutor('Adobe Photoshop');
       this.executor = this.macosExecutor;
     } else {
-      throw new Error(`Unsupported platform: ${platformType}`);
+      throw new Error(`Unsupported platform: ${sys}`);
     }
   }
 
   async ping(): Promise<boolean> {
     try {
-      this.logger.debug('Pinging Photoshop...');
-      
-      // Try to detect Photoshop if not already detected
-      if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
-      }
-
-      // For now, just check if Photoshop is detected
-      return this.photoshopInfo !== null;
+      if (!this.info) this.info = await this.detector.detect();
+      return this.info !== null;
     } catch (error) {
       this.logger.error('Ping failed:', error);
       return false;
@@ -53,59 +49,36 @@ export class PhotoshopConnection {
   }
 
   async getVersion(): Promise<string> {
-    try {
-      if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
-      }
-
-      return this.photoshopInfo?.version || 'Unknown';
-    } catch (error) {
-      this.logger.error('Failed to get version:', error);
-      throw error;
-    }
+    if (!this.info) this.info = await this.detector.detect();
+    return this.info.version;
   }
 
   async executeScript(script: string, timeout?: number): Promise<unknown> {
-    try {
-      // Ensure Photoshop is detected
-      if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
-      }
+    if (!this.info) this.info = await this.detector.detect();
 
-      // Set app name for macOS executor
-      if (this.macosExecutor && this.photoshopInfo.appName) {
-        this.macosExecutor.setAppName(this.photoshopInfo.appName);
-      }
-
-      // Check if Photoshop is running, launch if needed
-      const isRunning = await this.executor.isPhotoshopRunning();
-      if (!isRunning) {
-        this.logger.info('Photoshop not running, launching...');
-        await this.executor.launchPhotoshop(this.photoshopInfo.path);
-      }
-
-      // Execute the script
-      const result = await this.executor.execute(script, timeout);
-      return result;
-    } catch (error) {
-      this.logger.error('Script execution failed:', error);
-      throw error;
-    }
-  }
-
-  getPhotoshopInfo(): PhotoshopInfo | null {
-    return this.photoshopInfo;
-  }
-
-  async ensurePhotoshopRunning(): Promise<void> {
-    if (!this.photoshopInfo) {
-      this.photoshopInfo = await this.detector.detect();
+    if (this.macosExecutor && this.info.appName) {
+      this.macosExecutor.setAppName(this.info.appName);
     }
 
-    const isRunning = await this.executor.isPhotoshopRunning();
+    const isRunning = await this.executor.isAppRunning();
+    if (!isRunning) {
+      this.logger.info('Photoshop not running, launching...');
+      await this.executor.launchApp(this.info.path);
+    }
+
+    return await this.executor.execute(script, timeout);
+  }
+
+  getInfo(): AdobeAppInfo | null {
+    return this.info;
+  }
+
+  async ensureRunning(): Promise<void> {
+    if (!this.info) this.info = await this.detector.detect();
+    const isRunning = await this.executor.isAppRunning();
     if (!isRunning) {
       this.logger.info('Launching Photoshop...');
-      await this.executor.launchPhotoshop(this.photoshopInfo.path);
+      await this.executor.launchApp(this.info.path);
     }
   }
 }

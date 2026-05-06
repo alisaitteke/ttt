@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const repoUrl = 'https://github.com/alisaitteke/adobe-agent';
+const repoUrl = 'https://github.com/alisaitteke/ttt';
 const authorUrl = 'https://github.com/alisaitteke';
 </script>
 

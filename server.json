@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.alisaitteke/adobe-agent",
-  "description": "MCP server for Adobe Creative Cloud automation (Photoshop today; extensible to other CC apps)",
+  "name": "io.github.alisaitteke/ttt",
+  "description": "TTT (The Tortoise Trainer) — provider-driven MCP server for local design tools (Photoshop today; Adobe CC, Figma and more next)",
   "repository": {
-    "url": "https://github.com/alisaitteke/adobe-agent",
+    "url": "https://github.com/alisaitteke/ttt",
     "source": "github"
   },
-  "version": "1.1.2",
-  "mcpName": "io.github.alisaitteke/adobe-agent",
+  "version": "0.1.0",
+  "mcpName": "io.github.alisaitteke/ttt",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "@alisaitteke/adobe-agent",
-      "version": "1.1.2",
+      "identifier": "@alisaitteke/ttt",
+      "version": "0.1.0",
       "transport": {
         "type": "stdio"
       }

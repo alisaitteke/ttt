@@ -4,6 +4,11 @@ import { stepCountIs, streamText, type LanguageModelUsage, type ModelMessage } f
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ModelPricing, ProviderAdapter, UsageCost } from './providers/registry.js';
+import {
+  DESIGN_TOOLS,
+  sanitizeDesignToolIds,
+  type DesignToolId,
+} from './providers/design-tools.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -44,36 +49,69 @@ export interface RunChatOptions {
   provider: ProviderAdapter;
   apiKey: string;
   modelId: string;
+  designTools?: DesignToolId[];
   abortSignal: AbortSignal;
   onAssistantBuffer?: (buf: AssistantBuffer) => void;
   onFinish?: (info: RunChatFinishInfo) => void;
 }
 
-export const ADOBE_AGENT_SYSTEM_PROMPT = `
-You are an assistant that drives Adobe Creative Cloud applications on the user's
-machine via the Adobe Agent MCP server.
+export const TTT_SYSTEM_PROMPT = `
+You are an assistant that drives the user's local design tools — Adobe Creative
+Cloud apps, Figma, Docker, and other design surfaces — through the TTT MCP server.
 
-Currently implemented automation focuses on Adobe Photoshop — use photoshop_* tools
-to create and edit documents: manage layers, place images, apply filters, edit text,
-save files, etc. Additional Adobe apps may expose tools later with other prefixes.
+Format all narrative replies in GitHub-flavored Markdown: use headings, bullet or
+numbered lists, **bold** and *italic* where helpful, inline \`code\` and fenced
+code blocks for commands or snippets, and tables when comparing options. Keep tool
+summaries and errors readable with short paragraphs and lists; do not use raw HTML.
+`.trim();
+
+function designToolPromptLine(id: DesignToolId): string {
+  const tool = DESIGN_TOOLS[id];
+  if (tool.toolPrefixes?.length) {
+    const parts = tool.toolPrefixes.map((p) => `${p}*`).join(', ');
+    return `- **${tool.label}** (${parts} tools)`;
+  }
+  return `- **${tool.label}** (${tool.toolPrefix}* tools)`;
+}
+
+function designToolAllowedPrefixes(id: DesignToolId): string[] {
+  const tool = DESIGN_TOOLS[id];
+  if (tool.toolPrefixes?.length) return [...tool.toolPrefixes];
+  return [tool.toolPrefix];
+}
+
+function buildSystemPrompt(designTools: DesignToolId[]): string {
+  if (designTools.length === 0) {
+    return `${TTT_SYSTEM_PROMPT}\n\nCurrently no design tools are enabled for this chat. You can only respond with text.`;
+  }
+
+  const toolsDesc = designTools.map(designToolPromptLine).join('\n');
+
+  return `${TTT_SYSTEM_PROMPT}
+
+Currently enabled design tools for this chat:
+${toolsDesc}
 
 Guidelines:
-- Start with photoshop_ping when unsure whether Photoshop is reachable.
+- Follow the Markdown response format described in your role instructions above.
+- Only use tools that match the enabled design-tool prefixes above.
+- If unsure whether the target app is reachable, start with its *_ping tool
+  (e.g. photoshop_ping, docker_ping).
 - Prefer single, well-scoped tool calls instead of long combined operations.
 - After meaningful state changes, briefly describe in plain language what you did.
-- If a tool call fails, surface the error and ask before retrying or trying an alternative.
-- Only MCP tools from this Adobe Agent server are available. Do not attempt shell,
+- If a tool call fails, surface the error and ask before retrying or trying an
+  alternative.
+- Only MCP tools exposed by this TTT server are available. Do not attempt shell,
   filesystem, web, or general coding operations unless the user switches context.
 `.trim();
+}
 
 export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStreamEvent> {
   let mcp: MCPClient | undefined;
   const buffer: AssistantBuffer = { text: '', toolCalls: [] };
 
   try {
-    const spawnArgs = IS_DEV_SOURCE
-      ? ['--import', 'tsx', MCP_SERVER_ENTRY]
-      : [MCP_SERVER_ENTRY];
+    const spawnArgs = IS_DEV_SOURCE ? ['--import', 'tsx', MCP_SERVER_ENTRY] : [MCP_SERVER_ENTRY];
     mcp = await createMCPClient({
       transport: new Experimental_StdioMCPTransport({
         command: process.execPath,
@@ -82,7 +120,21 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
       }),
     });
 
-    const tools = await mcp.tools();
+    const allTools = await mcp.tools();
+
+    const designTools = sanitizeDesignToolIds(opts.designTools ?? []);
+    const allowedPrefixes = designTools.flatMap((id) => designToolAllowedPrefixes(id));
+    
+    const tools =
+      designTools.length === 0
+        ? {}
+        : Object.fromEntries(
+            Object.entries(allTools).filter(([name]) =>
+              allowedPrefixes.some((prefix) => name.startsWith(prefix))
+            )
+          );
+
+    const systemPrompt = buildSystemPrompt(designTools);
 
     const result = streamText({
       model: opts.provider.getLanguageModel({
@@ -90,7 +142,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
         modelId: opts.modelId,
       }),
       tools,
-      system: ADOBE_AGENT_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [...opts.history, { role: 'user', content: opts.prompt }],
       stopWhen: stepCountIs(20),
       abortSignal: opts.abortSignal,
@@ -181,8 +233,7 @@ export function computeCost(usage: LanguageModelUsage, pricing: ModelPricing): U
   // derive it from the total minus cache buckets so we don't double-bill.
   const totalInput = usage.inputTokens ?? 0;
   const noCache =
-    usage.inputTokenDetails?.noCacheTokens ??
-    Math.max(0, totalInput - cacheRead - cacheWrite);
+    usage.inputTokenDetails?.noCacheTokens ?? Math.max(0, totalInput - cacheRead - cacheWrite);
   const output = usage.outputTokens ?? 0;
 
   const inputUsd = (noCache / 1_000_000) * pricing.inputUsdPerMTok;
@@ -208,7 +259,7 @@ function stringifyToolOutput(output: unknown): string {
     const content = (output as { content?: Array<{ type?: string; text?: string }> }).content;
     if (Array.isArray(content)) {
       return content
-        .map((c) => (typeof c === 'string' ? c : c?.text ?? ''))
+        .map((c) => (typeof c === 'string' ? c : (c?.text ?? '')))
         .filter(Boolean)
         .join('\n');
     }

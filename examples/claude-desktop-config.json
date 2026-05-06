@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "adobe-agent": {
+    "ttt": {
       "command": "npx",
-      "args": ["-y", "@alisaitteke/adobe-agent"],
+      "args": ["-y", "@alisaitteke/ttt"],
       "env": {
         "LOG_LEVEL": "1",
         "PHOTOSHOP_PATH": ""

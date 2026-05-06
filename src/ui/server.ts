@@ -4,13 +4,9 @@ import { streamSSE } from 'hono/streaming';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { launchCreativeCloudDesktop } from '../providers/adobe/creative-cloud/desktop.js';
 import { Logger } from '../utils/logger.js';
-import {
-  buildHistory,
-  runChat,
-  type AssistantBuffer,
-  type RunChatFinishInfo,
-} from './agent.js';
+import { buildHistory, runChat, type AssistantBuffer, type RunChatFinishInfo } from './agent.js';
 import {
   loadConfig,
   maskApiKey,
@@ -19,6 +15,11 @@ import {
   type ProviderId,
 } from './config.js';
 import { getProvider, listProviders } from './providers/registry.js';
+import { type DesignToolId } from './providers/design-tools.js';
+import {
+  listDesignToolsWithInstallStatus,
+  resolveDefaultChatTools,
+} from './providers/design-tool-detection.js';
 import {
   appendMessage,
   createChat,
@@ -28,6 +29,7 @@ import {
   listChats,
   renameChat,
   updateChatModel,
+  updateChatTools,
 } from './store/chats.js';
 import { getDB } from './store/db.js';
 
@@ -96,7 +98,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   });
 
   app.post('/api/active', async (c) => {
-    const body = await c.req.json().catch(() => ({})) as Partial<{
+    const body = (await c.req.json().catch(() => ({}))) as Partial<{
       activeProvider: ProviderId;
       activeModel: string;
     }>;
@@ -127,10 +129,26 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     return c.json(out);
   });
 
+  // ---- Design Tools -------------------------------------------------------
+
+  app.get('/api/design-tools', async (c) => {
+    return c.json(await listDesignToolsWithInstallStatus());
+  });
+
+  app.post('/api/creative-cloud/launch', async (c) => {
+    try {
+      await launchCreativeCloudDesktop();
+      return c.json({ ok: true as const });
+    } catch (err) {
+      logger.warn('creative cloud launch failed', err);
+      return c.json({ error: (err as Error).message }, 500);
+    }
+  });
+
   app.post('/api/providers/:id/validate-key', async (c) => {
     const provider = getProvider(c.req.param('id'));
     if (!provider) return c.json({ ok: false, error: 'unknown_provider' }, 404);
-    const body = await c.req.json().catch(() => ({})) as { apiKey?: string };
+    const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
     if (!body.apiKey) return c.json({ ok: false, error: 'missing_key' }, 400);
     if (!provider.validateApiKeyFormat(body.apiKey)) {
       return c.json({ ok: false, error: 'invalid_format' }, 200);
@@ -142,7 +160,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   app.post('/api/providers/:id/key', async (c) => {
     const provider = getProvider(c.req.param('id'));
     if (!provider) return c.json({ error: 'unknown_provider' }, 404);
-    const body = await c.req.json().catch(() => ({})) as { apiKey?: string };
+    const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
     if (!body.apiKey) return c.json({ error: 'missing_key' }, 400);
     if (!provider.validateApiKeyFormat(body.apiKey)) {
       return c.json({ error: 'invalid_format' }, 400);
@@ -170,17 +188,19 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   });
 
   app.post('/api/chats', async (c) => {
-    const body = await c.req.json().catch(() => ({})) as Partial<{
+    const body = (await c.req.json().catch(() => ({}))) as Partial<{
       provider: ProviderId;
       model: string;
       title: string;
+      tools: DesignToolId[];
     }>;
     const config = loadConfig();
     const providerId = body.provider ?? config.activeProvider;
     const provider = getProvider(providerId);
     if (!provider) return c.json({ error: 'unknown_provider' }, 400);
     const model = body.model ?? config.activeModel ?? provider.defaultModel();
-    const chat = createChat({ provider: providerId, model, title: body.title });
+    const tools = body.tools ?? (await resolveDefaultChatTools());
+    const chat = createChat({ provider: providerId, model, title: body.title, tools });
     return c.json(chat);
   });
 
@@ -192,10 +212,11 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   });
 
   app.patch('/api/chats/:id', async (c) => {
-    const body = await c.req.json().catch(() => ({})) as Partial<{
+    const body = (await c.req.json().catch(() => ({}))) as Partial<{
       title: string;
       provider: ProviderId;
       model: string;
+      tools: DesignToolId[];
     }>;
     const id = c.req.param('id');
     if (body.title !== undefined) {
@@ -212,6 +233,9 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       const model = body.model ?? (body.provider ? adapter.defaultModel() : chat.model);
       updateChatModel(id, provider, model);
     }
+    if (body.tools !== undefined) {
+      updateChatTools(id, body.tools);
+    }
     return c.json({ ok: true });
   });
 
@@ -223,7 +247,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   // ---- Chat streaming -----------------------------------------------------
 
   app.post('/api/chat', async (c) => {
-    const body = await c.req.json().catch(() => ({})) as {
+    const body = (await c.req.json().catch(() => ({}))) as {
       chatId?: string;
       prompt?: string;
       requestId?: string;
@@ -290,6 +314,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
           provider,
           apiKey,
           modelId: chat.model,
+          designTools: chat.tools ?? [],
           abortSignal: controller.signal,
           onAssistantBuffer: (b) => {
             buffer = b;
@@ -334,9 +359,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   // so they're safe to cache forever. Everything else (index.html, bare svg
   // favicon, etc.) must revalidate on each load.
   const cacheControlFor = (pathname: string): string =>
-    pathname.startsWith('assets/')
-      ? 'public, max-age=31536000, immutable'
-      : 'no-cache';
+    pathname.startsWith('assets/') ? 'public, max-age=31536000, immutable' : 'no-cache';
 
   app.get('*', async (c) => {
     const url = new URL(c.req.url);
@@ -371,10 +394,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
         },
       });
     } catch {
-      return c.text(
-        'UI bundle not found. Run `npm run build` and try again.',
-        500
-      );
+      return c.text('UI bundle not found. Run `npm run build` and try again.', 500);
     }
   });
 

@@ -1,6 +1,7 @@
 import type { LanguageModelUsage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import type { UsageCost } from '../providers/registry.js';
+import { sanitizeDesignToolIds, type DesignToolId } from '../providers/design-tools.js';
 import { getDB } from './db.js';
 
 export interface ChatRow {
@@ -9,6 +10,7 @@ export interface ChatRow {
   provider: string;
   model: string;
   sessionId: string | null;
+  tools: DesignToolId[] | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -42,6 +44,7 @@ interface RawChatRow {
   provider: string;
   model: string;
   session_id: string | null;
+  tools: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -55,12 +58,22 @@ interface RawMessageRow {
 }
 
 function rowToChat(row: RawChatRow): ChatRow {
+  let tools: DesignToolId[] | null = null;
+  if (row.tools) {
+    try {
+      const parsed = JSON.parse(row.tools) as string[];
+      tools = sanitizeDesignToolIds(parsed);
+    } catch {
+      tools = null;
+    }
+  }
   return {
     id: row.id,
     title: row.title,
     provider: row.provider,
     model: row.model,
     sessionId: row.session_id,
+    tools,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -84,17 +97,16 @@ export function listChats(): ChatRow[] {
 }
 
 export function getChat(id: string): ChatRow | null {
-  const row = getDB()
-    .prepare<[string], RawChatRow>('SELECT * FROM chats WHERE id = ?')
-    .get(id);
+  const row = getDB().prepare<[string], RawChatRow>('SELECT * FROM chats WHERE id = ?').get(id);
   return row ? rowToChat(row) : null;
 }
 
 export function getMessages(chatId: string): MessageRow[] {
   const rows = getDB()
-    .prepare<[string], RawMessageRow>(
-      'SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at ASC'
-    )
+    .prepare<
+      [string],
+      RawMessageRow
+    >('SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at ASC')
     .all(chatId);
   return rows.map(rowToMessage);
 }
@@ -103,6 +115,7 @@ export function createChat(input: {
   provider: string;
   model: string;
   title?: string;
+  tools?: DesignToolId[];
 }): ChatRow {
   const now = Date.now();
   const chat: ChatRow = {
@@ -111,15 +124,25 @@ export function createChat(input: {
     provider: input.provider,
     model: input.model,
     sessionId: null,
+    tools: input.tools != null ? sanitizeDesignToolIds(input.tools) : null,
     createdAt: now,
     updatedAt: now,
   };
   getDB()
     .prepare(
-      `INSERT INTO chats (id, title, provider, model, session_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO chats (id, title, provider, model, session_id, tools, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(chat.id, chat.title, chat.provider, chat.model, chat.sessionId, chat.createdAt, chat.updatedAt);
+    .run(
+      chat.id,
+      chat.title,
+      chat.provider,
+      chat.model,
+      chat.sessionId,
+      chat.tools ? JSON.stringify(chat.tools) : null,
+      chat.createdAt,
+      chat.updatedAt
+    );
   return chat;
 }
 
@@ -148,7 +171,9 @@ export function appendMessage(input: {
 }
 
 export function renameChat(id: string, title: string): void {
-  getDB().prepare(`UPDATE chats SET title = ?, updated_at = ? WHERE id = ?`).run(title, Date.now(), id);
+  getDB()
+    .prepare(`UPDATE chats SET title = ?, updated_at = ? WHERE id = ?`)
+    .run(title, Date.now(), id);
 }
 
 export function updateChatModel(id: string, provider: string, model: string): void {
@@ -163,4 +188,11 @@ export function deleteChat(id: string): void {
 
 export function setChatSessionId(id: string, sessionId: string | null): void {
   getDB().prepare(`UPDATE chats SET session_id = ? WHERE id = ?`).run(sessionId, id);
+}
+
+export function updateChatTools(id: string, tools: DesignToolId[]): void {
+  const cleaned = sanitizeDesignToolIds(tools);
+  getDB()
+    .prepare(`UPDATE chats SET tools = ?, updated_at = ? WHERE id = ?`)
+    .run(JSON.stringify(cleaned), Date.now(), id);
 }

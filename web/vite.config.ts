@@ -1,9 +1,17 @@
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 
+const rootPackagePath = fileURLToPath(new URL('../package.json', import.meta.url));
+const rootPackageVersion =
+  JSON.parse(readFileSync(rootPackagePath, 'utf-8')).version ?? '0.0.0';
+
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_TTT_NPM_VERSION': JSON.stringify(rootPackageVersion),
+  },
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {

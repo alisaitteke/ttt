@@ -1,6 +1,6 @@
 import { kvGet, kvSet } from './store/kv.js';
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'groq';
 
 export interface ProviderConfig {
   apiKey?: string;

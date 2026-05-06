@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'groq';
 
 export interface ModelPricing {
   inputUsdPerMTok: number;

@@ -1,7 +1,7 @@
-import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
-import { PhotoshopConnection } from '../../platform/connection.js';
-import { PhotoshopAPIFactory } from '../../api/photoshop-api.js';
-import { ExtendScriptSnippets } from '../../api/extendscript.js';
+import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import { PhotoshopConnection } from '../connection.js';
+import { PhotoshopAPIFactory } from '../api/api-factory.js';
+import { ExtendScriptSnippets } from '../api/extendscript.js';
 
 export function createTextTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
@@ -68,7 +68,15 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
             alignment: {
               type: 'string',
               description: 'Text alignment',
-              enum: ['LEFT', 'CENTER', 'RIGHT', 'LEFTJUSTIFIED', 'CENTERJUSTIFIED', 'RIGHTJUSTIFIED', 'FULLYJUSTIFIED'],
+              enum: [
+                'LEFT',
+                'CENTER',
+                'RIGHT',
+                'LEFTJUSTIFIED',
+                'CENTERJUSTIFIED',
+                'RIGHTJUSTIFIED',
+                'FULLYJUSTIFIED',
+              ],
             },
           },
           required: ['alignment'],

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import anthropicIcon from '@lobehub/icons-static-svg/icons/anthropic.svg?url';
+import groqIcon from '@lobehub/icons-static-svg/icons/groq.svg?url';
 import openaiIcon from '@lobehub/icons-static-svg/icons/openai.svg?url';
 import openrouterIcon from '@lobehub/icons-static-svg/icons/openrouter.svg?url';
 import geminiIcon from '@lobehub/icons-static-svg/icons/gemini-color.svg?url';
@@ -8,6 +9,7 @@ import type { ProviderId } from '@/lib/api';
 
 const ICONS: Record<ProviderId, string> = {
   anthropic: anthropicIcon,
+  groq: groqIcon,
   openai: openaiIcon,
   openrouter: openrouterIcon,
   google: geminiIcon,
@@ -15,6 +17,7 @@ const ICONS: Record<ProviderId, string> = {
 
 const LABELS: Record<ProviderId, string> = {
   anthropic: 'Anthropic',
+  groq: 'Groq',
   openai: 'OpenAI',
   openrouter: 'OpenRouter',
   google: 'Google',
@@ -24,6 +27,7 @@ const LABELS: Record<ProviderId, string> = {
 // they remain visible. The Gemini mark is full color and is used as-is.
 const MONO: Record<ProviderId, boolean> = {
   anthropic: true,
+  groq: true,
   openai: true,
   openrouter: true,
   google: false,

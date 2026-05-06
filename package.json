@@ -1,12 +1,13 @@
 {
-  "name": "@alisaitteke/adobe-agent",
-  "version": "1.1.2",
-  "description": "MCP server for Adobe Creative Cloud automation (Photoshop today; designed for additional CC apps)",
+  "name": "@alisaitteke/ttt",
+  "version": "0.1.0",
+  "description": "TTT (The Tortoise Trainer) — provider-driven MCP server for local design tools (Photoshop today; Adobe CC, Figma and more next)",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "adobe-agent": "dist/index.js",
-    "adobe-agent-ui": "dist/ui/cli.js"
+    "ttt": "dist/index.js",
+    "ttt-ui": "dist/ui/cli.js",
+    "ui": "dist/ui/cli.js"
   },
   "files": [
     "dist",
@@ -25,6 +26,7 @@
     "start": "node dist/index.js",
     "start:ui": "node dist/ui/cli.js",
     "lint": "eslint src --ext .ts",
+    "verify:docker-tools": "tsx scripts/verify-docker-tool-parity.ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "prepare": "npm run build",
@@ -32,24 +34,24 @@
   },
   "keywords": [
     "mcp",
-    "adobe",
-    "creative-cloud",
-    "photoshop",
-    "illustrator",
-    "automation",
-    "ai",
     "model-context-protocol",
-    "image-editing"
+    "design-automation",
+    "ai",
+    "photoshop",
+    "figma",
+    "after-effects",
+    "creative-cloud",
+    "ttt"
   ],
   "author": "Ali Sait Teke",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alisaitteke/adobe-agent.git"
+    "url": "git+https://github.com/alisaitteke/ttt.git"
   },
-  "homepage": "https://github.com/alisaitteke/adobe-agent#readme",
+  "homepage": "https://github.com/alisaitteke/ttt#readme",
   "bugs": {
-    "url": "https://github.com/alisaitteke/adobe-agent/issues"
+    "url": "https://github.com/alisaitteke/ttt/issues"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -60,8 +62,10 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.75",
     "@ai-sdk/google": "^3.0.67",
+    "@ai-sdk/groq": "^3.0.38",
     "@ai-sdk/mcp": "^1.0.40",
     "@ai-sdk/openai": "^3.0.61",
+    "@alisaitteke/docker-mcp": "^0.2.4",
     "@hono/node-server": "^1.13.7",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@openrouter/ai-sdk-provider": "^2.9.0",
@@ -69,9 +73,10 @@
     "better-sqlite3": "^12.9.0",
     "get-port": "^7.1.0",
     "hono": "^4.6.14",
-    "open": "^10.1.0"
+    "open": "^10.1.0",
+    "vue-renderer-markdown": "^0.0.62"
   },
-  "mcpName": "io.github.alisaitteke/adobe-agent",
+  "mcpName": "io.github.alisaitteke/ttt",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.5",
@@ -79,6 +84,7 @@
     "@typescript-eslint/parser": "^8.20.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.18.0",
+    "globals": "^17.6.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"

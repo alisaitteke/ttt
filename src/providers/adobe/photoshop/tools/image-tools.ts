@@ -1,7 +1,7 @@
-import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
-import { PhotoshopConnection } from '../../platform/connection.js';
-import { PhotoshopAPIFactory } from '../../api/photoshop-api.js';
-import { ExtendScriptSnippets } from '../../api/extendscript.js';
+import { ToolDefinition, ToolResult } from '../../../../core/tool-registry.js';
+import { PhotoshopConnection } from '../connection.js';
+import { PhotoshopAPIFactory } from '../api/api-factory.js';
+import { ExtendScriptSnippets } from '../api/extendscript.js';
 
 export function createImageTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [

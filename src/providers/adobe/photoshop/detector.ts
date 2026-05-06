@@ -1,69 +1,56 @@
-import { platform } from 'os';
-import { Logger } from '../utils/logger.js';
-import { PhotoshopInfo } from './connection.js';
-import { WindowsDetector } from './windows-detector.js';
-import { MacOSDetector } from './macos-detector.js';
+import { BaseAdobeDetector } from '../_shared/detector/base-adobe-detector.js';
 
-export class PhotoshopDetector {
-  private logger: Logger;
-  private platformType: NodeJS.Platform;
-  private windowsDetector?: WindowsDetector;
-  private macosDetector?: MacOSDetector;
-
+/**
+ * Detect a locally-installed Adobe Photoshop on macOS or Windows.
+ *
+ * Honors the `PHOTOSHOP_PATH` env var as an explicit override, falls back to
+ * Spotlight (macOS) / Registry (Windows), then probes common install paths.
+ */
+export class PhotoshopDetector extends BaseAdobeDetector {
   constructor() {
-    this.logger = new Logger('PhotoshopDetector');
-    this.platformType = platform();
-
-    // Initialize platform-specific detector
-    if (this.platformType === 'win32') {
-      this.windowsDetector = new WindowsDetector();
-    } else if (this.platformType === 'darwin') {
-      this.macosDetector = new MacOSDetector();
-    }
+    super({ envOverrideVar: 'PHOTOSHOP_PATH' });
   }
 
-  async detect(): Promise<PhotoshopInfo> {
-    this.logger.info(`Detecting Photoshop on ${this.platformType}...`);
+  getAppId(): string {
+    return 'photoshop';
+  }
 
-    if (this.platformType === 'win32' && this.windowsDetector) {
-      return await this.windowsDetector.detect();
-    } else if (this.platformType === 'darwin' && this.macosDetector) {
-      return await this.macosDetector.detect();
-    } else {
-      throw new Error(`Unsupported platform: ${this.platformType}`);
-    }
+  getMacOSAppNamePrefix(): string {
+    return 'Adobe Photoshop';
+  }
+
+  getMacOSBundleId(): string {
+    return 'com.adobe.Photoshop';
+  }
+
+  getWindowsExeName(): string {
+    return 'Photoshop.exe';
+  }
+
+  protected getWindowsRegistryRoots(): string[] {
+    return ['HKLM\\SOFTWARE\\Adobe\\Photoshop', 'HKLM\\SOFTWARE\\WOW6432Node\\Adobe\\Photoshop'];
   }
 
   /**
-   * Determine if detected Photoshop version supports UXP
-   * UXP is supported in Photoshop 23.5+ (roughly 2022+)
+   * Determine if a Photoshop version supports UXP (23.5+, roughly 2022+).
+   * Kept here because some downstream code still asks the question even though
+   * the API factory always falls back to ExtendScript for external scripting.
    */
   supportsUXP(version: string): boolean {
-    // Try to extract numeric version
     const versionMatch = version.match(/(\d+)\.?(\d*)/);
     if (versionMatch) {
       const major = parseInt(versionMatch[1], 10);
       const minor = versionMatch[2] ? parseInt(versionMatch[2], 10) : 0;
-
-      // Photoshop 23.5 or higher supports UXP
       return major > 23 || (major === 23 && minor >= 5);
     }
-
-    // Try to extract year from version
     const yearMatch = version.match(/20(\d{2})/);
     if (yearMatch) {
       const year = parseInt(`20${yearMatch[1]}`, 10);
-      // 2022 and later support UXP
       return year >= 2022;
     }
-
-    // Default to false for unknown versions
     return false;
   }
 
-  /**
-   * Get recommended API type based on version
-   */
   getRecommendedAPI(version: string): 'UXP' | 'ExtendScript' {
     return this.supportsUXP(version) ? 'UXP' : 'ExtendScript';
   }

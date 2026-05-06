@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-export type AdobeApp = 'ps' | 'ai' | 'ae' | 'pr' | 'id' | 'xd' | 'lr';
+export type AdobeMnemonicApp = 'ps' | 'ai' | 'ae' | 'pr' | 'id' | 'xd' | 'lr';
+
+export type AdobeApp = AdobeMnemonicApp | 'figma' | 'davinci' | 'docker';
+
+const SVG_BRAND_APPS = new Set<AdobeApp>(['figma', 'davinci', 'docker']);
 
 interface AppMeta {
   label: string;
@@ -9,7 +13,7 @@ interface AppMeta {
   fg: string;
 }
 
-const APP_META: Record<AdobeApp, AppMeta> = {
+const APP_META: Record<AdobeMnemonicApp, AppMeta> = {
   ps: { label: 'Ps', bg: '#001E36', fg: '#31A8FF' },
   ai: { label: 'Ai', bg: '#330000', fg: '#FF9A00' },
   ae: { label: 'Ae', bg: '#00005B', fg: '#9999FF' },
@@ -27,21 +31,59 @@ const props = withDefaults(
   { size: 32 }
 );
 
-const meta = computed(() => APP_META[props.app]);
+const useSvg = computed(() => SVG_BRAND_APPS.has(props.app));
 
-const style = computed(() => ({
+const svgSrc = computed(() => {
+  const base = import.meta.env.BASE_URL;
+  if (props.app === 'figma') return `${base}figma-logo.svg`;
+  if (props.app === 'davinci') return `${base}davinci-resolve-logo.svg`;
+  if (props.app === 'docker') return `${base}docker-mark.svg`;
+  return '';
+});
+
+const svgAlt = computed(() => {
+  if (props.app === 'figma') return 'Figma';
+  if (props.app === 'davinci') return 'DaVinci Resolve';
+  if (props.app === 'docker') return 'Docker';
+  return '';
+});
+
+const meta = computed(() => APP_META[props.app as AdobeMnemonicApp]);
+
+const frameStyle = computed(() => ({
   width: `${props.size}px`,
   height: `${props.size}px`,
+  borderRadius: `${Math.max(2, Math.round(props.size * 0.1875))}px`,
+}));
+
+const mnemonicStyle = computed(() => ({
+  ...frameStyle.value,
   background: meta.value.bg,
   color: meta.value.fg,
-  // Adobe icons use ~18.75% squircle radius
-  borderRadius: `${Math.max(2, Math.round(props.size * 0.1875))}px`,
   fontSize: `${Math.round(props.size * 0.55)}px`,
 }));
 </script>
 
 <template>
-  <div class="adobe-app-icon" :style="style" :aria-label="meta.label">
+  <div
+    v-if="useSvg"
+    class="adobe-app-icon adobe-app-icon--svg"
+    :style="frameStyle"
+  >
+    <img
+      :src="svgSrc"
+      :alt="svgAlt"
+      class="adobe-app-icon__img"
+      :class="app === 'davinci' ? 'dark:invert' : ''"
+      draggable="false"
+    />
+  </div>
+  <div
+    v-else
+    class="adobe-app-icon"
+    :style="mnemonicStyle"
+    :aria-label="meta.label"
+  >
     <span class="adobe-app-icon__label">{{ meta.label }}</span>
   </div>
 </template>
@@ -56,12 +98,25 @@ const style = computed(() => ({
   font-family: var(--font-mnemonic);
 }
 
+.adobe-app-icon--svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  background: transparent;
+}
+
+.adobe-app-icon__img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+}
+
 .adobe-app-icon__label {
   font-weight: 900;
-  /* Tight tracking matches Adobe Clean Display Mnemonic */
   letter-spacing: -0.06em;
   line-height: 1;
-  /* Optical centering: Source Sans 3 Black sits a hair high in the box */
   transform: translateY(0.04em);
 }
 </style>

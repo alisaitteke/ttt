@@ -1,20 +1,19 @@
-import { Logger } from '../utils/logger.js';
-import { PhotoshopConnection } from '../platform/connection.js';
+import { Logger } from '../../../../utils/logger.js';
+import { PhotoshopConnection } from '../connection.js';
 
 export type APIType = 'UXP' | 'ExtendScript';
 
 export interface PhotoshopAPI {
-  /**
-   * Execute a script using the appropriate API
-   */
   executeScript(script: string): Promise<unknown>;
-
-  /**
-   * Get the API type being used
-   */
   getAPIType(): APIType;
 }
 
+/**
+ * Picks the right scripting API for the connected Photoshop instance.
+ *
+ * In practice we always end up using ExtendScript because UXP is plugin-only;
+ * the abstraction is kept so a future native plugin transport can plug in.
+ */
 export class PhotoshopAPIFactory {
   private logger: Logger;
   private connection: PhotoshopConnection;
@@ -25,60 +24,15 @@ export class PhotoshopAPIFactory {
   }
 
   async createAPI(): Promise<PhotoshopAPI> {
-    const info = this.connection.getPhotoshopInfo();
-    
+    const info = this.connection.getInfo();
     if (!info) {
       throw new Error('Photoshop info not available. Please detect Photoshop first.');
     }
-
-    // Determine which API to use based on version
-    const apiType = this.determineAPIType(info.version);
-    
-    this.logger.info(`Creating ${apiType} API for Photoshop version ${info.version}`);
-
-    if (apiType === 'UXP') {
-      return new UXPPhotoshopAPI(this.connection);
-    } else {
-      return new ExtendScriptPhotoshopAPI(this.connection);
-    }
-  }
-
-  private determineAPIType(version: string): APIType {
-    // IMPORTANT: When running scripts via AppleScript/COM, we can only use ExtendScript
-    // UXP is only available for plugins, not for external script execution
-    // Therefore, we always use ExtendScript for external automation
-    
-    this.logger.debug(`Using ExtendScript for version ${version} (UXP not available for external scripting)`);
-    return 'ExtendScript';
+    this.logger.debug(`Using ExtendScript for version ${info.version}`);
+    return new ExtendScriptPhotoshopAPI(this.connection);
   }
 }
 
-/**
- * UXP-based API for modern Photoshop (23.5+)
- * NOTE: UXP is not available for external script execution via AppleScript/COM
- * This class is kept for future plugin-based implementation
- */
-class UXPPhotoshopAPI implements PhotoshopAPI {
-  private connection: PhotoshopConnection;
-
-  constructor(connection: PhotoshopConnection) {
-    this.connection = connection;
-  }
-
-  async executeScript(script: string): Promise<unknown> {
-    // UXP cannot be executed externally via AppleScript/COM
-    // Fall back to ExtendScript
-    return await this.connection.executeScript(script);
-  }
-
-  getAPIType(): APIType {
-    return 'UXP';
-  }
-}
-
-/**
- * ExtendScript-based API for legacy Photoshop (< 23.5)
- */
 class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
   private connection: PhotoshopConnection;
 
@@ -87,21 +41,21 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
   }
 
   async executeScript(script: string): Promise<unknown> {
-    // Wrap script in error handling
-    const wrappedScript = this.wrapInErrorHandling(script);
-    return await this.connection.executeScript(wrappedScript);
+    return await this.connection.executeScript(this.wrapInErrorHandling(script));
   }
 
+  /**
+   * ExtendScript has no JSON object, so the result is serialized via
+   * toSource()/String(). Errors are surfaced with an "ERROR:" prefix that
+   * platform executors translate back into thrown Errors.
+   *
+   * Ruler and type units are temporarily forced to pixels/points so that every
+   * DOM API that accepts plain numbers (translate, textItem.size,
+   * textItem.position, doc.crop bounds, etc.) behaves consistently regardless
+   * of the user's Photoshop preferences. The user's original preferences are
+   * restored in the finally block.
+   */
   private wrapInErrorHandling(script: string): string {
-    // ExtendScript has no JSON object, so the result is serialized via
-    // toSource()/String(). Errors are surfaced with an "ERROR:" prefix
-    // that platform executors translate back into thrown Errors.
-    //
-    // Ruler and type units are temporarily forced to pixels/points so that
-    // every DOM API that accepts plain numbers (translate, textItem.size,
-    // textItem.position, doc.crop bounds, etc.) behaves consistently
-    // regardless of the user's Photoshop preferences. The user's original
-    // preferences are restored in the finally block.
     return `
 (function() {
   var __originalRulerUnits = null;
