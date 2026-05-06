@@ -1,6 +1,6 @@
 {
   "name": "@alisaitteke/ttt",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "TTT (The Tortoise Trainer) — provider-driven local MCP orchestrator with optional bundled web UI for Adobe automation, Docker, and more backends (scaffolded integrations: Figma, OpenClaw, Hermes)",
   "main": "dist/index.js",
   "type": "module",

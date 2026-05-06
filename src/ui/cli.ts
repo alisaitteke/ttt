@@ -112,9 +112,9 @@ function spawnDetached(): never {
   const existing = readBackgroundStateSync();
   if (existing && isProcessAlive(existing.pid)) {
     process.stderr.write(
-      `${c.yellow}!${c.reset} ttt-ui is already running (PID ${existing.pid})\n` +
+      `${c.yellow}!${c.reset} ttt ui is already running (PID ${existing.pid})\n` +
       `  ${c.dim}${existing.url}${c.reset}\n\n` +
-      `  Run ${c.bold}ttt-ui --stop${c.reset} to stop it.\n\n`
+      `  Run ${c.bold}ttt ui --stop${c.reset} to stop it.\n\n`
     );
     process.exit(1);
   }
@@ -145,8 +145,8 @@ function spawnDetached(): never {
     `  ${c.dim}State${c.reset}   ${c.cyan}${statePath}${c.reset}\n\n` +
     `  ${c.dim}The URL will be written to state file when ready.${c.reset}\n\n` +
     `  ${c.dim}────────────────────────────────────────────${c.reset}\n\n` +
-    `  ${c.bold}ttt-ui --stop${c.reset}${c.dim}        Stop the background server${c.reset}\n` +
-    `  ${c.bold}ttt-ui --help${c.reset}${c.dim}        Show all options${c.reset}\n\n`
+    `  ${c.bold}ttt ui --stop${c.reset}${c.dim}         Stop the background server${c.reset}\n` +
+    `  ${c.bold}ttt ui --help${c.reset}${c.dim}         Show all options${c.reset}\n\n`
   );
   process.exit(0);
 }
@@ -212,7 +212,7 @@ export function printUiHelp(): void {
   process.stdout.write(
     `\n  ${c.bold}ttt ui${c.reset}  ${c.dim}v${PKG_VERSION} — Browser UI for the TTT MCP server${c.reset}\n\n` +
     `  ${c.dim}USAGE${c.reset}\n\n` +
-    `  ttt ui ${c.dim}[options]${c.reset}\n\n` +
+    `  ttt ui ${c.dim}[options]${c.reset}\n\n`  +
     `  ${c.dim}OPTIONS${c.reset}\n\n` +
     row('-p, --port <number>', 'Port to listen on  (default: auto)') +
     row('    --host <host>',   'Bind address       (default: 127.0.0.1)') +
