@@ -1,0 +1,17 @@
+{
+  "connections": {
+    "whatsapp": {
+      "title": "关联 WhatsApp",
+      "blurb": "使用手机 WhatsApp 扫描二维码（已关联的设备）。非官方 API — 请合规使用。",
+      "linked": "已关联。可关闭此窗口。",
+      "waitingQr": "正在生成二维码…",
+      "scanHint": "WhatsApp → 设置 → 已关联的设备 → 关联设备。",
+      "retry": "重试",
+      "forget": "断开并清除会话",
+      "errors": {
+        "clientVersion": "WhatsApp 拒绝了关联（网页客户端版本过旧）。请更新本应用后重试。",
+        "sessionRejected": "WhatsApp 拒绝了会话。请先断开并清除会话，然后再试。"
+      }
+    }
+  }
+}

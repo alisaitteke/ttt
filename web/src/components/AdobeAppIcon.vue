@@ -3,9 +3,9 @@ import { computed } from 'vue';
 
 export type AdobeMnemonicApp = 'ps' | 'ai' | 'ae' | 'pr' | 'id' | 'xd' | 'lr';
 
-export type AdobeApp = AdobeMnemonicApp | 'figma' | 'davinci' | 'docker';
+export type AdobeApp = AdobeMnemonicApp | 'figma' | 'davinci' | 'docker' | 'whatsapp';
 
-const SVG_BRAND_APPS = new Set<AdobeApp>(['figma', 'davinci', 'docker']);
+const SVG_BRAND_APPS = new Set<AdobeApp>(['figma', 'davinci', 'docker', 'whatsapp']);
 
 interface AppMeta {
   label: string;
@@ -38,6 +38,7 @@ const svgSrc = computed(() => {
   if (props.app === 'figma') return `${base}figma-logo.svg`;
   if (props.app === 'davinci') return `${base}davinci-resolve-logo.svg`;
   if (props.app === 'docker') return `${base}docker-mark.svg`;
+  if (props.app === 'whatsapp') return `${base}whatsapp-mark.svg`;
   return '';
 });
 
@@ -45,6 +46,7 @@ const svgAlt = computed(() => {
   if (props.app === 'figma') return 'Figma';
   if (props.app === 'davinci') return 'DaVinci Resolve';
   if (props.app === 'docker') return 'Docker';
+  if (props.app === 'whatsapp') return 'WhatsApp';
   return '';
 });
 

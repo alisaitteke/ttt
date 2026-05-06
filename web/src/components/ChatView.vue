@@ -16,6 +16,7 @@ import {
   type ProviderInfo,
   type DesignToolInfo,
   type DesignToolId,
+  type SettingsOpenPayload,
 } from '@/lib/api';
 import type { useChatStore } from '@/stores/chat';
 
@@ -30,7 +31,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'new-chat': [];
-  'open-settings': [tab?: 'appearance' | 'providers'];
+  'open-settings': [payload?: SettingsOpenPayload];
   'open-sidebar': [];
 }>();
 
@@ -121,6 +122,7 @@ async function onToolsChange(tools: DesignToolId[]): Promise<void> {
                   :selected="activeChat.tools"
                   :disabled="props.store.sending.value"
                   @update:tools="onToolsChange"
+                  @open-settings="emit('open-settings', $event)"
                 />
                 <span class="h-4 w-px bg-border/60" />
                 <ModelSelector

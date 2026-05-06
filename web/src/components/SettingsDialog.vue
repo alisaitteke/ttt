@@ -26,13 +26,17 @@ import {
   apiListProviders,
   apiSaveKey,
   apiValidateKey,
+  type ConnectionProviderId,
   type ProviderId,
   type ProviderInfo,
+  type SettingsTab,
 } from '@/lib/api';
+import SettingsConnectionsPanel from './SettingsConnectionsPanel.vue';
 
 const props = defineProps<{
   open: boolean;
-  initialTab: 'appearance' | 'providers';
+  initialTab: SettingsTab;
+  focusConnection?: ConnectionProviderId | null;
 }>();
 
 const emit = defineEmits<{
@@ -43,7 +47,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const providers = ref<ProviderInfo[]>([]);
-const settingsTab = ref<'appearance' | 'providers'>('providers');
+const settingsTab = ref<SettingsTab>('providers');
 const panel = ref<'list' | 'form'>('list');
 const formMode = ref<'add' | 'replace'>('add');
 /** Add: null until user picks from grid (or auto-pick if only one). Replace: set when opening. */
@@ -155,13 +159,19 @@ async function removeKey(p: ProviderInfo): Promise<void> {
     removeBusyId.value = null;
   }
 }
+
+function onConnectionsChanged(): void {
+  emit('saved');
+}
 </script>
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="gap-0 p-5">
-      <div class="mb-4 flex items-start justify-between gap-3">
-        <div class="min-w-0 flex-1">
+    <DialogContent
+      class="flex h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden p-5 sm:max-w-lg"
+    >
+      <div class="mb-4 flex shrink-0 items-start justify-between gap-3">
+        <div class="flex min-h-[3.25rem] min-w-0 flex-1 flex-col justify-start">
           <DialogTitle class="text-base font-semibold leading-snug">{{
             t('settings.title')
           }}</DialogTitle>
@@ -180,6 +190,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
         </DialogClose>
       </div>
 
+      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]">
       <!-- List panel -->
       <div v-if="panel === 'list'" class="space-y-4">
         <div
@@ -207,6 +218,22 @@ async function removeKey(p: ProviderInfo): Promise<void> {
             type="button"
             role="tab"
             class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            :aria-selected="settingsTab === 'connections'"
+            :class="
+              cn(
+                settingsTab === 'connections'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )
+            "
+            @click="settingsTab = 'connections'"
+          >
+            {{ t('settings.tabs.connections') }}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             :aria-selected="settingsTab === 'appearance'"
             :class="
               cn(
@@ -225,6 +252,13 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           <SettingsAppearancePanel />
         </div>
 
+        <div v-show="settingsTab === 'connections'" role="tabpanel">
+          <SettingsConnectionsPanel
+            :auto-open-provider="focusConnection"
+            @changed="onConnectionsChanged"
+          />
+        </div>
+
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
         <h3 class="text-sm font-medium">{{ t('settings.providers.connectedHeading') }}</h3>
 
@@ -235,7 +269,7 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           {{ t('settings.providers.emptyState') }}
         </div>
 
-        <ul v-else class="max-h-[min(50vh,20rem)] space-y-2 overflow-y-auto pe-0.5">
+        <ul v-else class="space-y-2">
           <li
             v-for="p in configuredProviders"
             :key="p.id"
@@ -298,22 +332,21 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           {{ t('settings.providers.back') }}
         </Button>
 
-        <template v-if="formMode === 'replace' && formProvider">
-          <div class="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-            <ProviderIcon :provider="formProvider.id" :size="22" />
-            <span class="text-sm font-medium">{{ formProvider.label }}</span>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="space-y-2">
-            <Label>{{ t('settings.providers.providerLabel') }}</Label>
-            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div class="space-y-2">
+          <Label class="text-muted-foreground">{{ t('settings.providers.providerLabel') }}</Label>
+          <div class="rounded-lg border border-border bg-muted/30 p-3">
+            <template v-if="formMode === 'replace' && formProvider">
+              <div class="flex items-center gap-2">
+                <ProviderIcon :provider="formProvider.id" :size="22" />
+                <span class="text-sm font-medium">{{ formProvider.label }}</span>
+              </div>
+            </template>
+            <div v-else class="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 v-for="p in availableToAdd"
                 :key="p.id"
                 type="button"
-                class="flex flex-col items-center gap-1.5 rounded-md border px-2 py-3 text-xs font-medium transition"
+                class="flex flex-col items-center gap-1.5 rounded-md border bg-background px-2 py-3 text-xs font-medium transition"
                 :class="
                   formProviderId === p.id
                     ? 'border-primary bg-primary/10 text-primary'
@@ -326,14 +359,17 @@ async function removeKey(p: ProviderInfo): Promise<void> {
               </button>
             </div>
           </div>
-        </template>
+        </div>
 
         <div class="space-y-2">
-          <Label for="settings-api-key">{{ t('settings.providers.apiKeyLabel') }}</Label>
+          <Label class="text-muted-foreground" for="settings-api-key">{{
+            t('settings.providers.apiKeyLabel')
+          }}</Label>
           <Input
             id="settings-api-key"
             v-model="keyDraft"
             type="password"
+            class="h-10"
             :placeholder="formProvider?.apiKeyHint ?? t('settings.providers.pasteKeyPlaceholder')"
             :disabled="formBusy"
             @keydown.enter="onFormKeydown"
@@ -363,8 +399,11 @@ async function removeKey(p: ProviderInfo): Promise<void> {
           }}
         </Button>
       </div>
+      </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
+      <div
+        class="mt-6 shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4"
+      >
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <template v-if="panel === 'list' && settingsTab === 'providers'">
             <Button

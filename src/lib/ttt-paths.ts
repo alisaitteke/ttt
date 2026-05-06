@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 import { TTT_REVEAL_PATH_PREFIX } from './tool-ui-conventions.js';
 
 const EXPORTS_SUBDIR = 'exports';
 const DROPS_SUBDIR = 'drops';
+const CONNECTIONS_SUBDIR = 'connections';
 
 /** Set by the UI chat runner so default exports land under ~/.ttt/exports/<id>/. */
 export const TTT_EXPORT_CHAT_ID_ENV = 'TTT_EXPORT_CHAT_ID';
@@ -53,6 +55,31 @@ export function getTttDropsDir(): string {
   const dir = join(getTttHomeDir(), DROPS_SUBDIR);
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   return dir;
+}
+
+/** Base directory for connection adapters (WhatsApp auth state, etc.). */
+export function getTttConnectionsDir(): string {
+  const dir = join(getTttHomeDir(), CONNECTIONS_SUBDIR);
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  return dir;
+}
+
+/** WhatsApp (Baileys) multi-file auth state directory. */
+export function getTttWhatsAppAuthDir(): string {
+  const dir = join(getTttConnectionsDir(), 'whatsapp');
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  return dir;
+}
+
+/** True if Baileys `creds.json` exists (linked session can be restored after restart). */
+export async function hasPersistedWhatsAppAuth(): Promise<boolean> {
+  const credsPath = join(getTttHomeDir(), CONNECTIONS_SUBDIR, 'whatsapp', 'creds.json');
+  try {
+    await access(credsPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function normalizeExt(ext: string): string {

@@ -2,7 +2,7 @@ import { serve, type ServerType } from '@hono/node-server';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { spawn } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { homedir, platform as osPlatform } from 'node:os';
@@ -26,6 +26,10 @@ import {
   type RunChatFinishInfo,
 } from './agent.js';
 import {
+  getConnectionBridgeConfig,
+  setConnectionBridgeConfig,
+} from './connection-bridge-config.js';
+import {
   ensureProviderKeysMigrated,
   getProviderApiKey,
   loadConfig,
@@ -35,10 +39,11 @@ import {
   type ProviderId,
 } from './config.js';
 import { getProvider, listProviders } from './providers/registry.js';
-import { type DesignToolId } from './providers/design-tools.js';
+import { sanitizeDesignToolIds, type DesignToolId } from './providers/design-tools.js';
 import {
   listDesignToolsWithInstallStatus,
   resolveDefaultChatTools,
+  invalidateDesignToolsListCache,
 } from './providers/design-tool-detection.js';
 import {
   appendMessage,
@@ -52,8 +57,13 @@ import {
   updateChatModel,
   updateChatTools,
 } from './store/chats.js';
+import {
+  getLastComposerDesignToolsPreference,
+  setLastComposerDesignToolsPreference,
+} from './store/composer-design-tools-preference.js';
 import { getDB } from './store/db.js';
-import { getTttDropsDir } from '../lib/ttt-paths.js';
+import { getTttDropsDir, hasPersistedWhatsAppAuth } from '../lib/ttt-paths.js';
+import { getConnectionAdapter, listConnectionAdapters } from '../connections/registry.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // dist/ui/server.js -> ../../web/dist
@@ -334,6 +344,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   // ---- Design Tools -------------------------------------------------------
 
   app.get('/api/design-tools', async (c) => {
+    if (c.req.query('nocache') === '1') invalidateDesignToolsListCache();
     return c.json(await listDesignToolsWithInstallStatus());
   });
 
@@ -344,6 +355,85 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     } catch (err) {
       logger.warn('creative cloud launch failed', err);
       return c.json({ error: (err as Error).message }, 500);
+    }
+  });
+
+  // ---- Connection adapters (WhatsApp, …) -----------------------------------
+
+  app.get('/api/connections', async (c) => {
+    const items = await Promise.all(
+      listConnectionAdapters().map(async (a) => {
+        const info = await a.getPublicInfo();
+        return info;
+      })
+    );
+    return c.json({ connections: items });
+  });
+
+  app.post('/api/connections/whatsapp/pairing/start', async (c) => {
+    try {
+      await getConnectionAdapter('whatsapp').ensureSocket();
+      invalidateDesignToolsListCache();
+      return c.json({ ok: true as const });
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 500);
+    }
+  });
+
+  app.post('/api/connections/whatsapp/logout', async (c) => {
+    try {
+      await getConnectionAdapter('whatsapp').logout();
+      invalidateDesignToolsListCache();
+      return c.json({ ok: true as const });
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 500);
+    }
+  });
+
+  app.get('/api/connections/whatsapp/events', async (c) => {
+    const adapter = getConnectionAdapter('whatsapp');
+    return streamSSE(c, async (stream) => {
+      const unsub = adapter.subscribe((ev) => {
+        void stream.writeSSE({ event: ev.type, data: JSON.stringify(ev) });
+      });
+      try {
+        const info = await adapter.getPublicInfo();
+        await stream.writeSSE({
+          event: 'snapshot',
+          data: JSON.stringify({ connected: info.connected, sessionHint: info.sessionHint ?? null }),
+        });
+        const raw = adapter.getLatestQrRaw();
+        if (raw) {
+          await stream.writeSSE({ event: 'qr', data: JSON.stringify({ type: 'qr', raw }) });
+        }
+        while (true) {
+          await new Promise<void>((r) => setTimeout(r, 60_000));
+        }
+      } finally {
+        unsub();
+      }
+    });
+  });
+
+  app.post('/api/internal/connections/:adapterId/tools/:toolName', async (c) => {
+    const cfg = getConnectionBridgeConfig();
+    if (!cfg) return c.json({ error: 'bridge_unconfigured' }, 503);
+    const secret = c.req.header('x-ttt-bridge-secret');
+    if (!secret || secret !== cfg.secret) {
+      return c.json({ error: 'forbidden' }, 403);
+    }
+    const adapterId = c.req.param('adapterId');
+    const toolName = c.req.param('toolName');
+    if (adapterId !== 'whatsapp') {
+      return c.json({ error: 'unknown_adapter' }, 404);
+    }
+    const body = (await c.req.json().catch(() => ({}))) as { args?: Record<string, unknown> };
+    const args = body.args ?? {};
+    try {
+      const out = await getConnectionAdapter('whatsapp').invokeTool(toolName, args);
+      return c.text(out, 200);
+    } catch (e) {
+      return c.json({ message: (e as Error).message }, 500);
     }
   });
 
@@ -401,8 +491,19 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     const provider = getProvider(providerId);
     if (!provider) return c.json({ error: 'unknown_provider' }, 400);
     const model = body.model ?? config.activeModel ?? provider.defaultModel();
-    const tools = body.tools ?? (await resolveDefaultChatTools());
+    let tools: DesignToolId[];
+    let toolsFromRequestBody = false;
+    if (body.tools != null) {
+      toolsFromRequestBody = true;
+      tools = sanitizeDesignToolIds(body.tools);
+    } else {
+      const fromKv = getLastComposerDesignToolsPreference();
+      tools = fromKv !== undefined ? fromKv : await resolveDefaultChatTools();
+    }
     const chat = createChat({ provider: providerId, model, title: body.title, tools });
+    if (toolsFromRequestBody) {
+      setLastComposerDesignToolsPreference(chat.tools ?? []);
+    }
     return c.json(chat);
   });
 
@@ -543,6 +644,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
           anonymousHostContext,
           ...(locale ? { locale } : {}),
           abortSignal: controller.signal,
+          connectionBridge: getConnectionBridgeConfig() ?? undefined,
           onAssistantBuffer: (b) => {
             buffer = b;
           },
@@ -625,10 +727,34 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     }
   });
 
+  const bridgeSecret = randomBytes(32).toString('hex');
+  setConnectionBridgeConfig({
+    baseUrl: `http://${opts.host}:${opts.port}`,
+    secret: bridgeSecret,
+  });
+
   const server: ServerType = serve(
     { fetch: app.fetch, port: opts.port, hostname: opts.host },
     (info) => logger.info(`Listening on http://${opts.host}:${info.port}`)
   );
+
+  getConnectionAdapter('whatsapp').subscribe((ev) => {
+    if (ev.type === 'connected' || ev.type === 'disconnected' || ev.type === 'stream_error') {
+      invalidateDesignToolsListCache();
+    }
+  });
+
+  void (async () => {
+    try {
+      if (await hasPersistedWhatsAppAuth()) {
+        void getConnectionAdapter('whatsapp')
+          .ensureSocket()
+          .catch((e) => logger.warn('whatsapp startup connect failed', e));
+      }
+    } catch (e) {
+      logger.warn('whatsapp startup auth check failed', e);
+    }
+  })();
 
   return {
     url: `http://${opts.host}:${opts.port}`,
@@ -636,6 +762,8 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       new Promise<void>((resolveClose) => {
         for (const controller of abortControllers.values()) controller.abort();
         abortControllers.clear();
+        setConnectionBridgeConfig(null);
+        void getConnectionAdapter('whatsapp').disconnect().catch(() => undefined);
         server.close(() => resolveClose());
       }),
   };

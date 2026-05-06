@@ -83,7 +83,10 @@
     "openCreativeCloud": "打开 Creative Cloud",
     "openingCreativeCloud": "正在打开…",
     "installLink": "安装",
-    "launchFailed": "启动失败"
+    "launchFailed": "启动失败",
+    "notLinkedStatus": "未关联",
+    "linkedStatus": "已关联",
+    "connectCta": "连接"
   },
   "toolCall": {
     "input": "输入",

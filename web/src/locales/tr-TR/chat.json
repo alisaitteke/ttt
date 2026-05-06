@@ -83,7 +83,10 @@
     "openCreativeCloud": "Creative Cloud'u aç",
     "openingCreativeCloud": "Açılıyor…",
     "installLink": "Yükle",
-    "launchFailed": "Başlatılamadı"
+    "launchFailed": "Başlatılamadı",
+    "notLinkedStatus": "Bağlı değil",
+    "linkedStatus": "Bağlı",
+    "connectCta": "Bağlan"
   },
   "toolCall": {
     "input": "Girdi",

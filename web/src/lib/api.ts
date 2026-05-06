@@ -31,18 +31,25 @@ export type DesignToolId =
   | 'figma'
   | 'premiere-pro'
   | 'davinci-resolve'
-  | 'docker';
+  | 'docker'
+  | 'whatsapp';
+
+export type DesignToolKind = 'install_probe' | 'connection';
+
+export type ConnectionProviderId = 'whatsapp';
 
 export interface DesignToolInfo {
   id: DesignToolId;
   label: string;
   toolPrefix: string;
   toolPrefixes?: readonly string[];
-  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker';
+  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp';
   available: boolean;
   installUrl?: string;
   /** Set when the UI server probes local installs (Adobe CC apps, Figma desktop, DaVinci Resolve, Docker, etc.). */
   installed?: boolean;
+  kind?: DesignToolKind;
+  connection?: { providerId: ConnectionProviderId; connected: boolean };
 }
 
 export interface DesignToolsResponse {
@@ -137,6 +144,27 @@ export interface ChatDetail {
   messages: PersistedMessage[];
 }
 
+export type SettingsTab = 'appearance' | 'providers' | 'connections';
+
+export interface SettingsOpenOptions {
+  tab?: SettingsTab;
+  focusConnection?: ConnectionProviderId;
+}
+
+/** Pass a tab id, or options object (e.g. open Messaging and focus WhatsApp). */
+export type SettingsOpenPayload = SettingsTab | SettingsOpenOptions;
+
+export interface ConnectionPublicInfo {
+  id: ConnectionProviderId;
+  displayName: string;
+  connected: boolean;
+  sessionHint?: string;
+}
+
+export interface ConnectionsListResponse {
+  connections: ConnectionPublicInfo[];
+}
+
 // ---- Status -----------------------------------------------------------
 
 export const apiStatus = () => api<Status>('/api/status');
@@ -188,6 +216,15 @@ export const apiListProviders = () => api<ProviderInfo[]>('/api/providers');
 // ---- Design Tools -----------------------------------------------------
 
 export const apiListDesignTools = () => api<DesignToolsResponse>('/api/design-tools');
+
+export const apiListConnections = () =>
+  api<ConnectionsListResponse>('/api/connections');
+
+export const apiStartWhatsAppPairing = () =>
+  api<{ ok: true }>('/api/connections/whatsapp/pairing/start', { method: 'POST' });
+
+export const apiLogoutWhatsApp = () =>
+  api<{ ok: true }>('/api/connections/whatsapp/logout', { method: 'POST' });
 
 export const apiLaunchCreativeCloud = () =>
   api<{ ok: true }>('/api/creative-cloud/launch', { method: 'POST' });

@@ -5,7 +5,8 @@
     "done": "Tamam",
     "tabs": {
       "appearance": "Görünüm",
-      "providers": "Sağlayıcılar"
+      "providers": "Sağlayıcılar",
+      "connections": "İletişim araçları"
     },
     "theme": {
       "label": "Tema",
@@ -32,6 +33,14 @@
       "back": "Geri",
       "addProvider": "Sağlayıcı ekle",
       "allConnected": "Tüm sağlayıcılar bağlı"
+    },
+    "connections": {
+      "heading": "İletişim bağlantıları",
+      "description": "İsteğe bağlı MCP araçları için mesajlaşma hesaplarını bağlayın. Her sohbette araç seçicide seçim yapılır.",
+      "statusConnected": "Bağlı",
+      "statusDisconnected": "Bağlı değil",
+      "setUp": "Kur",
+      "manage": "Yönet"
     }
   }
 }

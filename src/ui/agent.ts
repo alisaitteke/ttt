@@ -52,6 +52,11 @@ export interface RunChatOptions {
   modelId: string;
   designTools?: DesignToolId[];
   /**
+   * When the UI hosts long-lived connection adapters (WhatsApp, …), MCP child
+   * processes delegate tool calls to this loopback HTTP bridge.
+   */
+  connectionBridge?: { baseUrl: string; secret: string };
+  /**
    * User-selected UI locale (BCP 47), e.g. en-US. When set, the system prompt instructs the
    * model to reply in that language only.
    */
@@ -70,7 +75,8 @@ export interface RunChatOptions {
 
 export const TTT_SYSTEM_PROMPT = `
 You are an assistant that drives the user's local design tools — Adobe Creative
-Cloud apps, Figma, Docker, and other design surfaces — through the TTT MCP server.
+Cloud apps, Figma, Docker, messaging links (e.g. WhatsApp via TTT UI), and other
+design surfaces — through the TTT MCP server.
 
 Format all narrative replies in GitHub-flavored Markdown: use headings, bullet or
 numbered lists, **bold** and *italic* where helpful, inline \`code\` and fenced
@@ -132,7 +138,8 @@ When enabled MCP tools can fulfill any part of the user's request — including
 checks, inspections, edits, docker actions, or app discovery — you must issue the
 appropriate tool call(s) in your response turn instead of only describing what you
 would do, hedging, or guessing from prior context. If reachability is uncertain,
-call the relevant *_ping tool first, then continue with the substantive tool. Use
+call the relevant *_ping tool first (for **WhatsApp**, use \`whatsapp_status\`
+instead — there is no \`whatsapp_ping\`), then continue with the substantive tool. Use
 text-only answers only when the user clearly wants pure explanation with no
 actionable tool, or when no listed tool applies.
 `.trim();
@@ -168,19 +175,28 @@ function buildSystemPrompt(
   }
 
   const toolsDesc = designTools.map(designToolPromptLine).join('\n');
+  const whatsappBlock =
+    designTools.includes('whatsapp')
+      ? `
+
+WhatsApp (Baileys via TTT UI):
+- For session **reachability**, call \`whatsapp_status\` first (same role as \`*_ping\` for other apps).
+- To **send plain text**, use \`whatsapp_send_message\`: \`to\` must be international digits only (no \`+\`, no spaces).
+- Optional: \`whatsapp_check_recipient\` to see if a number is registered on WhatsApp before sending; \`whatsapp_send_image\` for an image at an \`https\`/\`http\` URL (with user consent and per WhatsApp ToS).`
+      : '';
 
   const groqExtras = providerId === 'groq' ? `\n\n${GROQ_MCP_TOOL_ENFORCEMENT}` : '';
 
   return `${TTT_SYSTEM_PROMPT}
 
 Currently enabled design tools for this chat:
-${toolsDesc}
+${toolsDesc}${whatsappBlock}
 
 Guidelines:
 - Follow the Markdown response format described in your role instructions above.
 - Only use tools that match the enabled design-tool prefixes above.
 - If unsure whether the target app is reachable, start with its *_ping tool
-  (e.g. photoshop_ping, docker_ping).
+  (e.g. photoshop_ping, docker_ping). For WhatsApp, use \`whatsapp_status\` (not \`whatsapp_ping\`).
 - Prefer single, well-scoped tool calls instead of long combined operations.
 - After meaningful state changes, briefly describe in plain language what you did.
 - If a tool call fails, surface the error and ask before retrying or trying an
@@ -202,6 +218,12 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
     const mcpEnv: Record<string, string> = {
       ...sanitizedEnv(),
       LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
+      ...(opts.connectionBridge
+        ? {
+            TTT_CONNECTION_BRIDGE_URL: opts.connectionBridge.baseUrl,
+            TTT_CONNECTION_BRIDGE_SECRET: opts.connectionBridge.secret,
+          }
+        : {}),
     };
     const exportSeg = sanitizeExportChatSegment(opts.exportChatId);
     if (exportSeg) {

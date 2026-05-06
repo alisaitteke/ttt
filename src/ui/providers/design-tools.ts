@@ -1,3 +1,5 @@
+import type { ConnectionAdapterId } from '../../connections/types.js';
+
 export type DesignToolId =
   | 'photoshop'
   | 'after-effects'
@@ -5,7 +7,10 @@ export type DesignToolId =
   | 'figma'
   | 'premiere-pro'
   | 'davinci-resolve'
-  | 'docker';
+  | 'docker'
+  | 'whatsapp';
+
+export type DesignToolKind = 'install_probe' | 'connection';
 
 export interface DesignToolInfo {
   id: DesignToolId;
@@ -13,12 +18,16 @@ export interface DesignToolInfo {
   toolPrefix: string;
   /** When set, MCP tools may use several name prefixes (e.g. Docker Hub / GHCR). */
   toolPrefixes?: readonly string[];
-  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker';
+  iconKey: 'ps' | 'ae' | 'ai' | 'figma' | 'pr' | 'davinci' | 'docker' | 'whatsapp';
   available: boolean;
   /** Official product / download page (Adobe apps). */
   installUrl?: string;
   /** Local install detected; omitted when probing does not apply. */
   installed?: boolean;
+  /** Default: install_probe. Connection-backed tools use session state instead of OS install probes. */
+  kind?: DesignToolKind;
+  /** Present when `kind === 'connection'` after server enriches status. */
+  connection?: { providerId: ConnectionAdapterId; connected: boolean };
 }
 
 export const DESIGN_TOOLS: Record<DesignToolId, DesignToolInfo> = {
@@ -76,6 +85,14 @@ export const DESIGN_TOOLS: Record<DesignToolId, DesignToolInfo> = {
     iconKey: 'docker',
     available: true,
     installUrl: 'https://www.docker.com/products/docker-desktop/',
+  },
+  whatsapp: {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    toolPrefix: 'whatsapp_',
+    iconKey: 'whatsapp',
+    available: true,
+    kind: 'connection',
   },
 };
 

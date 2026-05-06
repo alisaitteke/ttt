@@ -5,7 +5,7 @@ import { ChevronDown, Check, Lock } from 'lucide-vue-next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import ProviderIcon from './ProviderIcon.vue';
-import type { ProviderId, ProviderInfo, ProviderModel } from '@/lib/api';
+import type { ProviderId, ProviderInfo, ProviderModel, SettingsOpenPayload } from '@/lib/api';
 
 const props = defineProps<{
   providers: ProviderInfo[];
@@ -17,7 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:provider': [value: ProviderId];
   'update:model': [value: string];
-  'open-settings': [tab: 'appearance' | 'providers'];
+  'open-settings': [payload: SettingsOpenPayload];
 }>();
 
 const { t } = useI18n();

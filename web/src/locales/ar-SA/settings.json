@@ -5,7 +5,8 @@
     "done": "تم",
     "tabs": {
       "appearance": "المظهر",
-      "providers": "المزوِّدون"
+      "providers": "المزوِّدون",
+      "connections": "المراسلة"
     },
     "theme": {
       "label": "السمة",
@@ -32,6 +33,14 @@
       "back": "رجوع",
       "addProvider": "إضافة مزوِّد",
       "allConnected": "جميع المزوِّدين متصلون"
+    },
+    "connections": {
+      "heading": "اتصالات المراسلة",
+      "description": "اربط حسابات المراسلة لأدوات MCP الاختيارية. يختار كل محادثة من قائمة الأدوات.",
+      "statusConnected": "متصل",
+      "statusDisconnected": "غير متصل",
+      "setUp": "إعداد",
+      "manage": "إدارة"
     }
   }
 }

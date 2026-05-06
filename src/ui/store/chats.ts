@@ -2,6 +2,7 @@ import type { LanguageModelUsage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import type { UsageCost } from '../providers/registry.js';
 import { sanitizeDesignToolIds, type DesignToolId } from '../providers/design-tools.js';
+import { setLastComposerDesignToolsPreference } from './composer-design-tools-preference.js';
 import { getDB } from './db.js';
 
 export interface ChatRow {
@@ -200,6 +201,7 @@ export function updateChatTools(id: string, tools: DesignToolId[]): void {
   getDB()
     .prepare(`UPDATE chats SET tools = ?, updated_at = ? WHERE id = ?`)
     .run(JSON.stringify(cleaned), Date.now(), id);
+  setLastComposerDesignToolsPreference(cleaned);
 }
 
 export function setChatArchived(id: string, archived: boolean): void {

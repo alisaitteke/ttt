@@ -5,7 +5,8 @@
     "done": "Hecho",
     "tabs": {
       "appearance": "Apariencia",
-      "providers": "Proveedores"
+      "providers": "Proveedores",
+      "connections": "Mensajería"
     },
     "theme": {
       "label": "Tema",
@@ -32,6 +33,14 @@
       "back": "Atrás",
       "addProvider": "Añadir proveedor",
       "allConnected": "Todos los proveedores están conectados"
+    },
+    "connections": {
+      "heading": "Conexiones de mensajería",
+      "description": "Vincula cuentas de mensajería para herramientas MCP opcionales. Cada chat elige en el selector de herramientas.",
+      "statusConnected": "Conectado",
+      "statusDisconnected": "No conectado",
+      "setUp": "Configurar",
+      "manage": "Gestionar"
     }
   }
 }

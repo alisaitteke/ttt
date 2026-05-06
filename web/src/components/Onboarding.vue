@@ -78,32 +78,35 @@ async function submit(): Promise<void> {
       </CardHeader>
       <CardContent class="space-y-4">
         <div class="space-y-2">
-          <Label>{{ t('onboarding.provider') }}</Label>
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              v-for="p in providers"
-              :key="p.id"
-              type="button"
-              class="flex flex-col items-center gap-1.5 rounded-md border px-2 py-3 text-xs font-medium transition"
-              :class="
-                selectedId === p.id
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-input text-muted-foreground hover:bg-accent'
-              "
-              @click="selectedId = p.id"
-            >
-              <ProviderIcon :provider="p.id" :size="22" />
-              {{ p.label }}
-            </button>
+          <Label class="text-muted-foreground">{{ t('onboarding.provider') }}</Label>
+          <div class="rounded-lg border border-border bg-muted/30 p-3">
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                v-for="p in providers"
+                :key="p.id"
+                type="button"
+                class="flex flex-col items-center gap-1.5 rounded-md border bg-background px-2 py-3 text-xs font-medium transition"
+                :class="
+                  selectedId === p.id
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-input text-muted-foreground hover:bg-accent'
+                "
+                @click="selectedId = p.id"
+              >
+                <ProviderIcon :provider="p.id" :size="22" />
+                {{ p.label }}
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="space-y-2">
-          <Label for="api-key">{{ t('onboarding.apiKey') }}</Label>
+          <Label class="text-muted-foreground" for="api-key">{{ t('onboarding.apiKey') }}</Label>
           <Input
             id="api-key"
             v-model="apiKey"
             type="password"
+            class="h-10"
             :placeholder="selected?.apiKeyHint ?? ''"
             :disabled="validating"
             @keydown.enter="submit"

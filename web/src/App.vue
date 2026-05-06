@@ -19,8 +19,11 @@ import {
   apiListProviders,
   apiListDesignTools,
   apiStatus,
+  type ConnectionProviderId,
   type ProviderInfo,
   type DesignToolInfo,
+  type SettingsOpenPayload,
+  type SettingsTab,
   type Status,
 } from './lib/api';
 
@@ -31,12 +34,26 @@ const creativeCloudDesktopInstalled = ref(false);
 const loading = ref(true);
 const fatalError = ref<string | null>(null);
 const settingsOpen = ref(false);
-const settingsInitialTab = ref<'appearance' | 'providers'>('appearance');
+const settingsInitialTab = ref<SettingsTab>('appearance');
+const settingsFocusConnection = ref<ConnectionProviderId | null>(null);
 
-function handleOpenSettings(tab?: 'appearance' | 'providers'): void {
-  settingsInitialTab.value = tab ?? 'appearance';
+function handleOpenSettings(payload?: SettingsOpenPayload): void {
+  if (typeof payload === 'string') {
+    settingsInitialTab.value = payload;
+    settingsFocusConnection.value = null;
+  } else if (payload && typeof payload === 'object') {
+    settingsInitialTab.value = payload.tab ?? 'connections';
+    settingsFocusConnection.value = payload.focusConnection ?? null;
+  } else {
+    settingsInitialTab.value = 'appearance';
+    settingsFocusConnection.value = null;
+  }
   settingsOpen.value = true;
 }
+
+watch(settingsOpen, (o) => {
+  if (!o) settingsFocusConnection.value = null;
+});
 const sidebarMobileOpen = ref(false);
 const chatListSelectMode = ref(false);
 const chatListSelectedIds = ref<string[]>([]);
@@ -307,6 +324,7 @@ onUnmounted(() => {
         <SettingsDialog
           v-model:open="settingsOpen"
           :initial-tab="settingsInitialTab"
+          :focus-connection="settingsFocusConnection"
           @saved="handleSettingsSaved"
         />
       </div>

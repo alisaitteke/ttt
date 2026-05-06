@@ -1,0 +1,17 @@
+{
+  "connections": {
+    "whatsapp": {
+      "title": "WhatsApp verknüpfen",
+      "blurb": "QR-Code mit WhatsApp auf dem Telefon scannen (Verknüpfte Geräte). Inoffizielle API — verantwortungsvoll nutzen.",
+      "linked": "Verknüpft. Sie können schließen.",
+      "waitingQr": "QR-Code wird vorbereitet…",
+      "scanHint": "WhatsApp → Einstellungen → Verknüpfte Geräte → Gerät verknüpfen.",
+      "retry": "Erneut versuchen",
+      "forget": "Trennen und Sitzung löschen",
+      "errors": {
+        "clientVersion": "WhatsApp hat die Verknüpfung abgelehnt (veralteter Web-Client). Aktualisieren Sie die App und versuchen Sie es erneut.",
+        "sessionRejected": "WhatsApp hat die Sitzung abgelehnt. Zuerst trennen und Sitzung löschen, dann erneut versuchen."
+      }
+    }
+  }
+}

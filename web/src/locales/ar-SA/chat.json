@@ -83,7 +83,10 @@
     "openCreativeCloud": "فتح Creative Cloud",
     "openingCreativeCloud": "جارٍ الفتح…",
     "installLink": "تثبيت",
-    "launchFailed": "فشل التشغيل"
+    "launchFailed": "فشل التشغيل",
+    "notLinkedStatus": "غير مرتبط",
+    "linkedStatus": "مرتبط",
+    "connectCta": "اتصال"
   },
   "toolCall": {
     "input": "إدخال",

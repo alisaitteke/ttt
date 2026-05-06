@@ -5,7 +5,8 @@
     "done": "Done",
     "tabs": {
       "appearance": "Appearance",
-      "providers": "Providers"
+      "providers": "Providers",
+      "connections": "Messaging"
     },
     "theme": {
       "label": "Theme",
@@ -32,6 +33,14 @@
       "back": "Back",
       "addProvider": "Add provider",
       "allConnected": "All providers connected"
+    },
+    "connections": {
+      "heading": "Messaging connections",
+      "description": "Link messaging accounts for optional MCP tools. Each chat opts in from the tool picker.",
+      "statusConnected": "Connected",
+      "statusDisconnected": "Not connected",
+      "setUp": "Set up",
+      "manage": "Manage"
     }
   }
 }

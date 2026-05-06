@@ -11,6 +11,7 @@ import {
 } from './design-tools.js';
 import { probeDockerAvailable } from './docker-detection.js';
 import { probeDaVinciResolveInstalled, probeFigmaDesktopInstalled } from './third-party-design-desktop.js';
+import { getConnectionAdapter } from '../../connections/registry.js';
 
 type DetectorCtor = new () => { detect(): Promise<unknown> };
 
@@ -28,6 +29,10 @@ export interface DesignToolsWithHostStatus {
 
 let cached: { at: number; data: DesignToolsWithHostStatus } | null = null;
 const CACHE_MS = 45_000;
+
+export function invalidateDesignToolsListCache(): void {
+  cached = null;
+}
 
 export async function probeDesignToolInstalled(id: DesignToolId): Promise<boolean | null> {
   const Ctor = DETECTORS[id];
@@ -52,6 +57,16 @@ export async function enrichDesignToolsWithInstallStatus(
 ): Promise<DesignToolInfo[]> {
   return Promise.all(
     tools.map(async (t) => {
+      if (t.kind === 'connection') {
+        if (t.id === 'whatsapp') {
+          const st = await getConnectionAdapter('whatsapp').getPublicInfo();
+          return {
+            ...t,
+            connection: { providerId: 'whatsapp', connected: st.connected },
+          };
+        }
+        return { ...t };
+      }
       const installed = await probeDesignToolInstalled(t.id);
       if (installed === null) return { ...t };
       return { ...t, installed };
@@ -73,5 +88,7 @@ export async function listDesignToolsWithInstallStatus(): Promise<DesignToolsWit
 /** Default tools for a new chat: MCP-available apps that are installed locally. */
 export async function resolveDefaultChatTools(): Promise<DesignToolId[]> {
   const { tools } = await listDesignToolsWithInstallStatus();
-  return tools.filter((t) => t.available && t.installed === true).map((t) => t.id);
+  return tools
+    .filter((t) => t.id !== 'whatsapp' && t.available && t.installed === true)
+    .map((t) => t.id);
 }

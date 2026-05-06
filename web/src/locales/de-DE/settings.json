@@ -5,7 +5,8 @@
     "done": "Fertig",
     "tabs": {
       "appearance": "Darstellung",
-      "providers": "Anbieter"
+      "providers": "Anbieter",
+      "connections": "Messaging"
     },
     "theme": {
       "label": "Design",
@@ -32,6 +33,14 @@
       "back": "Zurück",
       "addProvider": "Anbieter hinzufügen",
       "allConnected": "Alle Anbieter verbunden"
+    },
+    "connections": {
+      "heading": "Messaging-Verbindungen",
+      "description": "Verknüpfen Sie Messaging-Konten für optionale MCP-Tools. Pro Chat im Tool-Picker auswählen.",
+      "statusConnected": "Verbunden",
+      "statusDisconnected": "Nicht verbunden",
+      "setUp": "Einrichten",
+      "manage": "Verwalten"
     }
   }
 }

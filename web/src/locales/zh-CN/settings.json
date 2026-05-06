@@ -5,7 +5,8 @@
     "done": "完成",
     "tabs": {
       "appearance": "外观",
-      "providers": "提供商"
+      "providers": "提供商",
+      "connections": "消息"
     },
     "theme": {
       "label": "主题",
@@ -32,6 +33,14 @@
       "back": "返回",
       "addProvider": "添加提供商",
       "allConnected": "所有提供商已连接"
+    },
+    "connections": {
+      "heading": "消息连接",
+      "description": "为可选的 MCP 工具关联消息账号。每个会话在工具选择器中自行启用。",
+      "statusConnected": "已连接",
+      "statusDisconnected": "未连接",
+      "setUp": "设置",
+      "manage": "管理"
     }
   }
 }

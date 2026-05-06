@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { Component } from 'vue';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Monitor, Moon, Sun } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -28,10 +30,10 @@ onMounted(() => {
   syncThemePref();
 });
 
-const themeChoices: { value: ThemePreference; labelKey: string }[] = [
-  { value: 'system', labelKey: 'settings.theme.system' },
-  { value: 'light', labelKey: 'settings.theme.light' },
-  { value: 'dark', labelKey: 'settings.theme.dark' },
+const themeChoices: { value: ThemePreference; icon: Component; labelKey: string }[] = [
+  { value: 'system', icon: Monitor, labelKey: 'settings.theme.system' },
+  { value: 'light', icon: Sun, labelKey: 'settings.theme.light' },
+  { value: 'dark', icon: Moon, labelKey: 'settings.theme.dark' },
 ];
 </script>
 
@@ -44,24 +46,28 @@ const themeChoices: { value: ThemePreference; labelKey: string }[] = [
 
     <div class="space-y-2">
       <Label class="text-muted-foreground">{{ t('settings.theme.label') }}</Label>
-      <div class="flex flex-wrap gap-2">
+      <div
+        class="flex w-full gap-1 rounded-lg border border-border bg-muted/40 p-1"
+        role="group"
+        :aria-label="t('settings.theme.label')"
+      >
         <Button
           v-for="choice in themeChoices"
           :key="choice.value"
           type="button"
-          variant="outline"
-          size="sm"
-          class="min-w-[5.5rem]"
+          variant="ghost"
+          class="flex h-auto min-h-0 min-w-0 flex-1 flex-col items-center gap-1 rounded-md px-1 py-2.5 text-muted-foreground hover:text-foreground"
           :aria-pressed="themePref === choice.value"
           :class="
             cn(
               themePref === choice.value &&
-                'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+                'bg-background text-primary shadow-sm hover:bg-background hover:text-primary'
             )
           "
           @click="pickTheme(choice.value)"
         >
-          {{ t(choice.labelKey) }}
+          <component :is="choice.icon" class="size-[1.125rem] shrink-0" aria-hidden="true" />
+          <span class="text-center text-[10px] font-medium leading-tight">{{ t(choice.labelKey) }}</span>
         </Button>
       </div>
     </div>

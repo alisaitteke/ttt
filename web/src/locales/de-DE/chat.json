@@ -83,7 +83,10 @@
     "openCreativeCloud": "Creative Cloud öffnen",
     "openingCreativeCloud": "Wird geöffnet…",
     "installLink": "Installieren",
-    "launchFailed": "Start fehlgeschlagen"
+    "launchFailed": "Start fehlgeschlagen",
+    "notLinkedStatus": "Nicht verknüpft",
+    "linkedStatus": "Verknüpft",
+    "connectCta": "Verbinden"
   },
   "toolCall": {
     "input": "Eingabe",

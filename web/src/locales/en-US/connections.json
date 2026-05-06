@@ -1,0 +1,17 @@
+{
+  "connections": {
+    "whatsapp": {
+      "title": "Link WhatsApp",
+      "blurb": "Scan the QR code with WhatsApp on your phone (Linked devices). Unofficial API — use responsibly and follow WhatsApp Terms of Service.",
+      "linked": "Linked. You can close this dialog.",
+      "waitingQr": "Preparing QR code…",
+      "scanHint": "WhatsApp → Settings → Linked devices → Link a device.",
+      "retry": "Try again",
+      "forget": "Disconnect & remove session",
+      "errors": {
+        "clientVersion": "WhatsApp blocked the link attempt (outdated web client). Update this app and try again.",
+        "sessionRejected": "WhatsApp rejected the session. Use Disconnect & remove session, then try again."
+      }
+    }
+  }
+}

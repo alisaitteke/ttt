@@ -5,7 +5,12 @@ import { ChevronDown, Check, Info, Lock } from 'lucide-vue-next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import AdobeAppIcon from './AdobeAppIcon.vue';
-import { apiLaunchCreativeCloud, type DesignToolId, type DesignToolInfo } from '@/lib/api';
+import {
+  apiLaunchCreativeCloud,
+  type DesignToolId,
+  type DesignToolInfo,
+  type SettingsOpenPayload,
+} from '@/lib/api';
 
 const props = defineProps<{
   designTools: DesignToolInfo[];
@@ -16,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:tools': [value: DesignToolId[]];
+  'open-settings': [payload: SettingsOpenPayload];
 }>();
 
 const { t } = useI18n();
@@ -37,24 +43,45 @@ async function openCreativeCloud(): Promise<void> {
   }
 }
 
+function connectionLinked(tool: DesignToolInfo): boolean {
+  return tool.kind === 'connection' && tool.connection?.connected === true;
+}
+
 function isSelectable(tool: DesignToolInfo): boolean {
   if (!tool.available) return false;
+  if (tool.kind === 'connection') return connectionLinked(tool);
   if (tool.installed === false) return false;
   return true;
 }
 
 function rowLocked(tool: DesignToolInfo): boolean {
   if (!tool.available) return true;
+  if (tool.kind === 'connection') {
+    if (!connectionLinked(tool) && !selectedTools.value.includes(tool.id)) return true;
+    return false;
+  }
   if (tool.installed === false && !selectedTools.value.includes(tool.id)) return true;
   return false;
+}
+
+function showConnectBlock(tool: DesignToolInfo): boolean {
+  return tool.kind === 'connection' && tool.available && !connectionLinked(tool);
+}
+
+function openConnectSettings(_tool: DesignToolInfo): void {
+  emit('open-settings', { tab: 'connections', focusConnection: 'whatsapp' });
+  open.value = false;
 }
 
 function showInstallBlock(tool: DesignToolInfo): boolean {
   return tool.installed === false && Boolean(tool.installUrl);
 }
 
-/** (1) Installed/local-detected tier: true → unknown probe → explicitly not installed. */
+/** Sort key for install-probed tools; connection tools use link state. */
 function installedTierRank(tool: DesignToolInfo): number {
+  if (tool.kind === 'connection') {
+    return connectionLinked(tool) ? 0 : 2;
+  }
   if (tool.installed === true) return 0;
   if (tool.installed === undefined) return 1;
   return 2;
@@ -213,7 +240,9 @@ function clearAll(): void {
             class="grid w-full min-w-0 grid-cols-[2rem_minmax(0,2fr)_minmax(0,1fr)_9.5rem] items-center gap-x-3 border-b border-border/30 px-3 py-1.5 text-start text-sm outline-none last:border-b-0 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             :class="[
               rowLocked(tool) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent/80',
-              selectedTools.includes(tool.id) && tool.available ? 'bg-accent/50' : '',
+              selectedTools.includes(tool.id) && tool.available && (tool.kind !== 'connection' || connectionLinked(tool))
+                ? 'bg-accent/50'
+                : '',
             ]"
             @keydown.enter.prevent="onRowActivate(tool)"
             @keydown.space.prevent="onRowActivate(tool)"
@@ -234,7 +263,19 @@ function clearAll(): void {
               </span>
             </span>
             <span class="flex min-h-[1.5rem] min-w-0 flex-col items-start justify-center gap-1" @click.stop>
-              <template v-if="tool.installed === false">
+              <template v-if="tool.kind === 'connection' && !connectionLinked(tool)">
+                <span class="text-[10px] leading-tight whitespace-nowrap text-muted-foreground">
+                  {{ t('designTools.notLinkedStatus') }}
+                </span>
+              </template>
+              <template v-else-if="tool.kind === 'connection' && connectionLinked(tool)">
+                <span
+                  class="text-[10px] leading-tight whitespace-nowrap rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-muted-foreground"
+                >
+                  {{ t('designTools.linkedStatus') }}
+                </span>
+              </template>
+              <template v-else-if="tool.installed === false">
                 <span class="text-[10px] leading-tight whitespace-nowrap text-muted-foreground">
                   {{ t('designTools.notInstalledStatus') }}
                 </span>
@@ -254,7 +295,17 @@ function clearAll(): void {
               <span v-else class="text-[10px] text-muted-foreground/50">—</span>
             </span>
             <span class="flex min-h-7 min-w-0 justify-end" @click.stop>
-              <template v-if="showInstallBlock(tool)">
+              <template v-if="showConnectBlock(tool)">
+                <button
+                  type="button"
+                  :disabled="disabled"
+                  class="inline-flex h-7 w-full max-w-[9.5rem] shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                  @click.stop="openConnectSettings(tool)"
+                >
+                  {{ t('designTools.connectCta') }}
+                </button>
+              </template>
+              <template v-else-if="showInstallBlock(tool)">
                 <button
                   v-if="creativeCloudDesktopInstalled"
                   type="button"

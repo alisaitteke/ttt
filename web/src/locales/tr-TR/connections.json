@@ -1,0 +1,17 @@
+{
+  "connections": {
+    "whatsapp": {
+      "title": "WhatsApp bağla",
+      "blurb": "Telefonunuzdaki WhatsApp ile QR kodu tarayın (Bağlı cihazlar). Resmi olmayan API — sorumlu kullanın ve WhatsApp kullanım koşullarına uyun.",
+      "linked": "Bağlandı. Bu pencereyi kapatabilirsiniz.",
+      "waitingQr": "QR kod hazırlanıyor…",
+      "scanHint": "WhatsApp → Ayarlar → Bağlı cihazlar → Cihaz bağla.",
+      "retry": "Yeniden dene",
+      "forget": "Bağlantıyı kes ve oturumu sil",
+      "errors": {
+        "clientVersion": "WhatsApp bağlantıyı reddetti (eski web istemcisi). Uygulamayı güncelleyip yeniden deneyin.",
+        "sessionRejected": "WhatsApp oturumu reddetti. Önce bağlantıyı kesip oturumu silin, sonra yeniden deneyin."
+      }
+    }
+  }
+}
