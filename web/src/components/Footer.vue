@@ -20,16 +20,13 @@ const { t } = useI18n();
       {{ t('footer.github') }}
     </a>
     <span aria-hidden="true" class="text-muted-foreground/60">·</span>
-    <span>
-      {{ t('footer.by') }}
-      <a
-        :href="authorUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="transition-colors hover:text-foreground"
-      >
-        @{{ t('footer.authorHandle') }}
-      </a>
-    </span>
+    <a
+      :href="authorUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="transition-colors hover:text-foreground"
+    >
+      @{{ t('footer.authorHandle') }}
+    </a>
   </footer>
 </template>
