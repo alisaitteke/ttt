@@ -13,15 +13,15 @@
 Run the UI **in the background** (you can close the terminal afterward). After it starts, open the URL from `ui-background.json` in your TTT data directory (`TTT_HOME`, default `~/.ttt`). Details: [Running the UI in the background](#running-the-ui-in-the-background-detached).
 
 ```bash
-npx -p @alisaitteke/ttt start -D
+npx @alisaitteke/ttt start -D
 ```
 
-Same as **`npx -p @alisaitteke/ttt start --detach`**.
+Same as **`npx @alisaitteke/ttt start --detach`**.
 
 Or run in the **foreground** (random free port; opens your browser):
 
 ```bash
-npx -p @alisaitteke/ttt start
+npx @alisaitteke/ttt start
 ```
 
 TTT (named after the famous Osman Hamdi Bey painting *The Tortoise Trainer*) is a Model Context Protocol (MCP) server that gives AI assistants — Claude, Cursor, and others — natural-language control over **local backends** you enable: Adobe apps for design and motion, Docker for containers and infra, optional **WhatsApp messaging** when you use the bundled web UI, with more integrations following the same pattern.
@@ -71,7 +71,7 @@ Pick any of the following on first launch — bring your own API key:
 
 WhatsApp is integrated as an optional **connection adapter** inside the **standalone UI**, not as a classic filesystem/process backend:
 
-1. Run the standalone UI (`npx -p @alisaitteke/ttt start` or detached mode).
+1. Run the standalone UI (`npx @alisaitteke/ttt start` or detached mode).
 2. Open **Settings → Messaging**, choose **WhatsApp**, and link your phone with **QR code** (same flow as WhatsApp “Linked devices”).
 3. Enable **WhatsApp** for the chats where you want `whatsapp_*` tools — alongside Photoshop, Docker, etc., if you like.
 
@@ -125,16 +125,16 @@ The standalone UI is a **long-lived HTTP server** on your machine. If you do not
 
 ```bash
 # Foreground: random free port, browser opens
-npx -p @alisaitteke/ttt start
+npx @alisaitteke/ttt start
 
 # Background: random port; URL written to ui-background.json when ready
-npx -p @alisaitteke/ttt start --detach
+npx @alisaitteke/ttt start --detach
 
 # Background on a fixed port; skip auto-opening the browser from the child process
-npx -p @alisaitteke/ttt start --detach --no-open --port 5174
+npx @alisaitteke/ttt start --detach --no-open --port 5174
 
 # Stop the detached server (default ~/.ttt/ui-background.json)
-npx -p @alisaitteke/ttt stop
+npx @alisaitteke/ttt stop
 ```
 
 Read `ui-background.json` for the exact URL. If a daemon is already running, a second detach (`--detach` or `-D`) is rejected until you `ttt stop` or the old process dies (stale state is cleared automatically).
