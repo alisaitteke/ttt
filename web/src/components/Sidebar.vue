@@ -120,7 +120,7 @@ function openSettings(): void {
     :class="
       mobileOpen
         ? 'translate-x-0'
-        : 'max-md:-translate-x-full max-md:rtl:translate-x-full'
+        : 'ltr:max-md:-translate-x-full rtl:max-md:translate-x-full'
     "
   >
     <div
