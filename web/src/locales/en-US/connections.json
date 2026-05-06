@@ -4,7 +4,7 @@
       "title": "Link WhatsApp",
       "betaBadge": "Beta",
       "betaNotice": "WhatsApp integration is in beta: behavior may change and issues may occur.",
-      "blurb": "Scan the QR code with WhatsApp on your phone (Linked devices). Unofficial API — use responsibly and follow WhatsApp Terms of Service.",
+      "blurb": "Scan the QR code with WhatsApp on your phone (Linked devices). This is an unofficial API; use it responsibly and follow WhatsApp Terms of Service.",
       "linked": "Linked. You can close this dialog.",
       "waitingQr": "Preparing QR code…",
       "scanHint": "WhatsApp → Settings → Linked devices → Link a device.",
@@ -12,7 +12,7 @@
       "forget": "Disconnect & remove session",
       "consent": {
         "title": "Extended data for AI tools",
-        "body": "Optional: allow MCP tools that read synced chats and contacts from this device’s Baileys cache (e.g. list chats, fetch recent messages, search contacts). This is unofficial WhatsApp access — you are responsible for lawful use and WhatsApp’s Terms of Service. You can turn this off anytime.",
+        "body": "Optional: allow MCP tools that read synced chats and contacts from this device’s Baileys cache (e.g. list chats, fetch recent messages, search contacts). This is unofficial WhatsApp access. You are responsible for lawful use and WhatsApp’s Terms of Service. You can turn this off anytime.",
         "checkbox": "Allow AI to read synced chats & contacts (extended tools)"
       },
       "sessionResetHint": "Local session was cleared so the next QR link can request full history. Remove the old \"Linked device\" on your phone if it still appears, then scan the new code.",

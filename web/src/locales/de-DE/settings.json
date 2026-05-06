@@ -11,7 +11,7 @@
       "hints": {
         "providers": "API-Schlüssel für LLM-Anbieter hinzufügen, damit der Chat diese Modelle nutzen kann.",
         "connections": "Messaging-Konten für optionale MCP-Tools verknüpfen; pro Chat im Tool-Picker aktivieren.",
-        "integrations": "API-Schlüssel für Extras wie GIF-Suche—getrennt von Ihren KI-Modellanbietern.",
+        "integrations": "API-Schlüssel für Extras wie GIF-Suche, getrennt von Ihren KI-Modellanbietern.",
         "appearance": "Oberflächensprache sowie hell-, dunkel oder System-Design wählen."
       }
     },

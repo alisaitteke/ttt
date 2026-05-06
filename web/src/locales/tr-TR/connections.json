@@ -4,7 +4,7 @@
       "title": "WhatsApp bağla",
       "betaBadge": "Beta",
       "betaNotice": "WhatsApp entegrasyonu beta aşamasındadır; davranış değişebilir ve sorunlarla karşılaşabilirsiniz.",
-      "blurb": "Telefonunuzdaki WhatsApp ile QR kodu tarayın (Bağlı cihazlar). Resmi olmayan API — sorumlu kullanın ve WhatsApp kullanım koşullarına uyun.",
+      "blurb": "Telefonunuzdaki WhatsApp ile QR kodu tarayın (Bağlı cihazlar). Resmi olmayan bir API'dir; sorumlu kullanın ve WhatsApp kullanım koşullarına uyun.",
       "linked": "Bağlandı. Bu pencereyi kapatabilirsiniz.",
       "waitingQr": "QR kod hazırlanıyor…",
       "scanHint": "WhatsApp → Ayarlar → Bağlı cihazlar → Cihaz bağla.",

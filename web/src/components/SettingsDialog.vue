@@ -33,6 +33,7 @@ import {
 } from '@/lib/api';
 import SettingsConnectionsPanel from './SettingsConnectionsPanel.vue';
 import SettingsIntegrationsPanel from './SettingsIntegrationsPanel.vue';
+import type { IntegrationsFooterState } from './SettingsIntegrationsPanel.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -57,6 +58,12 @@ const keyDraft = ref('');
 const formError = ref<string | null>(null);
 const formBusy = ref(false);
 const removeBusyId = ref<ProviderId | null>(null);
+const integrationsPanelRef = ref<InstanceType<typeof SettingsIntegrationsPanel> | null>(null);
+const integrationsFooter = ref<IntegrationsFooterState>({ variant: 'hidden' });
+
+function onIntegrationsFooterState(state: IntegrationsFooterState): void {
+  integrationsFooter.value = state;
+}
 
 const configuredProviders = computed(() => providers.value.filter((p) => p.hasApiKey));
 const availableToAdd = computed(() => providers.value.filter((p) => !p.hasApiKey));
@@ -168,6 +175,32 @@ function onConnectionsChanged(): void {
 function onIntegrationsChanged(): void {
   emit('saved');
 }
+
+function tabSectionTitle(tab: SettingsTab): string {
+  switch (tab) {
+    case 'providers':
+      return t('settings.tabs.providers');
+    case 'connections':
+      return t('settings.connections.heading');
+    case 'integrations':
+      return t('settings.integrations.heading');
+    case 'appearance':
+      return t('settings.tabs.appearance');
+  }
+}
+
+function tabSectionHint(tab: SettingsTab): string {
+  switch (tab) {
+    case 'providers':
+      return t('settings.tabs.hints.providers');
+    case 'connections':
+      return t('settings.tabs.hints.connections');
+    case 'integrations':
+      return t('settings.tabs.hints.integrations');
+    case 'appearance':
+      return t('settings.tabs.hints.appearance');
+  }
+}
 </script>
 
 <template>
@@ -199,7 +232,7 @@ function onIntegrationsChanged(): void {
       <!-- List panel: tab bar fixed, only panel body scrolls -->
       <div
         v-if="panel === 'list'"
-        class="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden"
+        class="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden"
       >
         <div
           class="flex shrink-0 rounded-lg border border-border bg-muted/40 p-1"
@@ -272,12 +305,22 @@ function onIntegrationsChanged(): void {
           </button>
         </div>
 
+        <div class="flex shrink-0 flex-col gap-1 border-b border-border/60 pb-3">
+          <h2 class="text-sm font-semibold leading-snug text-foreground">
+            {{ tabSectionTitle(settingsTab) }}
+          </h2>
+          <p class="text-xs leading-snug text-muted-foreground">
+            {{ tabSectionHint(settingsTab) }}
+          </p>
+        </div>
+
         <div
           class="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-0.5 [scrollbar-gutter:stable]"
         >
         <div v-show="settingsTab === 'providers'" role="tabpanel" class="space-y-3">
-        <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.providers') }}</p>
-        <h3 class="text-sm font-medium">{{ t('settings.providers.connectedHeading') }}</h3>
+        <h3 class="text-sm font-semibold leading-snug text-foreground">
+          {{ t('settings.providers.connectedHeading') }}
+        </h3>
 
         <div
           v-if="configuredProviders.length === 0"
@@ -342,7 +385,6 @@ function onIntegrationsChanged(): void {
         </div>
 
         <div v-show="settingsTab === 'connections'" role="tabpanel" class="space-y-3">
-          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.connections') }}</p>
           <SettingsConnectionsPanel
             :auto-open-provider="focusConnection"
             @changed="onConnectionsChanged"
@@ -350,12 +392,14 @@ function onIntegrationsChanged(): void {
         </div>
 
         <div v-show="settingsTab === 'integrations'" role="tabpanel" class="space-y-3">
-          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.integrations') }}</p>
-          <SettingsIntegrationsPanel @changed="onIntegrationsChanged" />
+          <SettingsIntegrationsPanel
+            ref="integrationsPanelRef"
+            @changed="onIntegrationsChanged"
+            @footer-state="onIntegrationsFooterState"
+          />
         </div>
 
         <div v-show="settingsTab === 'appearance'" role="tabpanel" class="space-y-3">
-          <p class="text-xs text-muted-foreground">{{ t('settings.tabs.hints.appearance') }}</p>
           <SettingsAppearancePanel />
         </div>
         </div>
@@ -426,17 +470,6 @@ function onIntegrationsChanged(): void {
           <ExternalLink class="size-3" />
         </a>
         <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
-
-        <Button
-          class="w-full"
-          :disabled="formBusy || !canSubmitForm"
-          @click="submitForm"
-        >
-          <Loader2 v-if="formBusy" class="size-4 animate-spin" />
-          {{
-            formBusy ? t('settings.providers.validating') : t('settings.providers.validateSave')
-          }}
-        </Button>
       </div>
       </div>
 
@@ -456,6 +489,41 @@ function onIntegrationsChanged(): void {
               {{ t('settings.providers.allConnected') }}
             </span>
           </template>
+          <template v-else-if="panel === 'list' && settingsTab === 'integrations'">
+            <template v-if="integrationsFooter.variant === 'list-add'">
+              <Button
+                variant="outline"
+                :disabled="integrationsFooter.disabled"
+                @click="integrationsPanelRef?.openPicker()"
+              >
+                {{ t('settings.integrations.addIntegration') }}
+              </Button>
+              <span
+                v-if="integrationsFooter.allConnectedHint"
+                class="text-xs text-muted-foreground"
+              >
+                {{ t('settings.integrations.allConnected') }}
+              </span>
+            </template>
+            <Button
+              v-else-if="integrationsFooter.variant === 'form-save'"
+              :disabled="integrationsFooter.disabled"
+              @click="integrationsPanelRef?.save()"
+            >
+              <Loader2 v-if="integrationsFooter.pending" class="size-4 animate-spin" />
+              {{ integrationsFooter.label }}
+            </Button>
+          </template>
+          <Button
+            v-else-if="panel === 'form'"
+            :disabled="formBusy || !canSubmitForm"
+            @click="submitForm"
+          >
+            <Loader2 v-if="formBusy" class="size-4 animate-spin" />
+            {{
+              formBusy ? t('settings.providers.validating') : t('settings.providers.validateSave')
+            }}
+          </Button>
         </div>
         <DialogClose as-child>
           <Button variant="secondary" type="button">{{ t('settings.done') }}</Button>

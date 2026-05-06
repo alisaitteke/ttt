@@ -11,7 +11,7 @@
       "hints": {
         "providers": "Add API keys for LLM providers so chat can use those models.",
         "connections": "Link messaging accounts for optional MCP tools; each chat enables them in the tool picker.",
-        "integrations": "API keys for extras like GIF search—separate from your AI model providers.",
+        "integrations": "API keys for extras like GIF search, kept separate from your AI model providers.",
         "appearance": "Choose the interface language and light, dark, or system theme."
       }
     },

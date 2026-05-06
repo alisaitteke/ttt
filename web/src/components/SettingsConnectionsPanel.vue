@@ -74,8 +74,6 @@ defineExpose({ refresh });
 
 <template>
   <div class="space-y-3">
-    <h3 class="text-sm font-medium">{{ t('settings.connections.heading') }}</h3>
-
     <ul class="space-y-2">
       <li
         v-for="c in list"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ArrowLeft, Check, ExternalLink, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,15 @@ import {
   type IntegrationInfo,
 } from '@/lib/api';
 
-const emit = defineEmits<{ changed: [] }>();
+export type IntegrationsFooterState =
+  | { variant: 'hidden' }
+  | { variant: 'list-add'; disabled: boolean; allConnectedHint: boolean }
+  | { variant: 'form-save'; disabled: boolean; pending: boolean; label: string };
+
+const emit = defineEmits<{
+  changed: [];
+  'footer-state': [state: IntegrationsFooterState];
+}>();
 
 const { t } = useI18n();
 
@@ -145,27 +153,57 @@ async function removeKey(id: IntegrationId): Promise<void> {
     removeBusyId.value = null;
   }
 }
+
+function computeFooterState(): IntegrationsFooterState {
+  if (view.value === 'picker') return { variant: 'hidden' };
+  if (view.value === 'list') {
+    const activeCount = integrations.value.filter((x) => x.availability === 'active').length;
+    return {
+      variant: 'list-add',
+      disabled: busy.value || availableToAdd.value.length === 0,
+      allConnectedHint:
+        !busy.value && availableToAdd.value.length === 0 && activeCount > 0,
+    };
+  }
+  if (view.value === 'form' && formIntegration.value) {
+    const fi = formIntegration.value;
+    return {
+      variant: 'form-save',
+      disabled: saveBusy.value || !keyDraft.value.trim(),
+      pending: saveBusy.value,
+      label:
+        fi.id === 'giphy'
+          ? t('settings.integrations.giphy.save')
+          : t('settings.providers.validateSave'),
+    };
+  }
+  return { variant: 'hidden' };
+}
+
+watch(
+  () => ({
+    view: view.value,
+    busy: busy.value,
+    saveBusy: saveBusy.value,
+    keyTrim: keyDraft.value.trim(),
+    avail: availableToAdd.value.length,
+    fid: formIntegration.value?.id,
+    integrationsLen: integrations.value.length,
+  }),
+  () => emit('footer-state', computeFooterState()),
+  { immediate: true }
+);
+
+defineExpose({
+  openPicker,
+  save,
+});
 </script>
 
 <template>
   <div class="space-y-4">
     <!-- List -->
     <template v-if="view === 'list'">
-      <div class="flex flex-wrap items-start justify-between gap-2">
-        <div class="min-w-0 flex-1">
-          <h3 class="text-sm font-medium">{{ t('settings.integrations.heading') }}</h3>
-        </div>
-        <Button
-          v-if="!busy"
-          variant="outline"
-          size="sm"
-          class="shrink-0"
-          @click="openPicker"
-        >
-          {{ t('settings.integrations.addIntegration') }}
-        </Button>
-      </div>
-
       <div v-if="busy" class="flex items-center gap-2 text-xs text-muted-foreground">
         <Loader2 class="size-4 animate-spin" />
         {{ t('settings.integrations.loading') }}
@@ -235,13 +273,6 @@ async function removeKey(id: IntegrationId): Promise<void> {
             </div>
           </li>
         </ul>
-
-        <p
-          v-if="availableToAdd.length === 0 && integrations.filter((x) => x.availability === 'active').length > 0"
-          class="text-xs text-muted-foreground"
-        >
-          {{ t('settings.integrations.allConnected') }}
-        </p>
 
         <template v-if="comingSoonIntegrations.length > 0">
           <h4 class="mt-6 text-xs font-medium text-muted-foreground">
@@ -406,19 +437,6 @@ async function removeKey(id: IntegrationId): Promise<void> {
             "
             @keydown.enter.prevent="save"
           />
-          <Button
-            size="sm"
-            class="w-full sm:w-auto"
-            :disabled="saveBusy || !keyDraft.trim()"
-            @click="save"
-          >
-            <Loader2 v-if="saveBusy" class="size-4 animate-spin" />
-            <template v-else>{{
-              formIntegration.id === 'giphy'
-                ? t('settings.integrations.giphy.save')
-                : t('settings.providers.validateSave')
-            }}</template>
-          </Button>
         </div>
 
         <p v-if="error" class="text-xs text-destructive">{{ error }}</p>
