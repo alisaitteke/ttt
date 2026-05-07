@@ -210,16 +210,20 @@ jobs:
         if: matrix.platform != 'windows-latest'
         run: |
           set -euo pipefail
-          # Reuse signature produced by the previous step.
+          # Reuse signature produced by the previous step. Tauri stores both
+          # the updater pubkey (in tauri.conf.json) and the .sig file as
+          # single-line base64; minisign(1) needs the plain 4-line form.
           node -e '
             const fs = require("node:fs");
             const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
             fs.writeFileSync(process.argv[1], Buffer.from(conf.plugins.updater.pubkey, "base64"));
-          ' "$RUNNER_TEMP/pubkey.minisign"
+            const sigB64 = fs.readFileSync(process.argv[2], "utf8").trim();
+            fs.writeFileSync(process.argv[3], Buffer.from(sigB64, "base64"));
+          ' "$RUNNER_TEMP/pubkey.minisign" "$RUNNER_TEMP/test.txt.sig" "$RUNNER_TEMP/test.txt.minisig"
           if ! minisign -V \
               -p "$RUNNER_TEMP/pubkey.minisign" \
               -m "$RUNNER_TEMP/test.txt" \
-              -x "$RUNNER_TEMP/test.txt.sig" \
+              -x "$RUNNER_TEMP/test.txt.minisig" \
               > "$RUNNER_TEMP/verify.out" 2>"$RUNNER_TEMP/verify.err"; then
             echo "::error::Updater pubkey in src-tauri/tauri.conf.json does not match TAURI_SIGNING_PRIVATE_KEY."
             echo "::error::Either rotate the secret to the matching key, or update plugins.updater.pubkey in tauri.conf.json."
