@@ -94,6 +94,12 @@ function assistantLabel(m: ChatMessage): string {
           >
             {{ m.role === 'user' ? t('messages.you') : assistantLabel(m) }}
           </div>
+          <div
+            v-if="m.toolCalls && m.toolCalls.length > 0"
+            class="mt-3 flex flex-wrap items-start gap-3"
+          >
+            <ToolCallCard v-for="tc in m.toolCalls" :key="tc.id" :tool-call="tc" />
+          </div>
           <MarkdownContent
             v-if="m.text && m.role === 'assistant'"
             class="assistant-markdown min-w-0 text-sm leading-relaxed text-foreground"
@@ -103,7 +109,6 @@ function assistantLabel(m: ChatMessage): string {
             v-else-if="m.text"
             class="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground"
           >{{ m.text }}</div>
-          <ToolCallCard v-for="tc in m.toolCalls" :key="tc.id" :tool-call="tc" />
         </div>
       </div>
 
