@@ -32,7 +32,7 @@ Native installers ship on **[GitHub Releases](https://github.com/alisaitteke/ttt
 | --- | --- |
 | macOS | Universal `.dmg` |
 | Windows | `.msi` / NSIS installers (see release) |
-| Linux | `.AppImage`, `.deb` |
+| Linux | `.deb`, `.rpm` |
 
 **Linux note:** Credential storage (`keytar`) expects Secret Service libraries at runtime (e.g. `libsecret-1-0` on Debian/Ubuntu).
 
