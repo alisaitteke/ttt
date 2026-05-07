@@ -1,6 +1,6 @@
 name: Desktop release (Tauri)
 
-# Builds native installers on tag pushes (version numbers like `0.2.8`).
+# Builds native installers on tag pushes (`v*`).
 #
 # Required secrets:
 # - TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (minisign; see README)
@@ -13,7 +13,7 @@ name: Desktop release (Tauri)
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+*'
+      - 'v*'
 
 permissions:
   contents: write
