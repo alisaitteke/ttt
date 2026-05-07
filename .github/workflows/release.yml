@@ -88,8 +88,8 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends minisign
+          # minisign is not in Ubuntu 22.04 default repos; use snap
+          sudo snap install minisign --classic
 
       - name: Install minisign (macOS)
         if: startsWith(matrix.platform, 'macos-')
