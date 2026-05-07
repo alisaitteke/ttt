@@ -7,10 +7,13 @@ name: Desktop release (Tauri)
 # under a minute instead of after 15+ minutes of build work.
 #
 # Required secrets:
-# - TAURI_SIGNING_PRIVATE_KEY: minisign secret key in **base64** form (the
-#   "Base64 encoded" line from `tauri signer generate`, or
-#   `base64 -w 0 < your.key`). Tauri decodes this at build time; pasting the
-#   raw three-line minisign file fails with "Invalid symbol ..." at offset.
+# - TAURI_SIGNING_PRIVATE_KEY: rsign2/minisign-compatible secret key in
+#   **base64** form (the "Base64 encoded" line from `tauri signer generate`,
+#   or `base64 -w 0 < your.key`). Tauri uses rsign2 under the hood, so the
+#   decoded first line is "untrusted comment: rsign encrypted secret key";
+#   raw minisign keys ("minisign encrypted secret key") also work because
+#   the two formats are signature-compatible. Pasting the raw three-line
+#   key file (un-base64'd) fails with "Invalid symbol ..." at offset.
 # - TAURI_SIGNING_PRIVATE_KEY_PASSWORD: password for the above key (may be
 #   empty if the key was generated without one).
 #
@@ -95,7 +98,7 @@ jobs:
             echo "::warning::TAURI_SIGNING_PRIVATE_KEY_PASSWORD is empty; build will assume a passwordless minisign key."
           fi
 
-      - name: Validate TAURI_SIGNING_PRIVATE_KEY (base64 + minisign format)
+      - name: Validate TAURI_SIGNING_PRIVATE_KEY (base64 + rsign/minisign format)
         id: check_tauri_key
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -109,13 +112,22 @@ jobs:
             sed 's/^/::error::/' /tmp/b64.err || true
             exit 1
           fi
+          # `tauri signer generate` uses rsign2 and emits "rsign encrypted
+          # secret key"; raw `minisign` produces "minisign encrypted secret
+          # key". Both are signature-compatible and accepted by Tauri.
           first_line="$(head -n 1 /tmp/decoded.key)"
-          if [ "$first_line" != "untrusted comment: minisign encrypted secret key" ]; then
-            echo "::error::Decoded TAURI_SIGNING_PRIVATE_KEY does not look like a minisign encrypted secret key."
-            echo "::error::First line was: $first_line"
-            echo "::error::Expected first line: 'untrusted comment: minisign encrypted secret key'"
-            exit 1
-          fi
+          case "$first_line" in
+            "untrusted comment: rsign encrypted secret key") ;;
+            "untrusted comment: minisign encrypted secret key") ;;
+            *)
+              echo "::error::Decoded TAURI_SIGNING_PRIVATE_KEY does not look like an rsign/minisign encrypted secret key."
+              echo "::error::First line was: $first_line"
+              echo "::error::Expected one of:"
+              echo "::error::  'untrusted comment: rsign encrypted secret key'   (from \`tauri signer generate\`)"
+              echo "::error::  'untrusted comment: minisign encrypted secret key' (from \`minisign -G\`)"
+              exit 1
+              ;;
+          esac
 
       - name: Validate APPLE_CERTIFICATE (.p12 + password + Developer ID identity)
         id: check_apple_cert
