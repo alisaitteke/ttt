@@ -102,7 +102,13 @@ jobs:
         env:
           TAG_TO: ${{ github.ref_name }}
 
+      # Two-attempt build: Apple's Notary Service occasionally returns transient
+      # 5xx errors that cause `tauri-action` to fail mid-bundle. Retrying within
+      # the same job is much faster than a full re-run because the Rust target
+      # cache and node_modules are still warm.
       - name: Build Tauri installers and updater manifest
+        id: tauri_build
+        continue-on-error: true
         uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -118,6 +124,35 @@ jobs:
           # Windows code signing disabled - uncomment and add secrets to enable
           # WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           # WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: TTT Desktop ${{ github.ref_name }}
+          releaseBody: ${{ steps.release_notes.outputs.body }}
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.tauri_args }}
+
+      - name: Backoff before build retry
+        if: steps.tauri_build.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::First build attempt failed; sleeping 90s before retry (likely transient Apple Notary 5xx)."
+          sleep 90
+
+      - name: Build Tauri installers and updater manifest (retry)
+        if: steps.tauri_build.outcome == 'failure'
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_VERSION_FOR_DESKTOP: ${{ env.NODE_VERSION_FOR_DESKTOP }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: TTT Desktop ${{ github.ref_name }}

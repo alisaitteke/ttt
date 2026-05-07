@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/ttt.svg)](https://www.npmjs.com/package/@alisaitteke/ttt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Desktop release (Tauri)](https://github.com/alisaitteke/ttt/actions/workflows/release.yml/badge.svg)](https://github.com/alisaitteke/ttt/actions/workflows/release.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)]()
 [![Patreon](https://img.shields.io/badge/Patreon-Support-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/tttanimals)
