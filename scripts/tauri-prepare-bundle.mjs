@@ -70,12 +70,21 @@ function defaultTargets() {
 /**
  * Tar on Windows GitHub-hosted runners responds to `-xzf` for `.tar.gz` and `-xf` for `.zip`.
  *
+ * On Windows we resolve `tar.exe` to the system-shipped bsdtar at
+ * `%SystemRoot%\System32\tar.exe`. PATH-based lookup can otherwise pick up
+ * MSYS2 GNU tar (Git Bash on `windows-latest` runners), which treats absolute
+ * paths containing a drive letter as remote `host:path` specs and fails with
+ * `tar: Cannot connect to D: resolve failed` when extracting the Node.js zip.
+ *
  * @param {string} archivePath
  * @param {string} outDir
  */
 function extractArchive(archivePath, outDir) {
   mkdirSync(outDir, { recursive: true });
-  const tarBin = process.platform === 'win32' ? 'tar.exe' : 'tar';
+  const tarBin =
+    process.platform === 'win32'
+      ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe')
+      : 'tar';
   const ext = archivePath.toLowerCase();
   /** @type {string[]} */
   const args =
