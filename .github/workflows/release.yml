@@ -56,8 +56,10 @@ jobs:
         include:
           - platform: macos-14
             os_label: macOS arm64
-          - platform: macos-13
-            os_label: macOS x64
+          # macos-13 (Intel x64) disabled: GitHub's runner pool is consistently
+          # overloaded. Intel Mac users can use ARM64 builds via Rosetta 2.
+          # - platform: macos-13
+          #   os_label: macOS x64
           - platform: ubuntu-22.04
             os_label: Linux x64
           - platform: windows-latest
@@ -400,10 +402,12 @@ jobs:
             target: aarch64-apple-darwin
             bundle_targets: darwin-arm64
             arch_label: aarch64
-          - platform: macos-13
-            target: x86_64-apple-darwin
-            bundle_targets: darwin-x64
-            arch_label: x64
+          # macos-13 (Intel x64) disabled: GitHub's runner pool is consistently
+          # overloaded. Intel Mac users can use ARM64 builds via Rosetta 2.
+          # - platform: macos-13
+          #   target: x86_64-apple-darwin
+          #   bundle_targets: darwin-x64
+          #   arch_label: x64
           - platform: ubuntu-22.04
             target: ''
             bundle_targets: linux-x64
