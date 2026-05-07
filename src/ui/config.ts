@@ -51,50 +51,6 @@ function getProviderApiKeyFromEnv(id: ProviderId): string | undefined {
   return v || undefined;
 }
 
-let migrateInflight: Promise<void> | undefined;
-
-async function migratePlaintextApiKeysFromKv(): Promise<void> {
-  const raw = kvGet<UIConfig>(KV_KEY);
-  if (!raw?.providers) return;
-
-  let dirty = false;
-  const providers: UIConfig['providers'] = { ...raw.providers };
-
-  for (const pid of Object.keys(providers) as ProviderId[]) {
-    const entry = providers[pid];
-    if (!entry) continue;
-    const legacyKey = entry.apiKey;
-    if (typeof legacyKey === 'string' && legacyKey.length > 0) {
-      try {
-        await setProviderCredentialSecret(pid, legacyKey);
-        const next = { ...entry };
-        delete next.apiKey;
-        providers[pid] = next;
-        dirty = true;
-      } catch {
-        // Keep plaintext in SQLite so a later run (e.g. after fixing OS store) can migrate.
-      }
-    }
-  }
-
-  if (dirty) {
-    kvSet(KV_KEY, { ...raw, providers });
-  }
-}
-
-/**
- * Migrates legacy plaintext API keys from ~/.ttt/data.db into the OS credential store.
- * Safe to call multiple times; later calls are cheap no-ops.
- */
-export function ensureProviderKeysMigrated(): Promise<void> {
-  if (!migrateInflight) {
-    migrateInflight = migratePlaintextApiKeysFromKv().finally(() => {
-      migrateInflight = undefined;
-    });
-  }
-  return migrateInflight;
-}
-
 export function loadConfig(): UIConfig {
   const stored = kvGet<UIConfig>(KV_KEY);
   if (!stored) return { ...DEFAULT_CONFIG, providers: {} };
@@ -119,7 +75,6 @@ export function saveConfig(patch: Partial<UIConfig>): UIConfig {
 }
 
 export async function setProviderConfig(id: ProviderId, patch: ProviderConfig): Promise<UIConfig> {
-  await ensureProviderKeysMigrated();
   const current = loadConfig();
   if ('apiKey' in patch) {
     if (patch.apiKey === undefined) {
@@ -140,7 +95,6 @@ export function getProviderConfig(id: ProviderId): ProviderConfig | undefined {
 }
 
 export async function getProviderApiKey(id: ProviderId): Promise<string | undefined> {
-  await ensureProviderKeysMigrated();
   const fromEnv = getProviderApiKeyFromEnv(id);
   if (fromEnv) return fromEnv;
   const fromStore = await getProviderCredentialSecret(id);

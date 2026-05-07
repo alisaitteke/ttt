@@ -27,7 +27,6 @@ const OUT_FILE = join(OUT_DIR, 'server.mjs');
  */
 const EXTERNALS = [
   'better-sqlite3',
-  'keytar',
   '@whiskeysockets/baileys',
   'sharp',
   'pino',
@@ -47,7 +46,6 @@ const EXTERNALS = [
  */
 const EXTERNAL_RUNTIME_DEPS = [
   'better-sqlite3',
-  'keytar',
   '@whiskeysockets/baileys',
   'pino',
   '@alisaitteke/docker-mcp',

@@ -25,52 +25,34 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 /**
- * @param {string} cmd
- * @param {string[]} args
- * @returns {string}
- */
-function execCapture(cmd, args) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8' });
-  if (r.status !== 0) {
-    throw new Error(`${cmd} ${args.join(' ')} failed: ${(r.stderr || '').trim()}`);
-  }
-  return r.stdout;
-}
-
-/**
- * Execute a command with retry logic for eventual consistency issues.
+ * Execute a command with bounded retries for transient GitHub API failures
+ * (rate limiting, 5xx). Permanent errors are surfaced after the first attempt.
+ *
  * @param {string} cmd
  * @param {string[]} args
  * @param {number} maxRetries
  * @param {number} delayMs
  * @returns {string}
  */
-function execCaptureWithRetry(cmd, args, maxRetries = 5, delayMs = 3000) {
+function execCaptureWithRetry(cmd, args, maxRetries = 3, delayMs = 2000) {
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const r = spawnSync(cmd, args, { encoding: 'utf8' });
-      if (r.status === 0) {
-        return r.stdout;
-      }
-      lastError = new Error(`${cmd} ${args.join(' ')} failed: ${(r.stderr || '').trim()}`);
-      
-      // If 404, it might be eventual consistency - retry
-      if (r.stderr?.includes('Not Found') || r.stderr?.includes('HTTP 404')) {
-        console.warn(`[retry ${attempt}/${maxRetries}] GitHub API returned 404, retrying in ${delayMs}ms...`);
-        if (attempt < maxRetries) {
-          spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'inherit' });
-          continue;
-        }
-      }
-      throw lastError;
-    } catch (err) {
-      lastError = err;
-      if (attempt < maxRetries) {
-        console.warn(`[retry ${attempt}/${maxRetries}] Command failed, retrying in ${delayMs}ms...`);
-        spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'inherit' });
-      }
+    const r = spawnSync(cmd, args, { encoding: 'utf8' });
+    if (r.status === 0) {
+      return r.stdout;
     }
+    const stderr = (r.stderr || '').trim();
+    lastError = new Error(`${cmd} ${args.join(' ')} failed: ${stderr}`);
+
+    const transient =
+      /HTTP 5\d{2}/u.test(stderr) ||
+      /rate limit/iu.test(stderr) ||
+      /timeout|ECONN|ENOTFOUND|EAI_AGAIN/iu.test(stderr);
+    if (!transient || attempt === maxRetries) {
+      throw lastError;
+    }
+    console.warn(`[retry ${attempt}/${maxRetries}] transient gh failure, retrying in ${delayMs}ms: ${stderr}`);
+    spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'inherit' });
   }
   throw lastError;
 }
@@ -131,12 +113,20 @@ function main() {
   const version = requireEnv('VERSION');
   const notes = process.env.NOTES?.trim() ?? '';
 
+  // `gh release view` works for draft and published releases alike (it
+  // proxies through `gh`'s own listing logic). The REST endpoint
+  // `/repos/{repo}/releases/tags/{tag}` only returns *published* releases
+  // and 404s on drafts, which is the state the asset upload jobs leave
+  // the release in until `publish-release` flips it to public.
   console.log(`[build-updater-manifest] Fetching release ${tag} from ${repo}...`);
   const raw = execCaptureWithRetry('gh', [
-    'api',
-    `repos/${repo}/releases/tags/${tag}`,
-    '--jq',
-    '{assets: [.assets[] | {name: .name, url: .browser_download_url}]}',
+    'release',
+    'view',
+    tag,
+    '--repo',
+    repo,
+    '--json',
+    'assets',
   ]);
   const release = JSON.parse(raw);
   /** @type {Array<{ name: string; url: string }>} */

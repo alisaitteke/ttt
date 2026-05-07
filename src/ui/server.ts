@@ -30,7 +30,6 @@ import {
   setConnectionBridgeConfig,
 } from '@ttt/ui/connection-bridge-config.js';
 import {
-  ensureProviderKeysMigrated,
   getProviderApiKey,
   loadConfig,
   maskApiKey,
@@ -190,7 +189,6 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   // Initialize the SQLite database eagerly so the first request is fast and
   // any migration error surfaces during startup instead of mid-request.
   getDB();
-  await ensureProviderKeysMigrated();
 
   const abortControllers = new Map<string, AbortController>();
 
