@@ -36,9 +36,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            tauri_args: '--target universal-apple-darwin'
-            bundle_targets: darwin-arm64,darwin-x64
+          # Per-arch macOS builds (no universal): each user downloads only the
+          # Node.js + native modules for their own architecture, roughly halving
+          # the .app/.dmg size compared to a universal build.
+          - platform: macos-14
+            tauri_args: '--target aarch64-apple-darwin'
+            bundle_targets: darwin-arm64
+          - platform: macos-13
+            tauri_args: '--target x86_64-apple-darwin'
+            bundle_targets: darwin-x64
           - platform: ubuntu-22.04
             tauri_args: ''
             bundle_targets: linux-x64
@@ -59,9 +65,13 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Add Rust targets (mac universal)
-        if: matrix.platform == 'macos-latest'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Add Rust target (macOS arm64)
+        if: matrix.platform == 'macos-14'
+        run: rustup target add aarch64-apple-darwin
+
+      - name: Add Rust target (macOS x64)
+        if: matrix.platform == 'macos-13'
+        run: rustup target add x86_64-apple-darwin
 
       - uses: swatinem/rust-cache@v2
         with:
@@ -91,7 +101,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Provision App Store Connect API key (macOS)
-        if: matrix.platform == 'macos-latest'
+        if: startsWith(matrix.platform, 'macos-')
         shell: bash
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}

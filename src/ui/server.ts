@@ -80,8 +80,14 @@ import {
 import { getConnectionAdapter, listConnectionAdapters } from '@ttt/connections/registry.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// dist/ui/server.js -> ../../web/dist
-const WEB_DIST = resolve(__dirname, '..', '..', 'web', 'dist');
+// In bundled desktop builds (`__TTT_BUNDLED__` injected by esbuild) the SPA is
+// staged next to the bundle as `<server.mjs dir>/web/dist`. In tsc dev/prod
+// builds the entry lives at `dist/ui/server.js`, so `../../web/dist` resolves
+// to `<repo>/web/dist`.
+const WEB_DIST =
+  typeof __TTT_BUNDLED__ !== 'undefined' && __TTT_BUNDLED__ === true
+    ? resolve(__dirname, 'web', 'dist')
+    : resolve(__dirname, '..', '..', 'web', 'dist');
 
 /** Max size for drag-drop staging (browser → ~/.ttt/drops). Loopback-only endpoint. */
 const STAGE_DROP_MAX_BYTES = 2 * 1024 * 1024 * 1024;

@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "cross-env TAURI=1 npm run dev:ui",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "npm run build && node scripts/tauri-prepare-bundle.mjs",
+    "beforeBuildCommand": "npm run build && npm run build:server:bundle && node scripts/tauri-prepare-bundle.mjs",
     "frontendDist": "../web/dist"
   },
   "app": {

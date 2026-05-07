@@ -169,16 +169,21 @@ async function removeBackgroundStateIfOwn(): Promise<void> {
 
 // dist/ui/cli.js -> ../../package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PKG_VERSION = (() => {
-  try {
-    const pkg = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8')) as {
-      version?: string;
-    };
-    return pkg.version ?? '0.0.0';
-  } catch {
-    return '0.0.0';
-  }
-})();
+const PKG_VERSION =
+  typeof __TTT_PKG_VERSION__ === 'string'
+    ? __TTT_PKG_VERSION__
+    : (() => {
+        try {
+          const pkg = JSON.parse(
+            readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8')
+          ) as {
+            version?: string;
+          };
+          return pkg.version ?? '0.0.0';
+        } catch {
+          return '0.0.0';
+        }
+      })();
 
 function parseFlags(argv: string[]): CliFlags {
   const flags: CliFlags = { host: '127.0.0.1', noOpen: false, detach: false, stop: false };
@@ -299,12 +304,16 @@ export async function runUiCli(argv: string[]): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-// Standalone entry — runs in both dev mode and background child process
-// Only skip if this file is being imported as a module (not executed directly)
-const isMainModule = 
-  import.meta.url === `file://${process.argv[1]}` || 
-  process.argv[1]?.endsWith('cli.ts') ||
-  process.argv[1]?.endsWith('cli.js');
+// Standalone entry — runs in both dev mode and background child process.
+// In the Tauri bundle, `src/index.ts` is the single entry point and dispatches
+// to `runUiCli` itself, so suppress the auto-run guard there to avoid running
+// the CLI twice (once on import, once from `main()`).
+const IS_BUNDLED = typeof __TTT_BUNDLED__ !== 'undefined' && __TTT_BUNDLED__ === true;
+const isMainModule =
+  !IS_BUNDLED &&
+  (import.meta.url === `file://${process.argv[1]}` ||
+    process.argv[1]?.endsWith('cli.ts') ||
+    process.argv[1]?.endsWith('cli.js'));
 
 if (isMainModule) {
   runUiCli(process.argv.slice(2)).catch((err) => {

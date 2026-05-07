@@ -2,9 +2,10 @@
 #![cfg_attr(debug_assertions, allow(dead_code))]
 
 use std::{
-  io::{BufRead, BufReader},
+  io::Read,
   path::{Path, PathBuf},
   process::{Command, Stdio},
+  thread,
 };
 
 /// Target-specific folder under `bundle-resources/nodejs/`.
@@ -43,7 +44,7 @@ pub fn bundled_server_root(resources_root: &Path) -> PathBuf {
 pub fn spawn_ui_sidecar(resources_root: &Path) -> Result<std::process::Child, String> {
   let node = bundled_node_exe(resources_root);
   let root = bundled_server_root(resources_root);
-  let entry = root.join("dist").join("index.js");
+  let entry = root.join("server.mjs");
 
   if !node.exists() {
     return Err(format!("Bundled Node missing ({})", node.display()));
@@ -67,27 +68,52 @@ pub fn spawn_ui_sidecar(resources_root: &Path) -> Result<std::process::Child, St
     .map_err(|e| format!("spawn sidecar: {e}"))
 }
 
-/// Reads stdout until `TTT_READY <url>` is emitted by `src/ui/cli.ts`.
+/// Reads stdout until `TTT_READY <url>` is emitted by `src/ui/cli.ts`. After
+/// the URL is captured, the remaining stdout is drained on a background thread
+/// so the sidecar's later `process.stdout.write` calls don't fail with EPIPE
+/// once we'd otherwise drop the pipe handle.
 pub fn read_ready_url(child: &mut std::process::Child) -> Result<tauri::Url, String> {
-  let stdout = child
+  let mut stdout = child
     .stdout
     .take()
     .ok_or_else(|| "sidecar stdout is not piped".to_string())?;
-  let reader = BufReader::new(stdout);
 
-  for line in reader.lines() {
-    let line = line.map_err(|e| format!("sidecar stdout: {e}"))?;
-    let trimmed = line.trim();
-    let Some(rest) = trimmed.strip_prefix("TTT_READY ") else {
-      continue;
-    };
-    let url_str = rest.trim();
-    let url =
-      url_str
-        .parse::<tauri::Url>()
-        .map_err(|e| format!("invalid TTT_READY url {url_str:?}: {e}"))?;
-    return Ok(url);
+  let mut buffered = Vec::<u8>::new();
+  let mut chunk = [0u8; 1024];
+  let mut consumed_through: usize = 0;
+  let url_marker = "TTT_READY ";
+
+  loop {
+    let n = stdout
+      .read(&mut chunk)
+      .map_err(|e| format!("sidecar stdout: {e}"))?;
+    if n == 0 {
+      return Err("sidecar exited before emitting TTT_READY".into());
+    }
+    buffered.extend_from_slice(&chunk[..n]);
+
+    while let Some(nl) = buffered[consumed_through..].iter().position(|&b| b == b'\n') {
+      let line_end = consumed_through + nl;
+      let line = String::from_utf8_lossy(&buffered[consumed_through..line_end])
+        .trim()
+        .to_string();
+      consumed_through = line_end + 1;
+      if let Some(rest) = line.strip_prefix(url_marker) {
+        let url_str = rest.trim();
+        let url = url_str
+          .parse::<tauri::Url>()
+          .map_err(|e| format!("invalid TTT_READY url {url_str:?}: {e}"))?;
+        // Keep the pipe alive so the sidecar's subsequent stdout writes don't EPIPE.
+        thread::spawn(move || {
+          let mut sink = [0u8; 4096];
+          while let Ok(read) = stdout.read(&mut sink) {
+            if read == 0 {
+              break;
+            }
+          }
+        });
+        return Ok(url);
+      }
+    }
   }
-
-  Err("sidecar exited before emitting TTT_READY".into())
 }

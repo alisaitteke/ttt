@@ -1,6 +1,16 @@
 /**
- * Copies built server bundles and downloadable Node.js runtimes into `src-tauri/bundle-resources/`
- * for Tauri packaging. Run after `npm run build` (see beforeBuildCommand in tauri.conf).
+ * Stages the desktop sidecar payload into `src-tauri/bundle-resources/`:
+ *
+ *   bundle-resources/
+ *   ├── server/
+ *   │   ├── server.mjs        (esbuild bundle of src/index.ts)
+ *   │   ├── package.json      (lists native/external runtime deps only)
+ *   │   ├── node_modules/     (npm install --omit=dev of those externals)
+ *   │   └── web/dist/         (Vite SPA)
+ *   └── nodejs/<target>/node  (downloaded official Node.js binary)
+ *
+ * Run after `npm run build && npm run build:server:bundle`
+ * (see `beforeBuildCommand` in `tauri.conf.json`).
  */
 
 import { spawnSync } from 'node:child_process';
@@ -10,6 +20,11 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(new URL('.', import.meta.url)));
 const TAURI_ROOT = join(root, 'src-tauri');
+const BUNDLE_RESOURCES = join(TAURI_ROOT, 'bundle-resources');
+const SERVER_OUT = join(BUNDLE_RESOURCES, 'server');
+const STAGING = join(BUNDLE_RESOURCES, '.staging');
+const BUNDLE_DIR = join(root, 'dist-bundle');
+
 /** Must match bundled Node majors used to resolve native prebuilds. */
 const NODE_VERSION = process.env.NODE_VERSION_FOR_DESKTOP ?? '22.14.0';
 const DIST_BASE = (process.env.NODEJS_ORG_MIRROR ?? 'https://nodejs.org/dist').replace(/\/?$/u, '');
@@ -139,9 +154,9 @@ function nodeArchiveMeta(t) {
 async function ensureNodeRuntime(t) {
   const { file, subdir } = nodeArchiveMeta(t);
   const url = `${DIST_BASE}/v${NODE_VERSION}/${file}`;
-  const staging = join(TAURI_ROOT, 'bundle-resources', '.staging', file);
-  const unpackDir = join(TAURI_ROOT, 'bundle-resources', '.staging', `unpacked-${t}`);
-  const outRoot = join(TAURI_ROOT, 'bundle-resources', 'nodejs', t);
+  const staging = join(STAGING, file);
+  const unpackDir = join(STAGING, `unpacked-${t}`);
+  const outRoot = join(BUNDLE_RESOURCES, 'nodejs', t);
   const binName = t === 'win-x64' ? 'node.exe' : 'node';
   const finalNode = join(outRoot, binName);
 
@@ -157,7 +172,7 @@ async function ensureNodeRuntime(t) {
   extractArchive(staging, unpackDir);
 
   const unpackedRoot = join(unpackDir, subdir);
-  const srcBin = t === 'win-x64' 
+  const srcBin = t === 'win-x64'
     ? join(unpackedRoot, binName)
     : join(unpackedRoot, 'bin', binName);
   if (!existsSync(srcBin)) {
@@ -179,29 +194,44 @@ async function ensureNodeRuntime(t) {
   rmSync(unpackDir, { recursive: true, force: true });
 }
 
-function syncServerAssets() {
-  const serverDir = join(TAURI_ROOT, 'bundle-resources', 'server');
-  rmSync(serverDir, { recursive: true, force: true });
-  mkdirSync(serverDir, { recursive: true });
+function stageServerPayload() {
+  const bundleEntry = join(BUNDLE_DIR, 'server.mjs');
+  const bundlePkg = join(BUNDLE_DIR, 'package.json');
+  const webDist = join(root, 'web', 'dist');
 
-  const srcDist = join(root, 'dist');
-  const srcWebDist = join(root, 'web', 'dist');
-  const srcModules = join(root, 'node_modules');
-
-  if (!existsSync(srcDist)) {
-    throw new Error('Missing dist/. Run npm run build first.');
+  if (!existsSync(bundleEntry) || !existsSync(bundlePkg)) {
+    throw new Error('Missing dist-bundle/. Run `npm run build:server:bundle` first.');
   }
-  if (!existsSync(srcWebDist)) {
-    throw new Error('Missing web/dist/. Run npm run build first.');
-  }
-  if (!existsSync(srcModules)) {
-    throw new Error('Missing root node_modules/.');
+  if (!existsSync(webDist)) {
+    throw new Error('Missing web/dist/. Run `npm run build:web` first.');
   }
 
-  cpSync(srcDist, join(serverDir, 'dist'), { recursive: true });
-  mkdirSync(join(serverDir, 'web'), { recursive: true });
-  cpSync(srcWebDist, join(serverDir, 'web', 'dist'), { recursive: true });
-  cpSync(srcModules, join(serverDir, 'node_modules'), { recursive: true });
+  rmSync(SERVER_OUT, { recursive: true, force: true });
+  mkdirSync(SERVER_OUT, { recursive: true });
+
+  cpSync(bundleEntry, join(SERVER_OUT, 'server.mjs'));
+  cpSync(bundlePkg, join(SERVER_OUT, 'package.json'));
+  cpSync(webDist, join(SERVER_OUT, 'web', 'dist'), { recursive: true });
+
+  // Native modules and other non-bundlable runtime deps need to be installed
+  // fresh against the staged `package.json` so prebuilds match the host OS/arch
+  // of the eventual desktop binary.
+  console.log('[tauri-prepare-bundle] Installing runtime externals…');
+  const r = spawnSync(
+    'npm',
+    ['install', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts=false'],
+    {
+      cwd: SERVER_OUT,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    }
+  );
+  if (r.status !== 0) {
+    throw new Error('npm install of staged externals failed.');
+  }
+
+  // `npm install` writes its own lockfile; not needed in the shipped bundle.
+  rmSync(join(SERVER_OUT, 'package-lock.json'), { force: true });
 }
 
 async function main() {
@@ -209,25 +239,16 @@ async function main() {
   console.log(`[tauri-prepare-bundle] Packaging ${pkg.version} with Node.js ${NODE_VERSION}`);
 
   const targets = argvTargets() ?? defaultTargets();
-  mkdirSync(join(TAURI_ROOT, 'bundle-resources'), { recursive: true });
+  mkdirSync(BUNDLE_RESOURCES, { recursive: true });
+  mkdirSync(STAGING, { recursive: true });
 
-  if (process.env.TAURI_PREPARE_SKIP_NPM_CI === '1') {
-    const r = spawnSync('npm', ['ci', '--omit=dev', '--no-audit', '--no-fund'], {
-      cwd: root,
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    });
-    if (r.status !== 0) {
-      throw new Error('npm ci --omit=dev failed (required for reproducible native prebuilds).');
-    }
-  }
-
-  syncServerAssets();
+  stageServerPayload();
 
   for (const t of targets) {
     await ensureNodeRuntime(t);
   }
 
+  rmSync(STAGING, { recursive: true, force: true });
   console.log('[tauri-prepare-bundle] Done.');
 }
 

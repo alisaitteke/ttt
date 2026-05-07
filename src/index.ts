@@ -6,16 +6,19 @@ import { fileURLToPath } from 'node:url';
 import { printAsciiLogo } from '@ttt/utils/logo.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PKG_VERSION = (() => {
-  try {
-    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
-      version?: string;
-    };
-    return pkg.version ?? '0.0.0';
-  } catch {
-    return '0.0.0';
-  }
-})();
+const PKG_VERSION =
+  typeof __TTT_PKG_VERSION__ === 'string'
+    ? __TTT_PKG_VERSION__
+    : (() => {
+        try {
+          const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+            version?: string;
+          };
+          return pkg.version ?? '0.0.0';
+        } catch {
+          return '0.0.0';
+        }
+      })();
 
 const isTTY = process.stdout.isTTY === true;
 const c = {

@@ -22,10 +22,15 @@ const __dirname = dirname(__filename);
 // In production (`dist/ui/agent.js`) we point at the compiled `dist/index.js`.
 // In development (`tsx watch src/ui/cli.ts`) the source `.ts` is loaded directly,
 // so we resolve the TS entry and spawn it through Node's tsx loader.
+// In the bundled desktop build, the same `server.mjs` handles both UI and MCP
+// modes (dispatched on argv[1]), so we re-spawn the bundle itself.
 const IS_DEV_SOURCE = __filename.endsWith('.ts');
-const MCP_SERVER_ENTRY = IS_DEV_SOURCE
-  ? resolve(__dirname, '..', 'index.ts')
-  : resolve(__dirname, '..', 'index.js');
+const IS_BUNDLED = typeof __TTT_BUNDLED__ !== 'undefined' && __TTT_BUNDLED__ === true;
+const MCP_SERVER_ENTRY = IS_BUNDLED
+  ? __filename
+  : IS_DEV_SOURCE
+    ? resolve(__dirname, '..', 'index.ts')
+    : resolve(__dirname, '..', 'index.js');
 
 /** Max model↔tool steps per `streamText` segment (AI SDK `stepCountIs`). */
 const STREAM_TEXT_STEP_BUDGET = 20;

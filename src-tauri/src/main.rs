@@ -162,9 +162,7 @@ fn main() {
       {
         let resources = app.path().resource_dir()?;
         let node = bundled_node_exe(&resources);
-        let marker = bundled_server_root(&resources)
-          .join("dist")
-          .join("index.js");
+        let marker = bundled_server_root(&resources).join("server.mjs");
         if !node.exists() || !marker.exists() {
           eprintln!(
             "TTT desktop: missing staged runtime under `{}`. Build with `npm run tauri:build`.",
