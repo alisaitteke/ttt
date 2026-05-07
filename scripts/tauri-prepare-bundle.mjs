@@ -157,7 +157,9 @@ async function ensureNodeRuntime(t) {
   extractArchive(staging, unpackDir);
 
   const unpackedRoot = join(unpackDir, subdir);
-  const srcBin = join(unpackedRoot, 'bin', binName);
+  const srcBin = t === 'win-x64' 
+    ? join(unpackedRoot, binName)
+    : join(unpackedRoot, 'bin', binName);
   if (!existsSync(srcBin)) {
     throw new Error(`Expected Node binary missing: ${srcBin}`);
   }
