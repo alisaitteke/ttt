@@ -38,6 +38,44 @@ function execCapture(cmd, args) {
 }
 
 /**
+ * Execute a command with retry logic for eventual consistency issues.
+ * @param {string} cmd
+ * @param {string[]} args
+ * @param {number} maxRetries
+ * @param {number} delayMs
+ * @returns {string}
+ */
+function execCaptureWithRetry(cmd, args, maxRetries = 5, delayMs = 3000) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const r = spawnSync(cmd, args, { encoding: 'utf8' });
+      if (r.status === 0) {
+        return r.stdout;
+      }
+      lastError = new Error(`${cmd} ${args.join(' ')} failed: ${(r.stderr || '').trim()}`);
+      
+      // If 404, it might be eventual consistency - retry
+      if (r.stderr?.includes('Not Found') || r.stderr?.includes('HTTP 404')) {
+        console.warn(`[retry ${attempt}/${maxRetries}] GitHub API returned 404, retrying in ${delayMs}ms...`);
+        if (attempt < maxRetries) {
+          spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'inherit' });
+          continue;
+        }
+      }
+      throw lastError;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        console.warn(`[retry ${attempt}/${maxRetries}] Command failed, retrying in ${delayMs}ms...`);
+        spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'inherit' });
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
  * @param {string} cmd
  * @param {string[]} args
  */
@@ -93,7 +131,8 @@ function main() {
   const version = requireEnv('VERSION');
   const notes = process.env.NOTES?.trim() ?? '';
 
-  const raw = execCapture('gh', [
+  console.log(`[build-updater-manifest] Fetching release ${tag} from ${repo}...`);
+  const raw = execCaptureWithRetry('gh', [
     'api',
     `repos/${repo}/releases/tags/${tag}`,
     '--jq',
@@ -102,6 +141,7 @@ function main() {
   const release = JSON.parse(raw);
   /** @type {Array<{ name: string; url: string }>} */
   const assets = release.assets ?? [];
+  console.log(`[build-updater-manifest] Found ${assets.length} assets in release.`);
 
   const tmp = mkdtempSync(join(tmpdir(), 'updater-sigs-'));
   /** @type {Record<string, { signature: string; url: string }>} */
