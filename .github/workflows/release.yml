@@ -170,10 +170,15 @@ jobs:
             if (!pubkey) {
               errs.push("plugins.updater.pubkey is empty in src-tauri/tauri.conf.json.");
             } else {
+              // Minisign/rsign public keys always look like:
+              //   untrusted comment: minisign public key: <16-hex-char-key-id>
+              //   <base64 payload starting with "Ed" (Ed25519 algo tag)>
               const decoded = Buffer.from(pubkey, "base64").toString("utf8");
-              const firstLine = decoded.split(/\r?\n/, 1)[0] ?? "";
-              if (firstLine !== "untrusted comment: minisign public key") {
-                errs.push(`plugins.updater.pubkey does not decode to a minisign public key (first line: ${firstLine}).`);
+              const [firstLine = "", payloadLine = ""] = decoded.split(/\r?\n/);
+              if (!/^untrusted comment: minisign public key(?::\s*[0-9A-F]{16})?$/.test(firstLine)) {
+                errs.push(`plugins.updater.pubkey first line is not a minisign public key header (got: ${firstLine}).`);
+              } else if (!payloadLine.trim() || !Buffer.from(payloadLine.trim(), "base64").toString("utf8").startsWith("Ed")) {
+                errs.push("plugins.updater.pubkey payload is not a valid Ed25519 minisign key.");
               }
             }
             const endpoints = conf.plugins?.updater?.endpoints;
