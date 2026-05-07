@@ -31,7 +31,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pre-create a draft release in a single job so the parallel matrix below can
+  # only upload assets to it. This avoids the race condition where multiple
+  # matrix jobs try to POST /releases concurrently and one of them gets
+  # "Resource not accessible by integration" from the GitHub API.
+  # See: https://github.com/tauri-apps/tauri-action/issues/914
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate release notes
+        id: release_notes
+        shell: bash
+        env:
+          TAG_TO: ${{ github.ref_name }}
+        run: |
+          {
+            echo 'body<<RELEASE_NOTES_EOF'
+            node scripts/generate-release-notes.mjs
+            echo 'RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        id: create
+        uses: actions/github-script@v7
+        env:
+          RELEASE_BODY: ${{ steps.release_notes.outputs.body }}
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `TTT Desktop ${tag}`,
+              body: process.env.RELEASE_BODY,
+              draft: true,
+              prerelease: false,
+            });
+            core.setOutput('release_id', data.id);
+
   desktop-build:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -112,18 +162,6 @@ jobs:
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APPLE_API_KEY}.p8
           echo "APPLE_API_KEY_PATH=$HOME/.appstoreconnect/private_keys/AuthKey_${APPLE_API_KEY}.p8" >> "$GITHUB_ENV"
 
-      - name: Generate release notes
-        id: release_notes
-        shell: bash
-        run: |
-          {
-            echo 'body<<RELEASE_NOTES_EOF'
-            node scripts/generate-release-notes.mjs
-            echo 'RELEASE_NOTES_EOF'
-          } >> "$GITHUB_OUTPUT"
-        env:
-          TAG_TO: ${{ github.ref_name }}
-
       - name: Build Tauri installers and updater manifest
         uses: tauri-apps/tauri-action@v0.6.2
         env:
@@ -141,10 +179,28 @@ jobs:
           # WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           # WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: TTT Desktop ${{ github.ref_name }}
-          releaseBody: ${{ steps.release_notes.outputs.body }}
-          releaseDraft: false
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           includeUpdaterJson: true
+          # Mitigates the parallel-upload race for latest.json
+          # (https://github.com/tauri-apps/tauri-action/issues/1270)
+          retryAttempts: 3
           args: ${{ matrix.tauri_args }}
+
+  # Promote draft to public only after every matrix job uploaded its assets.
+  # If any platform fails the release stays as a draft, avoiding partial releases.
+  publish-release:
+    needs: [create-release, desktop-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: Number(process.env.RELEASE_ID),
+              draft: false,
+            });
