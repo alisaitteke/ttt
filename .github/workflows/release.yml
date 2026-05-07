@@ -223,12 +223,13 @@ jobs:
           chmod 600 "$P8_PATH"
           echo "APPLE_API_KEY_PATH=$P8_PATH" >> "$GITHUB_ENV"
 
-      # Materialize the minisign updater key on disk and feed it to Tauri via
-      # TAURI_SIGNING_PRIVATE_KEY_PATH instead of TAURI_SIGNING_PRIVATE_KEY.
-      # The PATH variant takes a raw key file, so we sidestep the base64
-      # parsing fragility that bites people who paste line-wrapped output into
-      # GitHub Secrets. The repository secret should hold the raw three-line
-      # minisign key (starting with "untrusted comment: ...").
+      # Materialize the minisign updater key on disk and point Tauri at the
+      # file path. `tauri build` reads only TAURI_SIGNING_PRIVATE_KEY and, when
+      # the value is an existing file, loads the key from disk. Going through a
+      # file sidesteps the base64/line-wrap fragility that bites people who
+      # paste minisign output into GitHub Secrets. The repository secret
+      # should hold the raw three-line minisign key (starting with
+      # "untrusted comment: ...").
       - name: Materialize Tauri updater signing key
         shell: bash
         env:
@@ -242,7 +243,7 @@ jobs:
           KEY_PATH="${RUNNER_TEMP}/tauri-updater.key"
           printf '%s\n' "${TAURI_SIGNING_PRIVATE_KEY_RAW}" > "${KEY_PATH}"
           chmod 600 "${KEY_PATH}"
-          echo "TAURI_SIGNING_PRIVATE_KEY_PATH=${KEY_PATH}" >> "${GITHUB_ENV}"
+          echo "TAURI_SIGNING_PRIVATE_KEY=${KEY_PATH}" >> "${GITHUB_ENV}"
 
       - name: Build desktop bundles
         shell: bash
