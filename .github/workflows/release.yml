@@ -5,9 +5,15 @@ name: Desktop release (Tauri)
 # Required secrets:
 # - TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (minisign; see README)
 #
-# Optional signing / notarization:
-# APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID,
-# WINDOWS_CERTIFICATE, WINDOWS_CERTIFICATE_PASSWORD.
+# Apple code signing and notarization (enabled):
+# - APPLE_CERTIFICATE (base64 encoded .p12)
+# - APPLE_CERTIFICATE_PASSWORD
+# - APPLE_ID (Apple ID email)
+# - APPLE_PASSWORD (app-specific password)
+# - APPLE_TEAM_ID (10-char team identifier)
+#
+# Windows code signing (optional):
+# - WINDOWS_CERTIFICATE, WINDOWS_CERTIFICATE_PASSWORD
 
 
 on:
@@ -88,12 +94,13 @@ jobs:
           NODE_VERSION_FOR_DESKTOP: ${{ env.NODE_VERSION_FOR_DESKTOP }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Code signing disabled - uncomment and add secrets to enable
-          # APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          # APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          # APPLE_ID: ${{ secrets.APPLE_ID }}
-          # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Apple code signing and notarization
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows code signing disabled - uncomment and add secrets to enable
           # WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           # WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
