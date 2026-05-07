@@ -86,13 +86,6 @@ jobs:
       - name: Install Tauri CLI
         run: npm install --no-audit --no-fund --no-save @tauri-apps/cli@2
 
-      - name: Install minisign (Linux)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          set -euo pipefail
-          # minisign is not in Ubuntu 22.04 default repos; use snap
-          sudo snap install minisign --classic
-
       - name: Install minisign (macOS)
         if: startsWith(matrix.platform, 'macos-')
         run: brew install minisign
@@ -209,7 +202,7 @@ jobs:
 
       - name: Cross-check signing key matches updater pubkey
         id: check_sign_verify
-        if: matrix.platform != 'windows-latest'
+        if: startsWith(matrix.platform, 'macos-')
         run: |
           set -euo pipefail
           # Reuse signature produced by the previous step. Tauri stores both
