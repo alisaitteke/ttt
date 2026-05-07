@@ -43,6 +43,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["bundle-resources"]
+    "resources": ["bundle-resources"],
+    "macOS": {
+      "signingIdentity": null
+    }
   }
 }

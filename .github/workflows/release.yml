@@ -62,9 +62,23 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+
+      - name: Cache apt packages (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/release.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
 
       - name: Install Linux desktop dependencies (WebKitGTK)
         if: matrix.platform == 'ubuntu-22.04'
