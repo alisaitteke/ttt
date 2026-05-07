@@ -2,8 +2,17 @@ name: Desktop release (Tauri)
 
 # Builds native installers on tag pushes (`v*`).
 #
+# A cheap `preflight` job validates secrets and config on Ubuntu before the
+# expensive bundle/notarize matrix starts, so misconfigured secrets fail in
+# under a minute instead of after 15+ minutes of build work.
+#
 # Required secrets:
-# - TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (minisign; updater)
+# - TAURI_SIGNING_PRIVATE_KEY: minisign secret key in **base64** form (the
+#   "Base64 encoded" line from `tauri signer generate`, or
+#   `base64 -w 0 < your.key`). Tauri decodes this at build time; pasting the
+#   raw three-line minisign file fails with "Invalid symbol ..." at offset.
+# - TAURI_SIGNING_PRIVATE_KEY_PASSWORD: password for the above key (may be
+#   empty if the key was generated without one).
 #
 # Apple code signing and notarization (App Store Connect API Key auth):
 # - APPLE_CERTIFICATE (base64 encoded .p12, Developer ID Application)
@@ -30,9 +39,252 @@ env:
   NODE_VERSION_FOR_DESKTOP: '22.14.0'
 
 jobs:
+  # Validate every signing secret and updater config on a cheap Ubuntu runner
+  # before kicking off the long bundle/notarize matrix. Designed to fail in
+  # 30-60 s with an actionable error, not after 15 min of build work.
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install validation tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends minisign jq
+          npm install --no-audit --no-fund --no-save @tauri-apps/cli@2
+
+      - name: Verify required secrets are present
+        id: check_secrets
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          missing=()
+          for name in \
+            TAURI_SIGNING_PRIVATE_KEY \
+            APPLE_CERTIFICATE \
+            APPLE_CERTIFICATE_PASSWORD \
+            APPLE_API_ISSUER \
+            APPLE_API_KEY \
+            APPLE_API_KEY_CONTENT; do
+            if [ -z "${!name:-}" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required repository secrets:"
+            for n in "${missing[@]}"; do
+              echo "::error::  - $n"
+            done
+            exit 1
+          fi
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" ]; then
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY_PASSWORD is empty; build will assume a passwordless minisign key."
+          fi
+
+      - name: Validate TAURI_SIGNING_PRIVATE_KEY (base64 + minisign format)
+        id: check_tauri_key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | base64 -d > /tmp/decoded.key 2>/tmp/b64.err; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not valid base64."
+            echo "::error::Expected the 'Base64 encoded' line from \`tauri signer generate\`,"
+            echo "::error::or the output of \`base64 -w 0 < your.key\` pasted into the secret."
+            sed 's/^/::error::/' /tmp/b64.err || true
+            exit 1
+          fi
+          first_line="$(head -n 1 /tmp/decoded.key)"
+          if [ "$first_line" != "untrusted comment: minisign encrypted secret key" ]; then
+            echo "::error::Decoded TAURI_SIGNING_PRIVATE_KEY does not look like a minisign encrypted secret key."
+            echo "::error::First line was: $first_line"
+            echo "::error::Expected first line: 'untrusted comment: minisign encrypted secret key'"
+            exit 1
+          fi
+
+      - name: Validate APPLE_CERTIFICATE (.p12 + password + Developer ID identity)
+        id: check_apple_cert
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CERT=/tmp/cert.p12
+          if ! printf '%s' "$APPLE_CERTIFICATE" | base64 -d > "$CERT" 2>/tmp/b64.err; then
+            echo "::error::APPLE_CERTIFICATE is not valid base64. Re-run \`base64 -i Certificates.p12 | pbcopy\` and update the secret."
+            sed 's/^/::error::/' /tmp/b64.err || true
+            exit 1
+          fi
+          if ! openssl pkcs12 -in "$CERT" -nokeys -clcerts \
+              -passin "pass:${APPLE_CERTIFICATE_PASSWORD}" \
+              -out /tmp/cert.pem 2>/tmp/openssl.err; then
+            echo "::error::Failed to read APPLE_CERTIFICATE: APPLE_CERTIFICATE_PASSWORD is wrong or the .p12 is corrupt."
+            sed 's/^/::error::/' /tmp/openssl.err || true
+            exit 1
+          fi
+          subject="$(openssl x509 -in /tmp/cert.pem -noout -subject)"
+          echo "Certificate subject: $subject"
+          if ! echo "$subject" | grep -q 'Developer ID Application'; then
+            echo "::error::Certificate is not a 'Developer ID Application' cert. Subject was: $subject"
+            exit 1
+          fi
+
+      - name: Validate APPLE_API_KEY_CONTENT (.p8 PEM bounds)
+        id: check_apple_p8
+        env:
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! grep -qF -- '-----BEGIN PRIVATE KEY-----' <<< "$APPLE_API_KEY_CONTENT"; then
+            echo "::error::APPLE_API_KEY_CONTENT is missing the '-----BEGIN PRIVATE KEY-----' header."
+            exit 1
+          fi
+          if ! grep -qF -- '-----END PRIVATE KEY-----' <<< "$APPLE_API_KEY_CONTENT"; then
+            echo "::error::APPLE_API_KEY_CONTENT is missing the '-----END PRIVATE KEY-----' footer."
+            exit 1
+          fi
+
+      - name: Validate APPLE_API_KEY (Key ID format)
+        id: check_apple_key_id
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! [[ "$APPLE_API_KEY" =~ ^[A-Z0-9]{10}$ ]]; then
+            echo "::error::APPLE_API_KEY must be a 10-character App Store Connect Key ID (uppercase letters/digits)."
+            exit 1
+          fi
+
+      - name: Validate APPLE_API_ISSUER (UUID format)
+        id: check_apple_issuer
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! [[ "$APPLE_API_ISSUER" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+            echo "::error::APPLE_API_ISSUER must be the App Store Connect issuer UUID (e.g. 12345678-1234-1234-1234-123456789012)."
+            exit 1
+          fi
+
+      - name: Validate src-tauri/tauri.conf.json (updater config)
+        id: check_tauri_conf
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONF=src-tauri/tauri.conf.json
+          if ! jq empty "$CONF" 2>/tmp/jq.err; then
+            echo "::error::$CONF is not valid JSON."
+            sed 's/^/::error::/' /tmp/jq.err || true
+            exit 1
+          fi
+          updater_artifacts="$(jq -r '.bundle.createUpdaterArtifacts // false' "$CONF")"
+          if [ "$updater_artifacts" != "true" ]; then
+            echo "::error::bundle.createUpdaterArtifacts must be true so updater signatures are produced."
+            exit 1
+          fi
+          pubkey="$(jq -r '.plugins.updater.pubkey // ""' "$CONF")"
+          if [ -z "$pubkey" ]; then
+            echo "::error::plugins.updater.pubkey is empty in $CONF."
+            exit 1
+          fi
+          if ! printf '%s' "$pubkey" | base64 -d > /tmp/pubkey.minisign 2>/tmp/b64.err; then
+            echo "::error::plugins.updater.pubkey in $CONF is not valid base64."
+            sed 's/^/::error::/' /tmp/b64.err || true
+            exit 1
+          fi
+          first_line="$(head -n 1 /tmp/pubkey.minisign)"
+          if [ "$first_line" != "untrusted comment: minisign public key" ]; then
+            echo "::error::plugins.updater.pubkey does not decode to a minisign public key."
+            echo "::error::First line was: $first_line"
+            exit 1
+          fi
+          endpoints_len="$(jq -r '.plugins.updater.endpoints | length' "$CONF")"
+          if [ "$endpoints_len" = "0" ] || [ "$endpoints_len" = "null" ]; then
+            echo "::error::plugins.updater.endpoints must be a non-empty array."
+            exit 1
+          fi
+
+      - name: Cross-check signing key matches updater pubkey
+        id: check_sign_verify
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "preflight $(date -u +%FT%TZ)" > /tmp/test.txt
+          if ! npx tauri signer sign /tmp/test.txt > /tmp/sign.out 2>/tmp/sign.err; then
+            echo "::error::tauri signer sign failed; TAURI_SIGNING_PRIVATE_KEY_PASSWORD is wrong or the secret is corrupt."
+            sed 's/^/::error::/' /tmp/sign.err || true
+            exit 1
+          fi
+          jq -r '.plugins.updater.pubkey' src-tauri/tauri.conf.json | base64 -d > /tmp/pubkey.minisign
+          if ! minisign -V -p /tmp/pubkey.minisign -m /tmp/test.txt -x /tmp/test.txt.sig > /tmp/verify.out 2>/tmp/verify.err; then
+            echo "::error::Updater pubkey in src-tauri/tauri.conf.json does not match TAURI_SIGNING_PRIVATE_KEY."
+            echo "::error::Either rotate the secret to the matching key, or update plugins.updater.pubkey in tauri.conf.json."
+            sed 's/^/::error::/' /tmp/verify.err || true
+            exit 1
+          fi
+
+      - name: Preflight summary
+        if: always()
+        shell: bash
+        env:
+          R_SECRETS: ${{ steps.check_secrets.outcome }}
+          R_TAURI_KEY: ${{ steps.check_tauri_key.outcome }}
+          R_APPLE_CERT: ${{ steps.check_apple_cert.outcome }}
+          R_APPLE_P8: ${{ steps.check_apple_p8.outcome }}
+          R_APPLE_KEY_ID: ${{ steps.check_apple_key_id.outcome }}
+          R_APPLE_ISSUER: ${{ steps.check_apple_issuer.outcome }}
+          R_TAURI_CONF: ${{ steps.check_tauri_conf.outcome }}
+          R_SIGN_VERIFY: ${{ steps.check_sign_verify.outcome }}
+        run: |
+          icon() {
+            case "$1" in
+              success) echo "✓" ;;
+              failure) echo "✗" ;;
+              skipped|"") echo "—" ;;
+              *) echo "?" ;;
+            esac
+          }
+          {
+            echo "## Preflight checks"
+            echo
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Required secrets present | $(icon "${R_SECRETS}") |"
+            echo "| TAURI_SIGNING_PRIVATE_KEY (base64 + minisign) | $(icon "${R_TAURI_KEY}") |"
+            echo "| APPLE_CERTIFICATE (.p12 + password) | $(icon "${R_APPLE_CERT}") |"
+            echo "| APPLE_API_KEY_CONTENT (.p8 PEM) | $(icon "${R_APPLE_P8}") |"
+            echo "| APPLE_API_KEY (Key ID format) | $(icon "${R_APPLE_KEY_ID}") |"
+            echo "| APPLE_API_ISSUER (UUID format) | $(icon "${R_APPLE_ISSUER}") |"
+            echo "| tauri.conf.json updater config | $(icon "${R_TAURI_CONF}") |"
+            echo "| sign + verify cross-check | $(icon "${R_SIGN_VERIFY}") |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # Pre-create a single draft release so every matrix job can attach assets to
   # the same target without racing on POST /releases.
   create-release:
+    needs: preflight
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
@@ -223,31 +475,14 @@ jobs:
           chmod 600 "$P8_PATH"
           echo "APPLE_API_KEY_PATH=$P8_PATH" >> "$GITHUB_ENV"
 
-      # Materialize the minisign updater key on disk and point Tauri at the
-      # file path. `tauri build` reads only TAURI_SIGNING_PRIVATE_KEY and, when
-      # the value is an existing file, loads the key from disk. Going through a
-      # file sidesteps the base64/line-wrap fragility that bites people who
-      # paste minisign output into GitHub Secrets. The repository secret
-      # should hold the raw three-line minisign key (starting with
-      # "untrusted comment: ...").
-      - name: Materialize Tauri updater signing key
-        shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "${TAURI_SIGNING_PRIVATE_KEY_RAW}" ]; then
-            echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is empty"
-            exit 1
-          fi
-          KEY_PATH="${RUNNER_TEMP}/tauri-updater.key"
-          printf '%s\n' "${TAURI_SIGNING_PRIVATE_KEY_RAW}" > "${KEY_PATH}"
-          chmod 600 "${KEY_PATH}"
-          echo "TAURI_SIGNING_PRIVATE_KEY=${KEY_PATH}" >> "${GITHUB_ENV}"
-
       - name: Build desktop bundles
         shell: bash
         env:
+          # `tauri build` reads the minisign updater key directly from this
+          # env var (base64-decoded inline). Preflight already verified the
+          # secret decodes to a valid minisign key, matches the pubkey in
+          # tauri.conf.json, and that the password unlocks it.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # Apple notarization credentials are only consumed on macOS builds;
           # on other platforms these env vars are simply unset and ignored.
