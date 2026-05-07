@@ -47,6 +47,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -67,8 +69,20 @@ jobs:
       - name: Install root JS dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Generate release notes
+        id: release_notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<RELEASE_NOTES_EOF'
+            node scripts/generate-release-notes.mjs
+            echo 'RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+        env:
+          TAG_TO: ${{ github.ref_name }}
+
       - name: Build Tauri installers and updater manifest
-        uses: tauri-apps/tauri-action@v0.5
+        uses: tauri-apps/tauri-action@0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_VERSION_FOR_DESKTOP: ${{ env.NODE_VERSION_FOR_DESKTOP }}
@@ -85,6 +99,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: TTT Desktop ${{ github.ref_name }}
+          releaseBody: ${{ steps.release_notes.outputs.body }}
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
