@@ -223,10 +223,30 @@ jobs:
           chmod 600 "$P8_PATH"
           echo "APPLE_API_KEY_PATH=$P8_PATH" >> "$GITHUB_ENV"
 
+      # Materialize the minisign updater key on disk and feed it to Tauri via
+      # TAURI_SIGNING_PRIVATE_KEY_PATH instead of TAURI_SIGNING_PRIVATE_KEY.
+      # The PATH variant takes a raw key file, so we sidestep the base64
+      # parsing fragility that bites people who paste line-wrapped output into
+      # GitHub Secrets. The repository secret should hold the raw three-line
+      # minisign key (starting with "untrusted comment: ...").
+      - name: Materialize Tauri updater signing key
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY_RAW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY_RAW}" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY secret is empty"
+            exit 1
+          fi
+          KEY_PATH="${RUNNER_TEMP}/tauri-updater.key"
+          printf '%s\n' "${TAURI_SIGNING_PRIVATE_KEY_RAW}" > "${KEY_PATH}"
+          chmod 600 "${KEY_PATH}"
+          echo "TAURI_SIGNING_PRIVATE_KEY_PATH=${KEY_PATH}" >> "${GITHUB_ENV}"
+
       - name: Build desktop bundles
         shell: bash
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # Apple notarization credentials are only consumed on macOS builds;
           # on other platforms these env vars are simply unset and ignored.
