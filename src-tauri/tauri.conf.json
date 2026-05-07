@@ -35,7 +35,8 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg", "deb", "rpm", "msi", "nsis"],
+    "createUpdaterArtifacts": true,
+    "targets": ["app", "dmg", "appimage", "deb", "rpm", "msi", "nsis"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -45,7 +46,8 @@
     ],
     "resources": ["bundle-resources"],
     "macOS": {
-      "signingIdentity": null
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist"
     }
   }
 }

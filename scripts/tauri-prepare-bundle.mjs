@@ -234,6 +234,30 @@ function stageServerPayload() {
   rmSync(join(SERVER_OUT, 'package-lock.json'), { force: true });
 }
 
+/**
+ * On macOS, hand the staged tree to `macos-codesign-resources.mjs` so every
+ * nested Mach-O (`.node`, `.dylib`, helper executables) is signed before
+ * Tauri's outer bundling step. Skipped when no Developer ID identity is
+ * provided (local dev builds).
+ */
+function presignMacOSResources() {
+  if (process.platform !== 'darwin') {
+    return;
+  }
+  if (!process.env.APPLE_SIGNING_IDENTITY) {
+    console.log('[tauri-prepare-bundle] APPLE_SIGNING_IDENTITY not set; skipping macOS pre-sign.');
+    return;
+  }
+  const r = spawnSync(
+    process.execPath,
+    [join(root, 'scripts', 'macos-codesign-resources.mjs')],
+    { stdio: 'inherit' },
+  );
+  if (r.status !== 0) {
+    throw new Error('macos-codesign-resources.mjs failed.');
+  }
+}
+
 async function main() {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   console.log(`[tauri-prepare-bundle] Packaging ${pkg.version} with Node.js ${NODE_VERSION}`);
@@ -247,6 +271,8 @@ async function main() {
   for (const t of targets) {
     await ensureNodeRuntime(t);
   }
+
+  presignMacOSResources();
 
   rmSync(STAGING, { recursive: true, force: true });
   console.log('[tauri-prepare-bundle] Done.');
