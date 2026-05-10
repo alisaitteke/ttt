@@ -95,6 +95,10 @@ function showInstallBlock(tool: DesignToolInfo): boolean {
   return tool.installed === false && Boolean(tool.installUrl);
 }
 
+function isAdobeProduct(tool: DesignToolInfo): boolean {
+  return ['photoshop', 'after-effects', 'illustrator', 'premiere-pro'].includes(tool.id);
+}
+
 /** Sort key for install-probed tools; connection tools use link state. */
 function installedTierRank(tool: DesignToolInfo): number {
   if (tool.kind === 'connection') {
@@ -352,7 +356,7 @@ function clearAll(): void {
               </template>
               <template v-else-if="showInstallBlock(tool)">
                 <button
-                  v-if="creativeCloudDesktopInstalled"
+                  v-if="isAdobeProduct(tool) && creativeCloudDesktopInstalled"
                   type="button"
                   :disabled="launchPending || disabled"
                   class="inline-flex h-7 w-full max-w-[9.5rem] shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
