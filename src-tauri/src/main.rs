@@ -21,6 +21,8 @@ use tauri::{AppHandle, WebviewWindow};
 #[cfg(not(debug_assertions))]
 use sidecar::{bundled_node_exe, bundled_server_root, read_ready_url, spawn_ui_sidecar};
 #[cfg(not(debug_assertions))]
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+#[cfg(not(debug_assertions))]
 use tauri_plugin_updater::UpdaterExt;
 
 type SidecarSlot = Mutex<Option<std::process::Child>>;
@@ -110,12 +112,52 @@ fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 #[cfg(not(debug_assertions))]
 fn schedule_updater_check(app_handle: AppHandle) {
   tauri::async_runtime::spawn(async move {
-    let Ok(updater) = app_handle.updater() else {
-      return;
+    let updater = match app_handle.updater() {
+      Ok(u) => u,
+      Err(e) => {
+        eprintln!("TTT updater init failed: {e}");
+        return;
+      }
     };
-    if let Err(e) = updater.check().await {
-      eprintln!("TTT updater check failed: {e}");
+
+    let update = match updater.check().await {
+      Ok(Some(update)) => update,
+      Ok(None) => return,
+      Err(e) => {
+        eprintln!("TTT updater check failed: {e}");
+        return;
+      }
+    };
+
+    let version = update.version.clone();
+    let body = update.body.clone().unwrap_or_default();
+
+    let (tx, mut rx) = tauri::async_runtime::channel::<bool>(1);
+    app_handle
+      .dialog()
+      .message(format!(
+        "TTT v{version} is available.\n\n{body}\n\nDownload and install now?"
+      ))
+      .title("Update available")
+      .kind(MessageDialogKind::Info)
+      .buttons(MessageDialogButtons::OkCancelCustom(
+        "Update".into(),
+        "Later".into(),
+      ))
+      .show(move |accepted| {
+        let _ = tx.try_send(accepted);
+      });
+
+    if !rx.recv().await.unwrap_or(false) {
+      return;
     }
+
+    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+      eprintln!("TTT updater install failed: {e}");
+      return;
+    }
+
+    app_handle.restart();
   });
 }
 
@@ -135,6 +177,7 @@ fn main() {
     .plugin(tauri_plugin_deep_link::init())
     .plugin(tauri_plugin_autostart::Builder::new().build())
     .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_dialog::init())
     .manage(SidecarSlot::new(None))
     .setup(|app| {
       #[cfg(debug_assertions)]

@@ -26,6 +26,9 @@ import {
 } from '@ttt/lib/ttt-paths.js';
 import { Logger } from '@ttt/utils/logger.js';
 import type { ConnectionAdapter, ConnectionPublicInfo, WhatsAppStreamEvent } from '@ttt/connections/types.js';
+import { installLibsignalNoiseFilter } from './libsignal-noise-filter.js';
+
+installLibsignalNoiseFilter();
 
 const silentLogger = pino({ level: 'silent' });
 
@@ -696,25 +699,47 @@ export class WhatsAppConnectionAdapter implements ConnectionAdapter {
     }
 
     const waPrefs = await readWhatsAppPreferences();
-    const syncHistory = waPrefs.extendedDataTools;
+    const wantsExtendedTools = waPrefs.extendedDataTools;
     /**
-     * Baileys maps WebSubPlatform to DARWIN/WIN32 only when browser[0] is "Mac OS" or "Windows".
-     * Linux uses "Ubuntu", which keeps WEB_BROWSER and often never receives history-heavy sync.
+     * `state.creds.me` is set by Baileys' `configureSuccessfulPairing` and
+     * persisted into `creds.json`. Its absence is a reliable signal that this
+     * is the very first connection after the user scanned the QR.
      */
-    const historyBrowser =
-      syncHistory && hostPlatform() === 'linux'
-        ? Browsers.macOS('Chrome')
-        : syncHistory
-          ? Browsers.appropriate('Chrome')
-          : Browsers.ubuntu('Chrome');
+    const isInitialPairing = !state.creds.me;
+
+    /**
+     * Baileys forwards `syncFullHistory` into both the per-connection
+     * `webInfo.webSubPlatform` claim and the registration node's
+     * `requireFullSync` flag (see baileys/Utils/validate-connection.js).
+     * Re-issuing it on every reconnect makes WhatsApp run a brand-new history
+     * sync round each time, which fires a "Finished sync with WhatsApp …"
+     * notification on the user's phone on every CLI start. Honor the request
+     * only on the initial pairing; afterwards Baileys keeps streaming
+     * incremental `messaging-history.set` updates without re-triggering it.
+     */
+    const requestFullSync = wantsExtendedTools && isInitialPairing;
+
+    /**
+     * Baileys only maps `webSubPlatform` to DARWIN/WIN32 when browser[0] is
+     * "Mac OS" or "Windows", which is what unlocks the history-heavy sync on
+     * the initial pairing (Linux hosts otherwise default to WEB_BROWSER and
+     * receive truncated history). Apply the macOS hint only when we actually
+     * want the platform mapping; otherwise stick with the host's natural
+     * tuple so the linked-device entry on the phone stays consistent.
+     */
+    const browser = requestFullSync && hostPlatform() === 'linux'
+      ? Browsers.macOS('Chrome')
+      : requestFullSync
+        ? Browsers.appropriate('Chrome')
+        : Browsers.ubuntu('Chrome');
 
     const sock = makeWASocket({
       auth: state,
       version: verInfo.version,
       printQRInTerminal: false,
       logger: silentLogger,
-      syncFullHistory: syncHistory,
-      browser: historyBrowser,
+      syncFullHistory: requestFullSync,
+      browser,
     });
     this.sock = sock;
 

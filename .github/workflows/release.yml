@@ -624,6 +624,19 @@ jobs:
           fi
           gh release upload "$TAG" "${assets[@]}" --clobber
 
+      - name: Inspect Windows bundle output
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          set -uo pipefail
+          BUNDLE_DIR="src-tauri/target/release/bundle"
+          echo "::group::nsis"
+          ls -la "$BUNDLE_DIR/nsis" 2>/dev/null || echo "  (no nsis output)"
+          echo "::endgroup::"
+          echo "::group::msi"
+          ls -la "$BUNDLE_DIR/msi" 2>/dev/null || echo "  (no msi output)"
+          echo "::endgroup::"
+
       - name: Upload Windows artifacts to release
         if: matrix.platform == 'windows-latest'
         env:
